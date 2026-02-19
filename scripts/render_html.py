@@ -269,6 +269,7 @@ def generate_html(data: dict) -> str:
     with open(output_path / 'index.html', 'w') as f:
         f.write(template)
     
+    copy_html_assets(base_dir)
     return str(output_path)
 
 if __name__ == '__main__':
@@ -283,3 +284,29 @@ if __name__ == '__main__':
     data = load_yaml_data(str(data_path))
     output_path = generate_html(data)
     print(f"HTML generated: {output_path}")
+
+
+def copy_html_assets(base_dir: Path) -> None:
+    """Copy CSS, JS, and other assets to dist/html."""
+    html_dir = base_dir / 'templates' / 'html'
+    dist_html = base_dir / 'dist' / 'html'
+    
+    # List of assets to copy
+    assets = ['styles.css', 'script.js', 'three_effects.js']
+    
+    for asset in assets:
+        src = html_dir / asset
+        if src.exists():
+            dst = dist_html / asset
+            with open(src, 'r') as f:
+                content = f.read()
+            with open(dst, 'w') as f:
+                f.write(content)
+    
+    # Copy SVG assets
+    for svg_file in html_dir.glob('*.svg'):
+        dst = dist_html / svg_file.name
+        with open(svg_file, 'r') as f:
+            content = f.read()
+        with open(dst, 'w') as f:
+            f.write(content)
