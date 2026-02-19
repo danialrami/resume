@@ -5,6 +5,7 @@
 - **Build both**: `./scripts/build.sh` or `python scripts/build_all.py`
 - **Build PDF only**: `./scripts/build_pdf.sh` or `python scripts/render_latex.py`
 - **Build HTML only**: `./scripts/build_html.sh` or `python scripts/render_html.py`
+- **Lint LaTeX**: Optional (pdflatex/xelatex will report errors)
 - **Test**: Run build commands and inspect output files in `dist/`
 
 ## Code Style Guidelines
@@ -12,44 +13,57 @@
 ### YAML Data (`data/resume.yaml`)
 - Use 2-space indentation
 - Keep lines <80 chars
-- Use descriptive keys with underscores
-- Maintain consistent data types across sections
+- Use descriptive keys with underscores or hyphens
+- Date format: `"YYYY – YYYY"` or single year without quotes
 
 ### LaTeX Template (`templates/latex/resume.tex`)
-- Load only necessary packages
-- 4-space indentation, lines <80 chars
+- Follow standard LaTeX conventions
+- 4-space indentation, lines <80 chars  
 - Section titles Title Case
 - Comments with `%`
-- Follow standard LaTeX conventions
+- Output compiled to: `dist/pdf/resume.pdf`
 
 ### HTML Template (`templates/html/index.html`)
 - Semantic HTML5 structure
-- Consistent CSS variable usage
 - Mobile-first responsive design
 - Accessibility considerations (ARIA labels, keyboard navigation)
+- Interactive elements from `script.js` and `three_effects.js`
+- Output: `dist/html/index.html`
 
 ## Architecture
 
 ```
 data/resume.yaml
-    ↓
-templates/latex/resume.tex  →  dist/pdf/resume.pdf (via pdflatex)
-    ↓
+    ↓ (render_latex.py / render_html.py)
+templates/latex/resume.tex  →  dist/pdf/resume.pdf (via xelatex)
 templates/html/index.html   →  dist/html/index.html
 ```
+
+## Dependencies
+
+- Python 3.8+
+- PyYAML 6.0+ (installed via requirements.txt)
+- xelatex or pdflatex (for PDF generation)
+
+For PDF generation:
+- **xelatex** (recommended if using fontspec)
+- **pdflatex** (fallback, may need to remove fontspec package)
 
 ## Adding New Features
 
 1. Update `data/resume.yaml` with new data
-2. Add template support in respective `templates/` subdirectory
-3. Rebuild and verify output in `dist/`
-4. Commit both source files and generated outputs
+2. Modify templates in respective `templates/` subdirectory
+3. Rebuild using scripts or `python scripts/build_all.py`
+4. Review outputs in `dist/`
 
-## Dependencies
+## Migration Notes
 
-- Python 3.8+ (venv included)
-- PyYAML (installed via requirements.txt)
-- PyPDF2 (for PDF operations, optional)
+This repository unifies two previous repositories:
 
-For PDF generation:
-- MacTeX or TeX Live (system-level LaTeX distribution)
+- **generate-resume-pdf**: PDF-only resume generator using YAML → LaTeX
+- **interactive-resume**: Interactive HTML5 resume with audio visualizations
+
+The unified system uses:
+- Single source of truth: `data/resume.yaml`
+- Separate templates for print (LaTeX) and web (HTML)
+- Shared Python build scripts for consistent generation
