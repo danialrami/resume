@@ -15,10 +15,19 @@ let isLoaded = false;
 
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize loading screen
     initLoading();
+    
+    // Initialize audio elements
     initAudio();
+    
+    // Initialize Three.js scene
     initThreeJS();
+    
+    // Initialize scroll animations
     initScrollAnimations();
+    
+    // Initialize navigation
     initNavigation();
 });
 
@@ -28,6 +37,7 @@ function initLoading() {
     const container = document.querySelector('.container');
     const loadingProgress = document.querySelector('.loading-progress');
     
+    // Simulate loading progress
     let progress = 0;
     const loadingInterval = setInterval(() => {
         progress += Math.random() * 10;
@@ -35,6 +45,7 @@ function initLoading() {
             progress = 100;
             clearInterval(loadingInterval);
             
+            // Hide loading screen after a short delay
             setTimeout(() => {
                 loadingScreen.style.opacity = '0';
                 container.style.opacity = '1';
@@ -51,21 +62,26 @@ function initLoading() {
 
 // Audio initialization
 function initAudio() {
+    // Get canvas elements
     waveformCanvas = document.getElementById('waveform');
     waveformCtx = waveformCanvas.getContext('2d');
     
     frequencyCanvas = document.getElementById('frequency');
     frequencyCtx = frequencyCanvas.getContext('2d');
     
+    // Set canvas dimensions
     resizeCanvases();
     window.addEventListener('resize', resizeCanvases);
     
+    // Audio file upload
     const audioFileInput = document.getElementById('audio-file');
     audioFileInput.addEventListener('change', handleAudioUpload);
     
+    // Playback controls
     const playPauseButton = document.getElementById('play-pause');
     playPauseButton.addEventListener('click', togglePlayback);
     
+    // Volume control
     const volumeControl = document.getElementById('volume');
     volumeControl.addEventListener('input', (e) => {
         if (audioContext && audioSource) {
@@ -73,85 +89,143 @@ function initAudio() {
         }
     });
     
+    // Create default audio data for visualization when no audio is loaded
     createDefaultAudioData();
+    
+    // Start animation loop
     animate();
 }
 
 // Resize canvas elements
 function resizeCanvases() {
-    waveformCanvas.width = window.innerWidth * 0.8;
-    waveformCanvas.height = 150;
+    const container = document.querySelector('.visualization-container');
+    const width = container.clientWidth;
+    const height = container.clientHeight;
     
-    frequencyCanvas.width = window.innerWidth * 0.8;
-    frequencyCanvas.height = 150;
+    waveformCanvas.width = width;
+    waveformCanvas.height = height;
+    
+    frequencyCanvas.width = width;
+    frequencyCanvas.height = height;
 }
 
-// Audio file upload
-function handleAudioUpload(event) {
-    const file = event.target.files[0];
+// Handle audio file upload
+function handleAudioUpload(e) {
+    const file = e.target.files[0];
     if (!file) return;
     
-    audioFile = URL.createObjectURL(file);
-    
     const reader = new FileReader();
-    reader.onload = function(e) {
-        audioContext.decodeAudioData(e.target.result, (buffer) => {
+    reader.onload = (event) => {
+        const arrayBuffer = event.target.result;
+        
+        // Initialize audio context if not already created
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        // Stop any currently playing audio
+        if (audioSource && audioSource.source) {
+            audioSource.source.stop();
+            isPlaying = false;
+            updatePlayPauseButton();
+        }
+        
+        // Decode audio data
+        audioContext.decodeAudioData(arrayBuffer, (buffer) => {
             audioBuffer = buffer;
+            
+            // Update UI
+            const playPauseButton = document.getElementById('play-pause');
+            playPauseButton.disabled = false;
+            
+            // Auto-play the uploaded audio
+            playAudio();
+        }, (error) => {
+            console.error('Error decoding audio data:', error);
         });
     };
-    reader.readAsArrayBuffer(file);
-}
-
-// Toggle playback
-function togglePlayback() {
-    if (!audioContext) return;
     
-    if (isPlaying) {
-        audioSource.stop();
-        isPlaying = false;
-        document.getElementById('play-pause').innerHTML = '<i class="fas fa-play"></i>';
-    } else {
-        if (!audioBuffer) {
-            // Use default audio data
-            createDefaultAudioData();
-            playAudio();
-        } else {
-            playAudio();
-        }
-    }
+    reader.readAsArrayBuffer(file);
 }
 
 // Play audio
 function playAudio() {
-    if (!audioBuffer) return;
-    
-    if (audioSource) {
-        audioSource.stop();
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
     
-    audioSource = audioContext.createBufferSource();
-    audioSource.buffer = audioBuffer;
-    audioSource.loop = true;
-    audioSource.connect(analyser);
-    analyser.connect(audioContext.destination);
-    audioSource.start(0);
+    // Create audio source
+    const source = audioContext.createBufferSource();
+    source.buffer = audioBuffer;
     
+    // Create gain node for volume control
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = document.getElementById('volume').value;
+    
+    // Create analyser node
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    
+    // Connect nodes
+    source.connect(analyser);
+    analyser.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Store source and gain node
+    audioSource = {
+        source: source,
+        gainNode: gainNode
+    };
+    
+    // Start playback
+    source.start(0);
     isPlaying = true;
-    document.getElementById('play-pause').innerHTML = '<i class="fas fa-pause"></i>';
+    updatePlayPauseButton();
+    
+    // Handle when audio ends
+    source.onended = () => {
+        isPlaying = false;
+        updatePlayPauseButton();
+    };
 }
 
-// Create default audio data for visualization
-function createDefaultAudioData() {
-    if (!audioContext) return;
+// Toggle audio playback
+function togglePlayback() {
+    if (!audioBuffer) return;
     
-    const bufferSize = audioContext.sampleRate * 2;
-    audioBuffer = audioContext.createBuffer(2, bufferSize, audioContext.sampleRate);
-    
-    for (let channel = 0; channel < 2; channel++) {
-        const channelData = audioBuffer.getChannelData(channel);
-        for (let i = 0; i < bufferSize; i++) {
-            channelData[i] = Math.random() * 0.2;
+    if (isPlaying) {
+        // Pause audio
+        if (audioSource && audioSource.source) {
+            audioSource.source.stop();
+            isPlaying = false;
         }
+    } else {
+        // Play audio
+        playAudio();
+    }
+    
+    updatePlayPauseButton();
+}
+
+// Update play/pause button icon
+function updatePlayPauseButton() {
+    const playPauseButton = document.getElementById('play-pause');
+    const icon = playPauseButton.querySelector('i');
+    
+    if (isPlaying) {
+        icon.className = 'fas fa-pause';
+    } else {
+        icon.className = 'fas fa-play';
+    }
+}
+
+// Create default audio data for visualization when no audio is loaded
+function createDefaultAudioData() {
+    audioData = [];
+    
+    // Generate sine wave data
+    for (let i = 0; i < 100; i++) {
+        audioData.push(Math.sin(i * 0.1) * 0.5 + 0.5);
     }
 }
 
@@ -159,247 +233,591 @@ function createDefaultAudioData() {
 function animate() {
     requestAnimationFrame(animate);
     
-    if (analyser) {
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(dataArray);
-        
-        drawFrequency(dataArray);
-        drawWaveform();
+    // Draw audio visualizations
+    drawWaveform();
+    drawFrequency();
+    
+    // Update Three.js scene
+    updateThreeScene();
+    
+    // Render Three.js scene
+    if (threeRenderer && threeScene && threeCamera) {
+        composer.render();
     }
 }
 
-// Draw frequency spectrum
-function drawFrequency(dataArray) {
-    if (!frequencyCtx || !analyser) return;
-    
-    frequencyCtx.clearRect(0, 0, frequencyCanvas.width, frequencyCanvas.height);
-    
-    const barWidth = (frequencyCanvas.width / dataArray.length) * 2.5;
-    let barHeight;
-    let x = 0;
-    
-    for (let i = 0; i < dataArray.length; i++) {
-        barHeight = dataArray[i] / 2;
-        
-        const gradient = frequencyCtx.createLinearGradient(0, frequencyCanvas.height, 0, 0);
-        gradient.addColorStop(0, '#78BEBA');
-        gradient.addColorStop(1, '#D35233');
-        
-        frequencyCtx.fillStyle = gradient;
-        
-        if (i > 0) {
-            x += barWidth + 1;
-        }
-        
-        frequencyCtx.fillRect(x, frequencyCanvas.height - barHeight, barWidth, barHeight);
-    }
-}
-
-// Draw waveform
+// Draw waveform visualization
 function drawWaveform() {
-    if (!waveformCtx || !analyser) return;
+    const width = waveformCanvas.width;
+    const height = waveformCanvas.height;
     
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    analyser.getByteTimeDomainData(dataArray);
+    // Clear canvas
+    waveformCtx.clearRect(0, 0, width, height);
     
-    waveformCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
-    
+    // Set line style
     waveformCtx.lineWidth = 2;
-    const gradient = waveformCtx.createLinearGradient(0, 0, waveformCanvas.width, 0);
-    gradient.addColorStop(0, '#78BEBA');
-    gradient.addColorStop(0.5, '#E7B225');
-    gradient.addColorStop(1, '#D35233');
-    waveformCtx.strokeStyle = gradient;
+    waveformCtx.strokeStyle = getGradient(waveformCtx, height);
     
+    // Begin path
     waveformCtx.beginPath();
     
-    const sliceWidth = waveformCanvas.width * 1.0 / bufferLength;
-    let x = 0;
-    
-    for (let i = 0; i < bufferLength; i++) {
-        const barHeight = dataArray[i] / 2;
+    if (analyser && isPlaying) {
+        // Get time domain data
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyser.getByteTimeDomainData(dataArray);
         
-        if (i === 0) {
-            waveformCtx.moveTo(x, waveformCanvas.height / 2);
-        } else {
-            waveformCtx.lineTo(x, waveformCanvas.height / 2 + (barHeight - 128) * 0.7);
+        // Calculate step size
+        const sliceWidth = width / bufferLength;
+        
+        // Draw waveform
+        for (let i = 0; i < bufferLength; i++) {
+            const x = i * sliceWidth;
+            const v = dataArray[i] / 128.0;
+            const y = v * height / 2;
+            
+            if (i === 0) {
+                waveformCtx.moveTo(x, y);
+            } else {
+                waveformCtx.lineTo(x, y);
+            }
         }
+    } else {
+        // Draw default waveform
+        const sliceWidth = width / audioData.length;
         
-        x += sliceWidth;
+        for (let i = 0; i < audioData.length; i++) {
+            const x = i * sliceWidth;
+            const y = audioData[i] * height;
+            
+            if (i === 0) {
+                waveformCtx.moveTo(x, y);
+            } else {
+                waveformCtx.lineTo(x, y);
+            }
+            
+            // Update default audio data for animation
+            audioData[i] = Math.sin((i * 0.1) + (Date.now() * 0.001)) * 0.25 + 0.5;
+        }
     }
     
-    waveformCtx.lineTo(waveformCanvas.width, waveformCanvas.height / 2);
+    // Stroke path
     waveformCtx.stroke();
 }
 
-// Three.js initialization
+// Update frequency bar colors in drawFrequency function
+function drawFrequency() {
+    const width = frequencyCanvas.width;
+    const height = frequencyCanvas.height;
+    
+    // Clear canvas
+    frequencyCtx.clearRect(0, 0, width, height);
+    
+    if (analyser && isPlaying) {
+        // Get frequency data
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyser.getByteFrequencyData(dataArray);
+        
+        // Calculate bar width
+        const barWidth = width / bufferLength * 2.5;
+        let barHeight;
+        let x = 0;
+        
+        // Draw frequency bars
+        for (let i = 0; i < bufferLength; i++) {
+            barHeight = dataArray[i] / 255 * height;
+            
+            // Use gradient for bar color - UPDATED COLORS
+            const gradient = frequencyCtx.createLinearGradient(0, height, 0, height - barHeight);
+            gradient.addColorStop(0, '#78BEBA'); // Changed from #00E0E0 to LUFS teal
+            gradient.addColorStop(1, '#D35233'); // Changed from #FF6600 to LUFS red
+            
+            frequencyCtx.fillStyle = gradient;
+            frequencyCtx.fillRect(x, height - barHeight, barWidth, barHeight);
+            
+            x += barWidth + 1;
+        }
+    } else {
+        // Draw default frequency bars
+        const barCount = 64;
+        const barWidth = width / barCount;
+        
+        for (let i = 0; i < barCount; i++) {
+            // Generate animated bar height
+            const time = Date.now() * 0.001;
+            const barHeight = Math.sin((i * 0.2) + time) * 0.25 + 0.3;
+            const h = barHeight * height;
+            
+            // Use gradient for bar color - UPDATED COLORS
+            const gradient = frequencyCtx.createLinearGradient(0, height, 0, height - h);
+            gradient.addColorStop(0, '#78BEBA'); // Changed from #00E0E0 to LUFS teal
+            gradient.addColorStop(1, '#D35233'); // Changed from #FF6600 to LUFS red
+            
+            frequencyCtx.fillStyle = gradient;
+            frequencyCtx.fillRect(i * barWidth, height - h, barWidth - 1, h);
+        }
+    }
+}
+
+// Update waveform gradient in getGradient function
+function getGradient(ctx, height) {
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, '#D35233'); // Changed from #FF6600 to LUFS red
+    gradient.addColorStop(0.5, '#FFFFFF'); // Kept white for middle
+    gradient.addColorStop(1, '#78BEBA'); // Changed from #00E0E0 to LUFS teal
+    return gradient;
+}
+
+// Initialize Three.js scene
 function initThreeJS() {
     const container = document.getElementById('three-container');
     
+    // Create scene
     threeScene = new THREE.Scene();
-    threeScene.fog = new THREE.Fog(0x111111, 10, 50);
     
-    threeCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    threeCamera.position.z = 25;
+    // Create camera
+    threeCamera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+    threeCamera.position.z = 5;
     
+    // Create renderer
     threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    threeRenderer.setSize(window.innerWidth, window.innerHeight);
-    threeRenderer.setPixelRatio(window.devicePixelRatio);
+    threeRenderer.setSize(container.clientWidth, container.clientHeight);
+    threeRenderer.setClearColor(0x000000, 0);
     container.appendChild(threeRenderer.domElement);
     
+    // Add resize handler
+    window.addEventListener('resize', () => {
+        threeCamera.aspect = container.clientWidth / container.clientHeight;
+        threeCamera.updateProjectionMatrix();
+        threeRenderer.setSize(container.clientWidth, container.clientHeight);
+        composer.setSize(container.clientWidth, container.clientHeight);
+    });
+    
+    // Add controls
     threeControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
     threeControls.enableDamping = true;
     threeControls.dampingFactor = 0.05;
+    threeControls.enableZoom = false;
     
-    // Point cloud setup
+    // Create point cloud
     createPointCloud();
     
-    // Effect composer setup
-    composer = new THREE.EffectComposer(threeRenderer);
-    composer.addPass(new THREE.RenderPass(threeScene, threeCamera));
+    // Add ambient light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    threeScene.add(ambientLight);
     
-    const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-    bloomPass.threshold = 0;
-    bloomPass.strength = 1.5;
-    bloomPass.radius = 0.5;
+    // Add directional light
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(0, 1, 1);
+    threeScene.add(directionalLight);
     
-    composer.addPass(bloomPass);
-    
-    window.addEventListener('resize', onWindowResize);
+    // Set up post-processing
+    setupPostProcessing();
 }
 
 // Create point cloud
 function createPointCloud() {
+    // Create geometry
     const geometry = new THREE.BufferGeometry();
-    const vertices = [];
+    const particles = 5000;
+    const positions = new Float32Array(particles * 3);
+    const colors = new Float32Array(particles * 3);
     
-    for (let i = 0; i < 5000; i++) {
-        const x = (Math.random() - 0.5) * 40;
-        const y = (Math.random() - 0.5) * 20;
-        const z = (Math.random() - 0.5) * 40;
+    // Create cloud shape
+    for (let i = 0; i < particles; i++) {
+        // Generate point within cloud shape
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        const radius = 1 + Math.random() * 0.5;
         
-        vertices.push(x, y, z);
-    }
-    
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    
-    const colors = [];
-    for (let i = 0; i < vertices.length / 3; i++) {
+        const x = radius * Math.sin(phi) * Math.cos(theta);
+        const y = radius * Math.sin(phi) * Math.sin(theta);
+        const z = radius * Math.cos(phi);
+        
+        positions[i * 3] = x;
+        positions[i * 3 + 1] = y;
+        positions[i * 3 + 2] = z;
+        
+        // Set color
         const color = new THREE.Color();
-        color.setHSL(Math.random() * 0.2, 0.7, 0.5);
-        colors.push(color.r, color.g, color.b);
+        color.setHSL(Math.random() * 0.2 + 0.5, 0.7, 0.5);
+        
+        colors[i * 3] = color.r;
+        colors[i * 3 + 1] = color.g;
+        colors[i * 3 + 2] = color.b;
     }
     
-    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    // Set attributes
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     
-    const material = new THREE.PointsMaterial({ size: 0.5, vertexColors: true });
+    // Create material
+    const material = new THREE.PointsMaterial({
+        size: 0.05,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.8,
+        blending: THREE.AdditiveBlending
+    });
+    
+    // Create point cloud
     pointCloud = new THREE.Points(geometry, material);
     threeScene.add(pointCloud);
 }
 
-// Window resize handler
-function onWindowResize() {
-    if (!threeCamera || !threeRenderer) return;
+// Set up post-processing effects
+function setupPostProcessing() {
+    const container = document.getElementById('three-container');
     
-    threeCamera.aspect = window.innerWidth / window.innerHeight;
-    threeCamera.updateProjectionMatrix();
-    threeRenderer.setSize(window.innerWidth, window.innerHeight);
-    composer.setSize(window.innerWidth, window.innerHeight);
+    // Create render pass
+    const renderPass = new THREE.RenderPass(threeScene, threeCamera);
+    
+    // Create bloom pass
+    const bloomPass = new THREE.UnrealBloomPass(
+        new THREE.Vector2(container.clientWidth, container.clientHeight),
+        1.5,  // strength
+        0.4,  // radius
+        0.85  // threshold
+    );
+    
+    // Create effect composer
+    composer = new THREE.EffectComposer(threeRenderer);
+    composer.addPass(renderPass);
+    composer.addPass(bloomPass);
 }
 
-// Animation loop for Three.js
-function animateThree() {
-    requestAnimationFrame(animateThree);
+// Update Three.js scene
+function updateThreeScene() {
+    if (!pointCloud) return;
     
-    if (pointCloud) {
-        pointCloud.rotation.y += 0.002;
+    // Rotate point cloud
+    pointCloud.rotation.y += 0.002;
+    pointCloud.rotation.x += 0.001;
+    
+    // Update point positions based on audio
+    const positions = pointCloud.geometry.attributes.position.array;
+    const colors = pointCloud.geometry.attributes.color.array;
+    
+    if (analyser && isPlaying) {
+        // Get frequency data
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyser.getByteFrequencyData(dataArray);
         
-        if (analyser) {
-            const dataArray = new Uint8Array(analyser.frequencyBinCount);
-            analyser.getByteFrequencyData(dataArray);
+        // Update point positions based on audio data
+        for (let i = 0; i < positions.length; i += 3) {
+            const index = Math.floor(i / 3) % bufferLength;
+            const value = dataArray[index] / 255;
             
-            const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-            const scale = 1 + (average / 255) * 0.3;
+            // Original position
+            const originalX = positions[i];
+            const originalY = positions[i + 1];
+            const originalZ = positions[i + 2];
             
-            pointCloud.scale.set(scale, scale, scale);
+            // Calculate distance from center
+            const distance = Math.sqrt(
+                originalX * originalX +
+                originalY * originalY +
+                originalZ * originalZ
+            );
+            
+            // Normalize direction vector
+            const dirX = originalX / distance;
+            const dirY = originalY / distance;
+            const dirZ = originalZ / distance;
+            
+            // Apply audio-reactive displacement
+            const displacement = value * 0.5;
+            positions[i] = originalX * (1 + displacement * 0.2);
+            positions[i + 1] = originalY * (1 + displacement * 0.2);
+            positions[i + 2] = originalZ * (1 + displacement * 0.2);
+            
+            // Update color based on audio
+            const color = new THREE.Color();
+            color.setHSL(0.5 + value * 0.2, 0.7, 0.5 + value * 0.5);
+            
+            colors[i] = color.r;
+            colors[i + 1] = color.g;
+            colors[i + 2] = color.b;
         }
+        
+        // Update attributes
+        pointCloud.geometry.attributes.position.needsUpdate = true;
+        pointCloud.geometry.attributes.color.needsUpdate = true;
+    } else {
+        // Animate point cloud without audio
+        const time = Date.now() * 0.001;
+        
+        for (let i = 0; i < positions.length; i += 3) {
+            const ix = i / 3;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            
+            // Calculate pulsing effect
+            const pulse = Math.sin(time + ix * 0.1) * 0.1 + 1;
+            
+            // Original position
+            const originalX = positions[i];
+            const originalY = positions[i + 1];
+            const originalZ = positions[i + 2];
+            
+            // Calculate distance from center
+            const distance = Math.sqrt(
+                originalX * originalX +
+                originalY * originalY +
+                originalZ * originalZ
+            );
+            
+            // Normalize direction vector
+            const dirX = originalX / distance;
+            const dirY = originalY / distance;
+            const dirZ = originalZ / distance;
+            
+            // Apply pulsing effect
+            positions[i] = dirX * distance * pulse;
+            positions[i + 1] = dirY * distance * pulse;
+            positions[i + 2] = dirZ * distance * pulse;
+        }
+        
+        // Update position attribute
+        pointCloud.geometry.attributes.position.needsUpdate = true;
     }
     
+    // Update controls
     threeControls.update();
-    composer.render();
 }
 
-// Start Three.js animation
-animateThree();
-
-// Navigation initialization
-function initNavigation() {
-    const navLinks = document.querySelectorAll('.nav-links a');
-    const sections = document.querySelectorAll('section');
+// Initialize scroll animations
+function initScrollAnimations() {
+    const sections = document.querySelectorAll('.section');
     
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            const targetId = link.getAttribute('href').substring(1);
-            const targetSection = document.getElementById(targetId);
-            
-            if (targetSection) {
-                window.scrollTo({
-                    top: targetSection.offsetTop - 100,
-                    behavior: 'smooth'
-                });
-            }
-        });
-    });
-    
-    // Active link tracking
-    const observerOptions = {
-        root: null,
-        rootMargin: '-50%',
-        threshold: 0
-    };
-    
+    // Intersection Observer for section animations
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                const id = entry.target.getAttribute('id');
-                navLinks.forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('href') === `#${id}`) {
-                        link.classList.add('active');
-                    }
-                });
+                entry.target.classList.add('visible');
             }
         });
-    }, observerOptions);
+    }, { threshold: 0.1 });
     
+    // Observe each section
     sections.forEach(section => {
         observer.observe(section);
     });
 }
 
-// Scroll animations
-function initScrollAnimations() {
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
+// Initialize navigation
+function initNavigation() {
+    const navLinks = document.querySelectorAll('.nav-links a');
     
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
+    // Add click event listeners to navigation links
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Get target section
+            const targetId = link.getAttribute('href');
+            const targetSection = document.querySelector(targetId);
+            
+            // Scroll to target section
+            if (targetSection) {
+                targetSection.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Update active link
+            navLinks.forEach(navLink => {
+                navLink.classList.remove('active');
+            });
+            link.classList.add('active');
+        });
+    });
+    
+    // Update active link on scroll
+    window.addEventListener('scroll', () => {
+        let currentSection = '';
+        
+        document.querySelectorAll('.section').forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            
+            if (window.pageYOffset >= sectionTop - 200) {
+                currentSection = '#' + section.getAttribute('id');
             }
         });
-    }, observerOptions);
-    
-    document.querySelectorAll('.section').forEach(section => {
-        section.style.opacity = '0';
-        section.style.transform = 'translateY(20px)';
-        section.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
-        observer.observe(section);
+        
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === currentSection) {
+                link.classList.add('active');
+            }
+        });
     });
 }
+
+// Add interactive effects to skill items
+document.addEventListener('DOMContentLoaded', () => {
+    const skillItems = document.querySelectorAll('.skill-item');
+    
+    skillItems.forEach(item => {
+        item.addEventListener('mouseenter', () => {
+            // Add hover effect
+            item.style.transform = 'translateY(-10px)';
+            item.style.boxShadow = '0 15px 30px rgba(0, 224, 224, 0.3)';
+            
+            // Play sound effect if audio context exists
+            if (audioContext) {
+                playSkillSound(item.getAttribute('data-sound'));
+            }
+        });
+        
+        item.addEventListener('mouseleave', () => {
+            // Remove hover effect
+            item.style.transform = '';
+            item.style.boxShadow = '';
+        });
+    });
+});
+
+// Play sound effect for skill items
+// function playSkillSound(soundType) {
+//     if (!audioContext) {
+//         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+//     }
+//     
+//     // Create oscillator
+//     const oscillator = audioContext.createOscillator();
+//     const gainNode = audioContext.createGain();
+//     
+//     // Set oscillator type and frequency based on sound type
+//     switch (soundType) {
+//         case 'wwise':
+//             oscillator.type = 'sine';
+//             oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+//             break;
+//         case 'daw':
+//             oscillator.type = 'triangle';
+//             oscillator.frequency.setValueAtTime(330, audioContext.currentTime);
+//             break;
+//         case 'maxmsp':
+//             oscillator.type = 'square';
+//             oscillator.frequency.setValueAtTime(523, audioContext.currentTime);
+//             break;
+//         case 'modular':
+//             oscillator.type = 'sawtooth';
+//             oscillator.frequency.setValueAtTime(277, audioContext.currentTime);
+//             break;
+//         case 'gameengine':
+//             oscillator.type = 'sine';
+//             oscillator.frequency.setValueAtTime(587, audioContext.currentTime);
+//             break;
+//         case 'python':
+//             oscillator.type = 'triangle';
+//             oscillator.frequency.setValueAtTime(392, audioContext.currentTime);
+//             break;
+//         case 'node':
+//             oscillator.type = 'square';
+//             oscillator.frequency.setValueAtTime(349, audioContext.currentTime);
+//             break;
+//         case 'tools':
+//             oscillator.type = 'sawtooth';
+//             oscillator.frequency.setValueAtTime(466, audioContext.currentTime);
+//             break;
+//         default:
+//             oscillator.type = 'sine';
+//             oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+//     }
+//     
+//     // Set gain (volume)
+//     gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+//     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+//     
+//     // Connect nodes
+//     oscillator.connect(gainNode);
+//     gainNode.connect(audioContext.destination);
+//     
+//     // Start and stop oscillator
+//     oscillator.start();
+//     oscillator.stop(audioContext.currentTime + 0.5);
+// }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Update copyright year in footer
+    const yearSpan = document.getElementById('current-year');
+    if (yearSpan) {
+      yearSpan.textContent = new Date().getFullYear();
+    }
+  });
+
+  // Function to scroll the navigation to show the active section
+function scrollNavToActiveItem() {
+    // Get the active nav link
+    const activeLink = document.querySelector('.nav-links a.active');
+    
+    if (activeLink) {
+      // Get the nav links container
+      const navLinksContainer = document.querySelector('.nav-links');
+      
+      // Get the position of the active link relative to the container
+      const activeLinkPosition = activeLink.parentElement.offsetLeft;
+      
+      // Calculate the center position to scroll to
+      // This will center the active item in the viewport
+      const scrollPosition = activeLinkPosition - (navLinksContainer.offsetWidth / 2) + (activeLink.offsetWidth / 2);
+      
+      // Scroll smoothly to the position
+      navLinksContainer.scrollTo({
+        left: Math.max(0, scrollPosition),
+        behavior: 'smooth'
+      });
+    }
+  }
+  
+  // Call this function whenever a section becomes active
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initial scroll to active item on page load
+    scrollNavToActiveItem();
+    
+    // Create an observer for section visibility
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          // Get the id of the visible section
+          const sectionId = entry.target.id;
+          
+          // Update active class on nav links
+          document.querySelectorAll('.nav-links a').forEach(link => {
+            if (link.getAttribute('href') === '#' + sectionId) {
+              link.classList.add('active');
+            } else {
+              link.classList.remove('active');
+            }
+          });
+          
+          // Scroll nav to show the active item
+          scrollNavToActiveItem();
+        }
+      });
+    }, { threshold: 0.5 }); // Section is considered active when 50% visible
+    
+    // Observe all sections
+    document.querySelectorAll('.section').forEach(section => {
+      observer.observe(section);
+    });
+    
+    // Add click event listeners to nav links
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', function(e) {
+        // Smooth scroll already handled by CSS (scroll-behavior: smooth)
+        
+        // Update active class
+        document.querySelectorAll('.nav-links a').forEach(navLink => {
+          navLink.classList.remove('active');
+        });
+        this.classList.add('active');
+        
+        // Scroll nav to show the active item
+        setTimeout(scrollNavToActiveItem, 100);
+      });
+    });
+  });

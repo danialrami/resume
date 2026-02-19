@@ -9,23 +9,22 @@ RESUME_DIR="$(dirname "$SCRIPT_DIR")"
 # Use venv Python
 VENV_PYTHON="$RESUME_DIR/.venv/bin/python3"
 
-echo "Building resume..."
-"$VENV_PYTHON" "$RESUME_DIR/scripts/build_all.py"
+cd "$RESUME_DIR"
 
-# Check if LaTeX build is desired
-if command -v pdflatex &> /dev/null; then
-    echo ""
-    echo "LaTeX installed - generating PDF..."
-    
-    if [ -f "$RESUME_DIR/dist/pdf/resume.tex" ]; then
-        cd "$RESUME_DIR/dist/pdf"
-        pdflatex -interaction=nonstopmode resume.tex
-        echo "PDF generated: $RESUME_DIR/dist/pdf/resume.pdf"
-    else
-        echo "Warning: dist/pdf/resume.tex not found. Run build_all first."
-    fi
-else
-    echo ""
-    echo "LaTeX not found. Install MacTeX or TeX Live for PDF generation."
-    echo "Skipped PDF compilation (HTML only)."
+echo "Building resume..."
+"$VENV_PYTHON" scripts/build_all.py
+
+# Compile with xelatex (required for fontspec)
+COMPILE_CMD="xelatex"
+if ! command -v xelatex &> /dev/null; then
+    COMPILE_CMD="pdflatex"
+    echo "Warning: xelatex not found, trying pdflatex..."
 fi
+
+cd dist/pdf
+$COMPILE_CMD -interaction=nonstopmode resume.tex
+echo "PDF generated: $RESUME_DIR/dist/pdf/resume.pdf"
+cd "$RESUME_DIR"
+
+echo ""
+echo "Build complete!"

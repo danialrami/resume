@@ -16,6 +16,10 @@ def escape_latex(text: str) -> str:
     if not text:
         return ''
     
+    # Convert to string if number
+    if isinstance(text, (int, float)):
+        text = str(text)
+    
     replacements = [
         ('&', r'\&'),
         ('%', r'\%'),
@@ -33,20 +37,23 @@ def escape_latex(text: str) -> str:
 
 def render_contact_latex(contact: dict) -> str:
     """Render contact information line."""
-    email = contact.get('email', '')
+    email = escape_latex(contact.get('email', ''))
     phone = contact.get('phone', '')
     website = contact.get('website', '')
     portfolio = contact.get('portfolio', '')
+    
+    # Format phone without parentheses for the href
+    phone_href = phone.replace('(', '').replace(')', '').replace('-', '').replace(' ', '')
     
     parts = []
     if email:
         parts.append(rf'\href{{mailto:{email}}}{{\faEnvelope\, {email}}}')
     if phone:
-        parts.append(rf'\href{{tel:{phone}}}{{\faMobile\, {phone}}}')
+        parts.append(rf'\href{{tel:{phone_href}}}{{\faMobile\, {phone}}}')
     if website:
-        parts.append(rf'\href{{{website}}}{{\faGlobe\, {website}}}')
+        parts.append(rf'\href{{{website}}}{{\faGlobe\, {escape_latex(website)}}}')
     if portfolio:
-        parts.append(rf'\href{{{portfolio}}}{{\faFile\, {portfolio}}}')
+        parts.append(rf'\href{{{portfolio}}}{{\faFile\, {escape_latex(portfolio)}}}')
     
     return ' $|$ '.join(parts)
 
@@ -57,11 +64,15 @@ def render_experience_latex(experience: list) -> str:
         company = escape_latex(exp.get('company', ''))
         role = escape_latex(exp.get('role', ''))
         location = escape_latex(exp.get('location', ''))
-        dates = escape_latex(exp.get('dates', ''))
+        dates = escape_latex(str(exp.get('dates', '')))
         
-        lines.append(f'\\resumeSubheading{{{role}}}{{{company}}}{{{location}}}{{{dates}}}')
+        # Format: {role}{dates}{company}{location}
+        lines.append('\\resumeSubheading')
+        lines.append(f'{{{role}}}{{{dates}}}')
+        lines.append(f'{{{company}}}{{{location}}}')
         
-        bullets = exp.get('bullets', [])
+        # Use 'description' field from YAML
+        bullets = exp.get('description', [])
         if bullets:
             lines.append('\\resumeItemListStart')
             for bullet in bullets:
@@ -70,63 +81,69 @@ def render_experience_latex(experience: list) -> str:
     
     return '\n'.join(lines)
 
-def render_skills_latex(skills: dict) -> str:
-    """Render skills section."""
-    # Audio Software
-    audio_software = skills.get('audio_software', {})
-    items = ', '.join(item.get('name', '') for item in audio_software.get('items', []))
-    audio_skill = escape_latex(items)
+def render_skills_latex(skills: list) -> str:
+    """Render skills section from list format."""
+    # Build skill categories
+    audio_software = ''
+    daws = ''
+    game_engines = ''
+    scripting = ''
+    node_based = ''
+    specialties = ''
     
-    # Modular
-    modular = skills.get('modular', {})
-    items = ', '.join(item.get('name', '') for item in modular.get('items', []))
-    modular_skill = escape_latex(items)
-    
-    # Implementation
-    impl = skills.get('implementation', {})
-    items = ', '.join(item.get('name', '') for item in impl.get('items', []))
-    impl_skill = escape_latex(items)
-    
-    # Game Engines
-    engines = skills.get('game_engines', {})
-    items = ', '.join(item.get('name', '') for item in engines.get('items', []))
-    engines_skill = escape_latex(items)
-    
-    # Scripting
-    scripting = skills.get('scripting', {})
-    items = ', '.join(item.get('name', '') for item in scripting.get('items', []))
-    script_skill = escape_latex(items)
-    
-    # Node-based
-    node = skills.get('node_based', {})
-    items = ', '.join(item.get('name', '') for item in node.get('items', []))
-    node_skill = escape_latex(items)
-    
-    # DAWs
-    daws = skills.get('daws', {})
-    items = ', '.join(item.get('name', '') for item in daws.get('items', []))
-    daw_skill = escape_latex(items)
+    for skill in skills:
+        category = skill.get('category', '')
+        items = skill.get('list', [])
+        
+        if 'Audio Software' in category:
+            audio_software = ', '.join(items)
+        elif 'DAW' in category:
+            daws = ', '.join(items)
+        elif 'Game Engine' in category:
+            game_engines = ', '.join(items)
+        elif 'Scripting' in category:
+            scripting = ', '.join(items)
+        elif 'Node' in category or 'based' in category.lower():
+            node_based = ', '.join(items)
+        elif 'Specialty' in category:
+            specialties = ', '.join(items)
     
     return {
-        'audio_software': audio_skill,
-        'modular': modular_skill,
-        'implementation': impl_skill,
-        'game_engines': engines_skill,
-        'scripting': script_skill,
-        'node_based': node_skill,
-        'daws': daw_skill
+        'implementation': escape_latex(audio_software),
+        'daws': escape_latex(daws),
+        'game_engines': escape_latex(game_engines),
+        'scripting': escape_latex(scripting),
+        'node_based': escape_latex(node_based),
+        'specialties': escape_latex(specialties)
     }
 
 def render_education_latex(education: list) -> str:
     """Render education section."""
     lines = []
     for edu in education:
-        institution = escape_latex(edu.get('institution', ''))
-        degree = escape_latex(edu.get('degree', ''))
-        location = escape_latex(edu.get('location', ''))
-        period = escape_latex(edu.get('period', ''))
+        institution = escape_latex(edu.get('school', ''))
+        degree = escape_latex(str(edu.get('degree', '')))
+        location = escape_latex(str(edu.get('location', '')))
+        period = escape_latex(str(edu.get('dates', '')))
         
-        lines.append(f'\\resumeEducationHeading{{{institution}}}{{{degree}}}{{{location}}}{{{period}}}')
+        lines.append('\\resumeEducationHeading')
+        lines.append(f'{{{institution}}}{{{period}}}')
+        lines.append(f'{{{degree}}}{{{location}}}')
+    
+    return '\n'.join(lines)
+
+def render_certifications_latex(certifications: list) -> str:
+    """Render certifications section."""
+    if not certifications:
+        return ''
+    
+    # Extract certification names
+    cert_names = ', '.join(escape_latex(str(cert.get('name', ''))) for cert in certifications)
+    
+    lines = []
+    lines.append('\\resumeEducationHeading')
+    lines.append(f'{{Certifications}}{{}}')
+    lines.append(f'{{{cert_names}}}{{}}')
     
     return '\n'.join(lines)
 
@@ -134,34 +151,28 @@ def render_projects_latex(projects: list) -> str:
     """Render projects section."""
     lines = []
     for proj in projects:
-        name = escape_latex(proj.get('name', ''))
-        desc = '; '.join(escape_latex(d) for d in proj.get('description', []))
+        name = escape_latex(str(proj.get('name', '')))
         
-        lines.append(f'\\resumeProjectHeading{{{name}}}{{}}')
-        if desc:
+        lines.append('\\resumeProjectHeading')
+        lines.append(f'{{{name}}}{{}}')
+        
+        bullets = proj.get('description', [])
+        
+        if bullets:
             lines.append('\\resumeItemListStart')
-            lines.append(f'\\resumeItem{{{desc}}}')
+            for bullet in bullets:
+                lines.append(f'\\resumeItem{{{escape_latex(str(bullet))}}}')
             lines.append('\\resumeItemListEnd')
-    
-    return '\n'.join(lines)
-
-def render_certifications_latex(certifications: list) -> str:
-    """Render certifications section."""
-    lines = []
-    for cert in certifications:
-        name = escape_latex(cert.get('name', ''))
-        
-        lines.append(f'\\resumeEducationHeading{{{name}}}{{ certification }}{{}}{{}}')
     
     return '\n'.join(lines)
 
 def render_profile_latex(profile: str) -> str:
     """Render profile text."""
     # Profile comes from YAML as single string with newlines
-    # Need to split into items
-    lines = profile.strip().split('\n')
+    lines = str(profile).strip().split('\n')
     cleaned = [line.strip() for line in lines if line.strip()]
-    return '\\item ' + '\\item '.join(escape_latex(line) for line in cleaned)
+    # Join into single paragraph (original doesn't use \item for profile)
+    return ' '.join(cleaned)
 
 def generate_latex(data: dict) -> str:
     """Generate LaTeX file from data."""
@@ -172,28 +183,28 @@ def generate_latex(data: dict) -> str:
         template = f.read()
     
     # Build substitution map
-    skills = render_skills_latex(data.get('skills', {}))
+    skills = render_skills_latex(data.get('skills', []))
     
     substitutions = {
-        'NAME': escape_latex(data.get('name', '')),
-        'TITLE': escape_latex(data.get('title', '')),
+        'NAME': escape_latex(str(data.get('name', ''))),
+        'TITLE': escape_latex(str(data.get('title', ''))),
         'CONTACT_LINE': render_contact_latex(data.get('contact', {})),
-        'PROFILE_TEXT': render_profile_latex(data.get('profile', '')),
+        'PROFILE': render_profile_latex(data.get('profile', '')),
         'EXPERIENCE': render_experience_latex(data.get('experience', [])),
-        'SKILL_AUDIO_SOFTWARE': skills['audio_software'],
-        'SKILL_MODULAR': skills['modular'],
-        'SKILL_IMPLEMENTATION': skills['implementation'],
-        'SKILL_GAME_ENGINES': skills['game_engines'],
-        'SKILL_SCRIPTING': skills['scripting'],
-        'SKILL_NODE_BASED': skills['node_based'],
-        'SKILL_DAWS': skills['daws'],
+        'SKILLS_IMPLEMENTATION': skills['implementation'],
+        'SKILLS_DAWS': skills['daws'],
+        'SKILLS_GAME_ENGINES': skills['game_engines'],
+        'SKILLS_SCRIPTING': skills['scripting'],
+        'SKILLS_NODE_BASED': skills['node_based'],
+        'SKILLS_SPECIALTIES': skills['specialties'],
         'EDUCATION': render_education_latex(data.get('education', [])),
+        'CERTIFICATIONS_SECTION': render_certifications_latex(data.get('certifications', [])),
         'PROJECTS': render_projects_latex(data.get('projects', [])),
     }
     
-    # Replace placeholders (use single backslash to match template)
+    # Replace placeholders
     for placeholder, value in substitutions.items():
-        search = r'RESUME_' + placeholder
+        search = 'RESUME_' + placeholder
         template = template.replace(search, value)
     
     # Save output

@@ -1,9 +1,12 @@
-% resume.tex - PDF Resume Template
-% Generates a clean, ATS-friendly resume from YAML data
+%-------------------------
+% Resume in LaTeX
+% Author: Daniel Ramirez
+% Based on: 
+% License: GPL v3
+%------------------------
 
 \documentclass[letterpaper,10pt]{article}
 
-% Packages
 \usepackage{latexsym}
 \usepackage[empty]{fullpage}
 \usepackage{titlesec}
@@ -19,7 +22,7 @@
 \usepackage{xcolor}
 \usepackage{setspace}
 
-% LUFS Audio Brand Colors
+% Define custom colors
 \definecolor{teal}{HTML}{78BEBA}
 \definecolor{red}{HTML}{D35233}
 \definecolor{yellow}{HTML}{E7B225}
@@ -27,87 +30,124 @@
 \definecolor{black}{HTML}{111111}
 \definecolor{cream}{HTML}{FBF9E2}
 
-% Layout
+% Use default fonts with smaller size
+
 \pagestyle{fancy}
-\fancyhf{}
+\fancyhf{} % clear all header and footer fields
 \fancyfoot{}
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
 \addtolength{\oddsidemargin}{-0.6in}
 \addtolength{\evensidemargin}{-0.6in}
 \addtolength{\textwidth}{1.2in}
 \addtolength{\topmargin}{-0.6in}
 \addtolength{\textheight}{1.2in}
 
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
 % Section formatting
-\titleformat{\section}{\vspace{-4pt}\scshape\raggedright\large\color{red}}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large\color{red}
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
 
 % Custom commands
-\newcommand{\resumeItem}[1]{\item\footnotesize{#1 \vspace{-3pt}}}
-\newcommand{\resumeSubheading}[4]{\vspace{-3pt}\item \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}\textbf{\color{teal}#1} & \textcolor{blue}{\textit{#2}} \\
-\textit{\footnotesize#3} & \textit{\footnotesize #4} \\
-\end{tabular*}\vspace{-8pt}}
-\newcommand{\resumeEducationHeading}[4]{\vspace{-2pt}\item \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}\textbf{\color{teal}#1} & \textcolor{blue}{\textit{#2}} \\
-\textit{\small#3} & \textit{\small #4} \\
-\end{tabular*}\vspace{-5pt}}
-\newcommand{\resumeProjectHeading}[2]{\item \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}\textbf{\color{teal}#1} & \textcolor{blue}{#2} \\
-\end{tabular*}\vspace{-7pt}}
+\newcommand{\resumeItem}[1]{
+  \item\footnotesize{
+    {#1 \vspace{-3pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-3pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{\color{teal}#1} & \textcolor{blue}{\textit{#2}} \\
+      \textit{\footnotesize#3} & \textit{\footnotesize #4} \\
+    \end{tabular*}\vspace{-8pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeEducationHeading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{\color{teal}#1} & \textcolor{blue}{\textit{#2}} \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-5pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textbf{\color{teal}#1} & \textcolor{blue}{#2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
 \newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
 \newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
 \newcommand{\resumeItemListStart}{\begin{itemize}}
 \newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
 
-% Profile command
-\newcommand{\resumeProfile}{
-    \section{PROFESSIONAL PROFILE}
-    \vspace{3pt}
-    \begin{itemize}[leftmargin=*]
-        \item RESUME_PROFILE_TEXT
-    \end{itemize}
-}
-
 \begin{document}
 
-% Header (generated from YAML)
-{\Huge \textcolor{black}{\textbf{RESUME_NAME}}} \\
+\begin{center}
+    {\Huge \textcolor{black}{\textbf{RESUME_NAME}}} \\
+    \vspace{3pt}
+    {\Large \textcolor{teal}{RESUME_TITLE}} \\
+    \vspace{10pt}
+    \textcolor{black}{
+    RESUME_CONTACT_LINE
+    }
+\end{center}
+
+\section{PROFESSIONAL PROFILE}
 \vspace{3pt}
-{\Large \textcolor{teal}{RESUME_TITLE}} \\
-\vspace{10pt}
-\textcolor{black}{
-RESUME_CONTACT_LINE
-}
+RESUME_PROFILE
 
-% Profile
-\resumeProfile
-
-% Experience
 \section{PROFESSIONAL EXPERIENCE}
 \resumeSubHeadingListStart
+
 RESUME_EXPERIENCE
+
 \resumeSubHeadingListEnd
 
-% Skills
 \section{TECHNICAL SKILLS}
 \vspace{1pt}
-\begin{tabular}{@{}>{\bfseries\color{teal}}l @{\hspace{4pt}} l}
-Audio Software & \textbf{Recording:} RESUME_SKILL_AUDIO_SOFTWARE; \\
-& \textbf{Modular Synthesis:} RESUME_SKILL_MODULAR; \\
-Implementation & \textbf{Audio Implementation:} RESUME_SKILL_IMPLEMENTATION; \\
-Development & \textbf{Game Engines:} RESUME_SKILL_GAME_ENGINES; \\
-& \textbf{Scripting:} RESUME_SKILL_SCRIPTING; \textbf{Node-based:} RESUME_SKILL_NODE_BASED \\
-DAWs & \textbf{Digital Audio Workstations:} RESUME_SKILL_DAWS \\
+\begin{tabular}{ @{} >{\bfseries\color{teal}}l @{\hspace{4pt}} l }
+Audio Software & \textbf{Implementation:} RESUME_SKILLS_IMPLEMENTATION; \textbf{DAWs:} RESUME_SKILLS_DAWS; \\
+& \textbf{Game Engines:} RESUME_SKILLS_GAME_ENGINES \\
+Development & \textbf{Scripting:} RESUME_SKILLS_SCRIPTING; \textbf{Node-based:} RESUME_SKILLS_NODE_BASED \\
+Sound Design & UI/UX sound design, Interactive audio implementation, Sound synthesis, \\
+Specialties & RESUME_SKILLS_SPECIALTIES \\
 \end{tabular}
 
-% Education & Certifications
 \section{EDUCATION \& CERTIFICATIONS}
 \resumeSubHeadingListStart
+
 RESUME_EDUCATION
+RESUME_CERTIFICATIONS_SECTION
+
 \resumeSubHeadingListEnd
 
-% Projects
-\section{TECHNICAL PROJECTS}
+\section{PROJECTS}
 \resumeSubHeadingListStart
+
 RESUME_PROJECTS
+
 \resumeSubHeadingListEnd
 
 \end{document}
