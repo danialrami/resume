@@ -1,0 +1,15 @@
+# Virtual Environment
+.venv/
+
+# Generated outputs
+dist/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

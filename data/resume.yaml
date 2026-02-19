@@ -1,0 +1,230 @@
+# Unified Resume Data Structure
+# Single source of truth for both PDF and HTML outputs
+
+name: Daniel Ramirez
+title: Sound Designer / UX Audio specialist
+tagline: Sound Designer specializing in interactive audio implementation and UX sound design for mobile applications
+
+contact:
+  email: daniel@danialrami.com
+  phone: (714) 616-1558
+  linkedin: danialrami
+  github: danialramirez
+  website: https://www.lufs.audio
+  portfolio: https://www.danialrami.com
+
+profile: |
+  Sound Designer specializing in interactive audio implementation and UX sound design for mobile applications. Experienced in creating cohesive sonic identities that enhance user engagement while providing clear feedback for interactions. Combines technical implementation skills with creative sound design to craft meaningful audio experiences.
+
+experience:
+  - company: LUFS Audio
+    role: Sound Designer
+    location: Remote
+    dates: "July 2024 – Present"
+    bullets:
+      - Lead sound designer for tech clients including Hinge Health and xAI
+      - Design and implement interaction sounds for mobile and web applications
+      - Develop scalable audio pipelines and workflows for product teams
+      - Create sonic identities aligned with brand values and user experience goals
+
+  - company: Hinge Health
+    role: Sound Designer (Contract)
+    location: San Francisco, CA
+    dates: "May 2022 – July 2024"
+    bullets:
+      - Designed interaction sounds for mobile health applications serving 70k+ daily users
+      - Collaborated with UX designers to map user journeys and identify key interaction points
+      - Built custom implementation pipelines using Wwise integrated with Unity
+      - Created a modular sound system with adaptive behaviors for different interaction types
+      - Implemented A/B testing framework that achieved 18% increase in user session duration
+      - Established scalable audio guidelines for engineering teams to implement independently
+
+  - company: Sunnyvale Theater
+    role: A1/A2 Audio Tech
+    location: Sunnyvale, CA
+    dates: "January 2022–May 2022"
+    bullets:
+      - Conducted real-time mixing and soundchecks for live musical performances
+      - Managed QLab integration for live audio playback
+      - Planned and executed audio setups, managing signal paths
+      - Coordinated with clients to ensure seamless technical delivery
+
+  - company: Perfect Circuit Audio
+    role: Sales Associate & Customer Service Rep
+    location: Burbank, CA
+    dates: "June 2020–January 2021"
+    bullets:
+      - Provided support and guidance for customers on music technology products
+      - Stayed current with industry developments during COVID-19 pandemic
+
+  - company: Sacred Tiger Music Publishing
+    role: Studio Operations Intern
+    location: Santa Monica, CA
+    dates: "2018"
+    bullets:
+      - Assisted composer Henry Jackman in audio production
+      - Managed synthesizer setup and sound asset organization
+      - Developed skills in sound synthesis, Foley, and surround mixing
+
+  - company: Remote Control Productions
+    role: Studio Operations Intern
+    location: Santa Monica, CA
+    dates: "2018"
+    bullets:
+      - Supported Hans Zimmer's music composition team
+      - Worked alongside industry experts Alan Meyerson, Benjamin Wallfisch, and Ramin Djawadi
+      - Organized and managed sound libraries maintaining audio asset quality
+
+skills:
+  audio_software:
+    category: Audio Software & Hardware
+    items:
+      - name: Recording
+        description: Logic Pro X, Pro Tools, Cubase/Nuendo, Ableton Live, REAPER
+      - name: Modular Synthesis
+        description: Eurorack/Buchla/MOTM systems, Supercollider
+
+  implementation:
+    category: Audio Implementation
+    items:
+      - name: Wwise
+        description: Audiokinetic Wwise (101, 201 certified)
+      - name: FMOD
+        description: Firelight FMOD
+
+  game_engines:
+    category: Game Engines
+    items:
+      - name: Unreal Engine 5
+        description: Blueprint, C++, Blueprints
+      - name: Unity
+        description: C#, Bolt
+
+  scripting:
+    category: Scripting & Automation
+    items:
+      - name: Python
+        description: Audio scripting, automation pipelines
+      - name: Lua
+        description: Wwise event triggers, game logic
+
+  node_based:
+    category: Node-based Audio
+    items:
+      - name: Max/MSP
+        description: Patching, externals, audio processing
+      - name: Pure Data
+        description: GEM, VUX, libpd
+      - name: Metasounds
+        description: Unreal Engine audio system
+
+  daws:
+    category: Digital Audio Workstations
+    items:
+      - name: Pro Tools
+        description: Mixing, editing, post-production
+      - name: Logic Pro X
+        description: Composing, recording, editing
+
+certifications:
+  - name: Wwise-101
+    provider: Audiokinetic
+    link: https://example.com/wwise-101
+  - name: Wwise-201
+    provider: Audiokinetic
+    link: https://example.com/wwise-201
+  - name: Unreal Engine 5
+    provider: School of Video Game Audio
+    link: https://example.com/unreal-5
+  - name: Max/MSP
+    provider: IRCAM / L'École Normale de Musique de Paris
+    link: https://example.com/max-msp
+
+education:
+  - institution: NYU Steinhardt
+    degree: B.M. Music Theory and Composition for Film and Multimedia
+    location: New York, NY
+    period: "2015–2019"
+  - institution: IRCAM
+    degree: Sound Spatialization and Synthesis
+    location: Paris, France
+    period: "2017"
+    notes: Specialized in Max/MSP and IRCAM tools
+  - institution: L'École Normale de Musique de Paris
+    degree: Composition and Orchestration
+    location: Paris, France
+    period: "2017"
+    notes: Private instruction under Michel Merlet, student of Olivier Messiaen
+
+projects:
+  - name: Custom Eurorack module and mixer design/construction
+    description:
+      - Designed and built custom modular synthesizer system
+      - Implemented mixer with routing options
+  - name: Python-based audio tools development
+    description:
+      - Created utilities for batch audio processing
+      - Built asset management systems
+  - name: Docker-based application management
+    description:
+      - Set up self-hosted infrastructure (Gitea/Forgejo, Nextcloud, Ollama)
+      - Containerized web applications
+  - name: Audio pipeline automation scripts
+    description:
+      - Developed Python tools for asset organization
+      - Created automated naming conventions and metadata tagging
+
+# Interactive Resume Specific Configurations
+interactive:
+  audio:
+    default_playlist: []
+    visualizer:
+      waveform_enabled: true
+      frequency_enabled: true
+      point_cloud:
+        enabled: true
+        particle_count: 5000
+        bloom_effect: true
+  
+  branding:
+    colors:
+      teal: "#78BEBA"
+      red: "#D35233"
+      yellow: "#E7B225"
+      blue: "#2C5AA0"
+      black: "#111111"
+      cream: "#FBF9E2"
+    fonts:
+      heading: "Montserrat"
+      body: "Roboto"
+  
+  sections:
+    about:
+      hero_enabled: true
+      media_enabled: true
+    skills:
+      interactive_cards: true
+    experience:
+      timeline_visual: true
+      scroll_effects: true
+    projects:
+      grid_layout: true
+      hover_effects: true
+
+latex:
+  page_options:
+    paper_size: letterpaper
+    font_size: 10pt
+    margins:
+      top: -0.6in
+      bottom: -0.6in
+      left: -0.6in
+      right: -0.6in
+  layout:
+    single_column: true
+    section_breaks: true
+    contact_inline: false
+  fonts:
+    main: Latin Modern Roman
+    monospace: Courier
+  

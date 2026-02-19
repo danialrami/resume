@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RESUME_NAME | RESUME_TITLE</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen">
+        <div class="cloud-logo">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <path d="M100,30 C130,30 150,50 150,80 C180,80 200,100 200,130 C200,160 180,180 150,180 L50,180 C20,180 0,160 0,130 C0,100 20,80 50,80 C50,50 70,30 100,30 Z" fill="#fbf9e2"/>
+                <circle cx="70" cy="100" r="15" fill="#000"/>
+                <circle cx="130" cy="100" r="15" fill="#000"/>
+            </svg>
+        </div>
+        <div class="loading-text">Loading...</div>
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Navigation -->
+        <nav>
+            <a href="#" class="logo-link">
+                <div class="logo">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M100,30 C130,30 150,50 150,80 C180,80 200,100 200,130 C200,160 180,180 150,180 L50,180 C20,180 0,160 0,130 C0,100 20,80 50,80 C50,50 70,30 100,30 Z" fill="#fbf9e2"/>
+                        <circle cx="70" cy="100" r="15" fill="#000"/>
+                        <circle cx="130" cy="100" r="15" fill="#000"/>
+                    </svg>
+                    <div class="brand-text">DANIALRAMI</div>
+                    <div class="color-squares">
+                        <span class="square yellow"></span>
+                        <span class="square teal"></span>
+                        <span class="square blue"></span>
+                        <span class="square red"></span>
+                    </div>
+                </div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#about" class="active">About</a></li>
+                <li><a href="#skills">Skills</a></li>
+                <li><a href="#experience">Experience</a></li>
+                <li><a href="#education">Education</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+
+        <!-- Audio Controls -->
+        <div class="audio-controls">
+            <div class="audio-upload">
+                <label for="audio-file">
+                    <i class="fas fa-upload"></i>
+                    <span>Upload Audio</span>
+                </label>
+                <input type="file" id="audio-file" accept="audio/*">
+            </div>
+            <div class="playback-controls">
+                <button id="play-pause"><i class="fas fa-play"></i></button>
+                <div class="volume-control">
+                    <i class="fas fa-volume-up"></i>
+                    <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5">
+                </div>
+            </div>
+        </div>
+
+        <!-- Audio Visualization -->
+        <div class="visualization-container">
+            <canvas id="waveform"></canvas>
+            <canvas id="frequency"></canvas>
+        </div>
+
+        <!-- 3D Scene Container -->
+        <div id="three-container"></div>
+
+        <!-- Main Content -->
+        <main>
+            <!-- About Section -->
+            <section id="about" class="section">
+                <div class="section-content">
+                    <h1>RESUME_NAME</h1>
+                    <h2>RESUME_TITLE</h2>
+                    <p>RESUME_PROFILE_ABOUT</p>
+                </div>
+            </section>
+
+            <!-- Skills Section -->
+            <section id="skills" class="section">
+                <div class="section-content">
+                    <h2>Technical Proficiency</h2>
+                    
+                    <!-- Audio Software & Hardware -->
+                    <div class="skills-category">
+                        <h3>Audio Software & Hardware</h3>
+                        <div class="skills-grid">
+                            RESUME_SKILLS_AUDIO_GRID
+                        </div>
+                    </div>
+                    
+                    <!-- Development Tools -->
+                    <div class="skills-category">
+                        <h3>Development Tools</h3>
+                        <div class="skills-grid">
+                            RESUME_SKILLS_DEV_GRID
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Experience Section -->
+            <section id="experience" class="section">
+                <div class="section-content">
+                    <h2>Professional Experience</h2>
+                    
+                    <div class="timeline">
+                        RESUME_EXPERIENCE_TIMELINE
+                    </div>
+                </div>
+            </section>
+
+            <!-- Education Section -->
+            <section id="education" class="section">
+                <div class="section-content">
+                    <h2>Education</h2>
+                    
+                    RESUME_EDUCATION_ITEMS
+                    
+                    <h2>Certifications</h2>
+                    
+                    <div class="certifications">
+                        RESUME_CERTIFICATIONS
+                    </div>
+                </div>
+            </section>
+
+            <!-- Projects Section -->
+            <section id="projects" class="section">
+                <div class="section-content">
+                    <h2>Technical Projects</h2>
+                    
+                    <div class="projects-grid">
+                        RESUME_PROJECTS_GRID
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contact Section -->
+            <section id="contact" class="section">
+                <div class="section-content">
+                    <h2>Contact</h2>
+                    
+                    <div class="contact-container">
+                        <div class="contact-info">
+                            RESUME_CONTACT_ITEMS
+                        </div>
+                        
+                        <div class="social-links">
+                            RESUME_SOCIAL_LINKS
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; <span id="current-year">2025</span> LUFS Audio. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.min.js"></script>
+    <script src="script.js"></script>
+    <script src="three_effects.js"></script>
+</body>
+</html>
