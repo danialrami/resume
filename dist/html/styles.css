@@ -1,0 +1,1028 @@
+/* Updated color variables to match LUFS brand guidelines */
+:root {
+    --bg-color: #111111; /* Changed from #000000 to match black key */
+    --text-color: #ffffff; /* Kept white for text legibility */
+    --primary-accent: #78BEBA; /* Changed from #00E0E0 to match key G teal */
+    --secondary-accent: #D35233; /* Changed from #FF6600 to match key R rust/orange-red */
+    --tertiary-accent: #E7B225; /* Changed from #FFCC00 to match key Y golden yellow */
+    --quaternary-accent: #2C5AA0; /* Changed from #CC66FF to use key B blue */
+    --font-primary: 'Montserrat', sans-serif;
+    --font-secondary: 'Roboto', sans-serif;
+    --transition-speed: 0.3s;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-secondary);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+a {
+    color: var(--primary-accent);
+    text-decoration: none;
+    transition: color var(--transition-speed) ease;
+}
+
+a:hover {
+    color: var(--secondary-accent);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-primary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+h1 {
+    font-size: 3rem;
+    color: var(--primary-accent);
+}
+
+h2 {
+    font-size: 2rem;
+    color: var(--secondary-accent);
+    margin-top: 2rem;
+}
+
+h3 {
+    font-size: 1.5rem;
+    color: var(--text-color);
+}
+
+p {
+    margin-bottom: 1rem;
+}
+
+ul {
+    list-style-position: inside;
+    margin-bottom: 1rem;
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 3rem;
+}
+
+/* Fade-in animation for page load */
+.container.visible {
+    animation: fadeIn 0.8s ease forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Updated navigation styling with tighter spacing */
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1rem; /* Changed from 1rem 0 to add horizontal padding */
+    position: sticky;
+    top: 0;
+    background-color: rgba(0, 0, 0, 0.9); /* Keeping the dark contrast */
+    z-index: 100;
+    backdrop-filter: blur(10px);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    margin-left: 0.5rem;
+    transition: transform 0.3s ease;
+}
+
+.logo svg {
+    width: 50px;
+    height: 50px;
+    margin-right: 1rem;
+}
+
+.brand-text {
+    font-family: var(--font-primary);
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+}
+
+.color-squares {
+    display: flex;
+    margin-left: 1rem;
+}
+
+.square {
+    width: 10px;
+    height: 10px;
+    margin-right: 4px;
+}
+
+.square.yellow {
+    background-color: var(--tertiary-accent); /* #E7B225 */
+}
+
+.square.teal {
+    background-color: var(--primary-accent); /* #78BEBA */
+}
+
+.square.blue {
+    background-color: var(--quaternary-accent); /* #2C5AA0 */
+}
+
+.square.red {
+    background-color: var(--secondary-accent); /* #D35233 */
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    margin-right: 0.5rem; /* Add a bit of margin to the right */
+    margin-top: 1rem; /* Add a small top margin to help center text vertically */
+}
+
+.nav-links li {
+    margin-left: 2rem;
+}
+
+.nav-links a {
+    color: var(--text-color);
+    font-weight: 500;
+    position: relative;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: var(--primary-accent);
+}
+
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--primary-accent);
+    transition: width var(--transition-speed) ease;
+}
+
+.nav-links a:hover::after,
+.nav-links a.active::after {
+    width: 100%;
+}
+
+/* Audio Controls */
+.audio-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    margin: 2rem 0;
+}
+
+.audio-source-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.audio-samples {
+    display: flex;
+    align-items: center;
+}
+
+.audio-samples select {
+    padding: 0.5rem 2rem 0.5rem 1rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    font-family: var(--font-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    min-width: 180px;
+    transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease;
+}
+
+.audio-samples select:hover {
+    border-color: var(--primary-accent);
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.audio-samples select:focus {
+    outline: none;
+    border-color: var(--primary-accent);
+    box-shadow: 0 0 0 2px rgba(120, 190, 186, 0.3);
+}
+
+.audio-samples select option {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    padding: 0.5rem;
+}
+
+.audio-or {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+    padding: 0 0.75rem;
+}
+
+.audio-upload {
+    position: relative;
+}
+
+.audio-upload label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    background-color: var(--primary-accent);
+    color: var(--bg-color);
+    border-radius: 5px;
+    transition: background-color var(--transition-speed) ease;
+}
+
+.audio-upload label:hover {
+    background-color: var(--secondary-accent);
+}
+
+.audio-upload i {
+    margin-right: 0.5rem;
+}
+
+.audio-upload input[type="file"] {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+}
+
+.playback-controls {
+    display: flex;
+    align-items: center;
+}
+
+.playback-controls button {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-right: 1rem;
+    transition: color var(--transition-speed) ease;
+}
+
+.playback-controls button:hover {
+    color: var(--primary-accent);
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+}
+
+.volume-control i {
+    margin-right: 0.5rem;
+}
+
+.volume-control input[type="range"] {
+    -webkit-appearance: none;
+    width: 100px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    outline: none;
+}
+
+.volume-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    background: var(--primary-accent);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* Visualization Container */
+.visualization-container {
+    width: 100%;
+    height: 200px;
+    position: relative;
+    margin-bottom: 2rem;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#waveform, #frequency {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#waveform {
+    z-index: 1;
+}
+
+#frequency {
+    z-index: 2;
+    opacity: 0.7;
+}
+
+/* Three.js Container */
+#three-container {
+    width: 100%;
+    height: 400px;
+    margin-bottom: 2rem;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Main Content */
+main {
+    padding: 2rem 0;
+}
+
+.section {
+    margin-bottom: 4rem;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.section.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.section-content {
+    padding: 2rem;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Skills Section */
+.skills-category {
+    margin-bottom: 2rem;
+}
+
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.skill-item {
+    padding: 1.5rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+    cursor: pointer;
+}
+
+.skill-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 224, 224, 0.2);
+}
+
+.skill-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--primary-accent);
+}
+
+.skill-name {
+    font-weight: 500;
+}
+
+.skill-details {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Experience Section */
+.timeline {
+    position: relative;
+    padding: 2rem 0;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20px;
+    height: 100%;
+    width: 2px;
+    background: var(--primary-accent);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+    padding-left: 50px;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: 15px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--secondary-accent);
+    border: 2px solid var(--primary-accent);
+}
+
+.timeline-content {
+    padding: 1.5rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.timeline-date {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.5rem;
+}
+
+/* Education Section */
+.education-item {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.education-degree {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.education-location {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.5rem;
+}
+
+.certifications {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.certification-item {
+    padding: 1.5rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Projects Section */
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.project-item {
+    padding: 1.5rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+.project-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 224, 224, 0.2);
+}
+
+.project-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--secondary-accent);
+}
+
+/* Contact Section */
+.contact-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.contact-info {
+    margin-bottom: 2rem;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.contact-item i {
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    color: var(--primary-accent);
+}
+
+.social-links {
+    display: flex;
+}
+
+.social-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+    margin: 0 0.5rem;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    font-size: 1.5rem;
+    transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+}
+
+.social-link:hover {
+    background-color: var(--primary-accent);
+    color: var(--bg-color);
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    margin-top: 4rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    /* Container padding adjustment */
+    .container {
+        padding: 0 1.5rem;
+    }
+    
+    /* Improved navigation layout */
+    nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 0.75rem 0.5rem;
+    }
+    
+    /* Logo area adjustments */
+    .logo-link {
+        margin-right: auto;
+        flex-shrink: 0;
+    }
+    
+    .logo {
+        transform: scale(0.9);
+        margin: 0;
+    }
+    
+    .brand-text {
+        font-size: 1.25rem;
+    }
+    
+    /* Horizontal scrolling navigation */
+    .nav-links {
+        width: 100%;
+        margin: 0.75rem 0 0 0;
+        padding: 0.5rem 0;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+        display: flex;
+        justify-content: flex-start;
+    }
+    
+    .nav-links::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+    
+    .nav-links li {
+        margin: 0 1.5rem 0 0;
+        padding: 0.25rem 0;
+    }
+    
+    .nav-links li:first-child {
+        margin-left: 0.5rem;
+    }
+    
+    .nav-links li:last-child {
+        margin-right: 1.5rem; /* Add padding at the end */
+    }
+    
+    /* Enhanced active state */
+    .nav-links a.active::after {
+        height: 3px;
+    }
+    
+    /* Projects section improvements */
+    .projects-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .project-item {
+        padding: 1.25rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .project-item h3 {
+        font-size: 1.2rem;
+        line-height: 1.4;
+    }
+    
+    .project-icon {
+        font-size: 1.75rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Other mobile adjustments */
+    .audio-controls {
+        flex-direction: column;
+    }
+    
+    .audio-source-controls {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+    
+    .audio-samples,
+    .audio-upload {
+        width: 100%;
+    }
+    
+    .audio-samples select {
+        width: 100%;
+        min-width: unset;
+    }
+    
+    .audio-or {
+        text-align: center;
+        padding: 0.25rem 0;
+    }
+    
+    .audio-upload {
+        width: 100%;
+    }
+    
+    .audio-upload label {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .skills-grid,
+    .certifications {
+        grid-template-columns: 1fr;
+    }
+    
+    .timeline::before {
+        left: 15px;
+    }
+    
+    .timeline-item {
+        padding-left: 40px;
+    }
+    
+    .timeline-dot {
+        left: 10px;
+    }
+}
+
+/* Extra adjustments for very small screens */
+@media (max-width: 360px) {
+    .container {
+        padding: 0 1rem;
+    }
+    
+    .logo svg {
+        width: 40px;
+        height: 40px;
+        margin-right: 0.5rem;
+    }
+    
+    .brand-text {
+        font-size: 1.1rem;
+    }
+    
+    .color-squares {
+        margin-left: 0.5rem;
+    }
+    
+    .square {
+        width: 8px;
+        height: 8px;
+        margin-right: 3px;
+    }
+    
+    .project-item h3 {
+        font-size: 1.1rem;
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 1s ease forwards;
+}
+
+.slide-up {
+    animation: slideUp 1s ease forwards;
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Glitch Effect */
+.glitch {
+    position: relative;
+}
+
+.glitch::before,
+.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.glitch::before {
+    left: 2px;
+    text-shadow: -1px 0 var(--primary-accent);
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+    left: -2px;
+    text-shadow: -1px 0 var(--secondary-accent);
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+    0% {
+        clip: rect(31px, 9999px, 94px, 0);
+    }
+    5% {
+        clip: rect(70px, 9999px, 71px, 0);
+    }
+    10% {
+        clip: rect(29px, 9999px, 83px, 0);
+    }
+    15% {
+        clip: rect(16px, 9999px, 91px, 0);
+    }
+    20% {
+        clip: rect(2px, 9999px, 23px, 0);
+    }
+    25% {
+        clip: rect(46px, 9999px, 33px, 0);
+    }
+    30% {
+        clip: rect(8px, 9999px, 5px, 0);
+    }
+    35% {
+        clip: rect(77px, 9999px, 77px, 0);
+    }
+    40% {
+        clip: rect(65px, 9999px, 30px, 0);
+    }
+    45% {
+        clip: rect(88px, 9999px, 93px, 0);
+    }
+    50% {
+        clip: rect(15px, 9999px, 13px, 0);
+    }
+    55% {
+        clip: rect(32px, 9999px, 49px, 0);
+    }
+    60% {
+        clip: rect(60px, 9999px, 74px, 0);
+    }
+    65% {
+        clip: rect(51px, 9999px, 77px, 0);
+    }
+    70% {
+        clip: rect(44px, 9999px, 40px, 0);
+    }
+    75% {
+        clip: rect(5px, 9999px, 57px, 0);
+    }
+    80% {
+        clip: rect(89px, 9999px, 91px, 0);
+    }
+    85% {
+        clip: rect(39px, 9999px, 59px, 0);
+    }
+    90% {
+        clip: rect(89px, 9999px, 13px, 0);
+    }
+    95% {
+        clip: rect(45px, 9999px, 45px, 0);
+    }
+    100% {
+        clip: rect(66px, 9999px, 92px, 0);
+    }
+}
+
+@keyframes glitch-anim2 {
+    0% {
+        clip: rect(65px, 9999px, 58px, 0);
+    }
+    5% {
+        clip: rect(93px, 9999px, 44px, 0);
+    }
+    10% {
+        clip: rect(70px, 9999px, 71px, 0);
+    }
+    15% {
+        clip: rect(67px, 9999px, 43px, 0);
+    }
+    20% {
+        clip: rect(98px, 9999px, 72px, 0);
+    }
+    25% {
+        clip: rect(51px, 9999px, 40px, 0);
+    }
+    30% {
+        clip: rect(18px, 9999px, 9px, 0);
+    }
+    35% {
+        clip: rect(57px, 9999px, 51px, 0);
+    }
+    40% {
+        clip: rect(28px, 9999px, 15px, 0);
+    }
+    45% {
+        clip: rect(31px, 9999px, 96px, 0);
+    }
+    50% {
+        clip: rect(96px, 9999px, 43px, 0);
+    }
+    55% {
+        clip: rect(24px, 9999px, 31px, 0);
+    }
+    60% {
+        clip: rect(88px, 9999px, 40px, 0);
+    }
+    65% {
+        clip: rect(11px, 9999px, 84px, 0);
+    }
+    70% {
+        clip: rect(50px, 9999px, 84px, 0);
+    }
+    75% {
+        clip: rect(30px, 9999px, 6px, 0);
+    }
+    80% {
+        clip: rect(77px, 9999px, 31px, 0);
+    }
+    85% {
+        clip: rect(95px, 9999px, 88px, 0);
+    }
+    90% {
+        clip: rect(29px, 9999px, 44px, 0);
+    }
+    95% {
+        clip: rect(82px, 9999px, 72px, 0);
+    }
+    100% {
+        clip: rect(94px, 9999px, 49px, 0);
+    }
+}
+
+.logo-link {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+}
+
+.logo-link:hover {
+    color: inherit;
+}
+
+.logo-link:hover .logo {
+    transform: scale(1.05);
+}
+
+/* Improved CSS for custom social icons */
+.social-link.custom-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    overflow: hidden;
+}
+
+.social-link.custom-icon img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    max-width: 36px;  /* Ensure nothing exceeds this size */
+    max-height: 36px;
+    padding: 5px;
+    filter: brightness(0) invert(1); /* Makes the icon white */
+    transition: filter var(--transition-speed) ease, transform var(--transition-speed) ease;
+}
+
+.social-link.custom-icon:hover img {
+    filter: brightness(1) invert(0); /* Returns to original color on hover */
+    /* transform: scale(1.1); */
+}
+
+.social-link.custom-icon.preserve-colors:hover img {
+    filter: opacity(1); /* Full opacity on hover */
+}
+
+/* For the Font Awesome icons to ensure they match */
+.social-link i {
+    font-size: 24px; 
+}
+
+.social-link.custom-icon.small-icon img {
+    width: 52px;  /* Slightly larger than the standard, 36 base scaling*/
+    height: 52px;
+    max-width: 52px;
+    max-height: 52px;
+    padding: 7px;  /* Adjust padding to center the visual weight */
+}
+
+::selection {
+    background: #2C5AA0; /* Your LUFS royal blue */
+    color: white; /* Text color when selected */
+  }
+  
+  ::-moz-selection { /* Firefox */
+    background: #2C5AA0;
+    color: white;
+  }

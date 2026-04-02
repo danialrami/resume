@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daniel Ramirez | Sound Designer</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="container visible">
+        <!-- Navigation -->
+        <nav>
+            <a href="#" class="logo-link">
+                <div class="logo">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M100,30 C130,30 150,50 150,80 C180,80 200,100 200,130 C200,160 180,180 150,180 L50,180 C20,180 0,160 0,130 C0,100 20,80 50,80 C50,50 70,30 100,30 Z" fill="#fbf9e2"/>
+                        <circle cx="70" cy="100" r="15" fill="#000"/>
+                        <circle cx="130" cy="100" r="15" fill="#000"/>
+                    </svg>
+                    <div class="brand-text">DANIALRAMI</div>
+                    <div class="color-squares">
+                        <span class="square yellow"></span>
+                        <span class="square teal"></span>
+                        <span class="square blue"></span>
+                        <span class="square red"></span>
+                    </div>
+                </div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#about" class="active">About</a></li>
+                <li><a href="#skills">Skills</a></li>
+                <li><a href="#experience">Experience</a></li>
+                <li><a href="#education">Education</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+
+        <!-- Audio Controls -->
+        <div class="audio-controls">
+            <div class="audio-source-controls">
+                <div class="audio-samples">
+                    <select id="audio-samples-select">
+                        <option value="">Select a sample...</option>
+                        <option value="assets/audio/Generative from Supercollider.opus">Generative From Supercollider (2:14)</option>
+<option value="assets/audio/High Intensity for Marketing Campaign.opus">High Intensity For Marketing Campaign (1:26)</option>
+<option value="assets/audio/Piano Solo.opus">Piano Solo (6:37)</option>
+<option value="assets/audio/String + Samples.opus">String + Samples (3:43)</option>
+<option value="assets/audio/Synth Improvisation.opus">Synth Improvisation (6:41)</option>
+<option value="assets/audio/Theme from Hogtagon - Game Audio Design.opus">Theme From Hogtagon Game Audio Design (1:55)</option>
+                    </select>
+                </div>
+                <span class="audio-or">or</span>
+                <div class="audio-upload">
+                    <label for="audio-file">
+                        <i class="fas fa-upload"></i>
+                        <span>Upload Audio</span>
+                    </label>
+                    <input type="file" id="audio-file" accept="audio/*">
+                </div>
+            </div>
+            <div class="playback-controls">
+                <button id="play-pause"><i class="fas fa-play"></i></button>
+                <div class="volume-control">
+                    <i class="fas fa-volume-up"></i>
+                    <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5">
+                </div>
+            </div>
+        </div>
+
+        <!-- Audio Visualization -->
+        <div class="visualization-container">
+            <canvas id="waveform"></canvas>
+            <canvas id="frequency"></canvas>
+        </div>
+
+        <!-- 3D Scene Container -->
+        <div id="three-container"></div>
+
+        <!-- Main Content -->
+        <main>
+            <!-- About Section -->
+            <section id="about" class="section">
+                <div class="section-content">
+                    <h1>Daniel Ramirez</h1>
+                    <h2>Sound Designer</h2>
+                    <p>Sound Designer specializing in interactive audio implementation, sound synthesis, and audio pipeline development for mobile applications and live performances. Experienced in working with industry-leading professionals and managing complex audio workflows.</p>
+                    <!-- <div class="contact-info">
+                         <a href="mailto:daniel@danialrami.com">daniel@danialrami.com</a> 
+                    </div> -->
+                </div>
+            </section>
+
+            <!-- Skills Section -->
+            <section id="skills" class="section">
+                <div class="section-content">
+                    <h2>Technical Proficiency</h2>
+                    
+                    <div class="skills-category">
+                        <h3>Audio Software & Hardware</h3>
+                        <div class="skills-grid">
+                            <div class="skill-item" data-sound="daw">
+                                <div class="skill-icon"><i class="fas fa-music"></i></div>
+                                <div class="skill-name">Recording</div>
+                                <div class="skill-details">Logic Pro X, Pro Tools, Cubase/Nuendo, Ableton Live, REAPER</div>
+                            </div>
+                            <!--
+                            <div class="skill-item" data-sound="maxmsp">
+                                <div class="skill-icon"><i class="fas fa-project-diagram"></i></div>
+                                <div class="skill-name">Max/MSP, Pure Data</div>
+                            </div> -->
+                            <div class="skill-item" data-sound="modular">
+                                <div class="skill-icon"><i class="fas fa-plug"></i></div>
+                                <div class="skill-name">Synthesis</div>
+                                <div class="skill-details">Eurorack/Buchla/MOTM systems, Supercollider</div>
+                            </div>
+                            <div class="skill-item" data-sound="wwise">
+                                <div class="skill-icon"><i class="fas fa-sliders-h"></i></div>
+                                <div class="skill-name">Implementation</div>
+                                <div class="skill-details">Wwise, FMOD</div>
+                                
+                            </div>
+                            <div class="skill-item" data-sound="gameengine">
+                                <div class="skill-icon"><i class="fas fa-gamepad"></i></div>
+                                <div class="skill-name">Game Engines</div>
+                                <div class="skill-details">Unreal Engine 5, Unity</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="skills-category">
+                        <h3>Development Tools</h3>
+                        <div class="skills-grid">
+                            <div class="skill-item" data-sound="python">
+                                <div class="skill-icon"><i class="fas fa-code"></i></div>
+                                <div class="skill-name">Audio Scripting and Automation</div>
+                                <div class="skill-details">Python, Lua</div>
+                            </div>
+                            <div class="skill-item" data-sound="node">
+                                <div class="skill-icon"><i class="fas fa-sitemap"></i></div>
+                                <div class="skill-name">Node-based Audio Systems</div>
+                                <div class="skill-details">Max/MSP, Pure Data, Metasounds</div>
+                            </div>
+                            <div class="skill-item" data-sound="tools">
+                                <div class="skill-icon"><i class="fas fa-tools"></i></div>
+                                <div class="skill-name">Server-side</div>
+                                <div class="skill-details">Jira, Docker, Arch Linux</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Experience Section -->
+            <section id="experience" class="section">
+                <div class="section-content">
+                    <h2>Professional Experience</h2>
+                    
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <h3>Sound Designer | LUFS Audio</h3>
+                                <p class="timeline-date">July 2024–Present</p>
+                                <ul>
+                                    <li>Clients include Hinge Health and xAI</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <h3>Sound Designer (Contract) | Hinge Health</h3>
+                                <p class="timeline-date">San Francisco, CA | May 2022–July 2024</p>
+                                <ul>
+                                    <li>Designed interaction sounds for mobile apps serving 70k+ daily users</li>
+                                    <li>Built scalable Wwise workflows and audio pipelines</li>
+                                    <li>Implemented audio assets using Unity and React Native</li>
+                                    <li>Developed automated workflows for sound library management</li>
+                                    <li>Maintained direct communication and managed tasks through Jira</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <h3>A1/A2 Audio Tech | Sunnyvale Theater</h3>
+                                <p class="timeline-date">Sunnyvale, CA | January 2022–May 2022</p>
+                                <ul>
+                                    <li>Conducted real-time mixing and soundchecks for live musical performances</li>
+                                    <li>Managed QLab integration for live audio playback</li>
+                                    <li>Planned and executed audio setups, managing signal paths</li>
+                                    <li>Coordinated with clients to ensure seamless technical delivery</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <h3>Sales Associate & Customer Service Rep | Perfect Circuit Audio</h3>
+                                <p class="timeline-date">Burbank, CA | June 2020–January 2021</p>
+                                <ul>
+                                    <li>Provided support and guidance for customers on music technology products</li>
+                                    <li>Stayed current with industry developments during COVID-19 pandemic</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <h3>Studio Operations Intern | Sacred Tiger Music Publishing</h3>
+                                <p class="timeline-date">Santa Monica, CA | 2018</p>
+                                <ul>
+                                    <li>Assisted composer Henry Jackman in audio production</li>
+                                    <li>Managed synthesizer setup and sound asset organization</li>
+                                    <li>Developed skills in sound synthesis, Foley, and surround mixing</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <h3>Studio Operations Intern | Remote Control Productions</h3>
+                                <p class="timeline-date">Santa Monica, CA | 2018</p>
+                                <ul>
+                                    <li>Supported Hans Zimmer's music composition team</li>
+                                    <li>Worked alongside industry experts Alan Meyerson, Benjamin Wallfisch, and Ramin Djawadi</li>
+                                    <li>Organized and managed sound libraries maintaining audio asset quality</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Education Section -->
+            <section id="education" class="section">
+                <div class="section-content">
+                    <h2>Education</h2>
+                    
+                    <div class="education-item">
+                        <h3>NYU Steinhardt</h3>
+                        <p class="education-degree">B.M. Music Theory and Composition for Film and Multimedia</p>
+                        <p class="education-location">New York, New York | 2015–2019</p>
+                    </div>
+                    
+                    <div class="education-item">
+                        <h3>IRCAM</h3>
+                        <p class="education-degree">Sound Spatialization and Synthesis</p>
+                        <p class="education-location">Paris, France | 2017</p>
+                        <p>Specialized in Max/MSP and IRCAM tools</p>
+                    </div>
+                    
+                    <div class="education-item">
+                        <h3>L'École Normale de Musique de Paris</h3>
+                        <p class="education-degree">Composition and Orchestration</p>
+                        <p class="education-location">Paris, France | 2017</p>
+                        <p>Private instruction under Michel Merlet, student of Olivier Messiaen</p>
+                    </div>
+                    
+                    <h2>Certifications</h2>
+                    
+                    <div class="certifications">
+                        <div class="certification-item">
+                            <h3>Audiokinetic Wwise</h3>
+                            <ul>
+                                <li>Wwise-101 Fundamentals</li>
+                                <li>Wwise-201 Interactive Music</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="certification-item">
+                            <h3>School of Video Game Audio</h3>
+                            <ul>
+                                <li>Unreal Engine 5</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Projects Section -->
+            <section id="projects" class="section">
+                <div class="section-content">
+                    <h2>Technical Projects</h2>
+                    
+                    <div class="projects-grid">
+                        <div class="project-item">
+                            <div class="project-icon"><i class="fas fa-microchip"></i></div>
+                            <h3>Custom Eurorack module and mixer design/construction</h3>
+                        </div>
+                        
+                        <div class="project-item">
+                            <div class="project-icon"><i class="fas fa-code"></i></div>
+                            <h3>Python-based audio tools development</h3>
+                        </div>
+                        
+                        <div class="project-item">
+                            <div class="project-icon"><i class="fas fa-server"></i></div>
+                            <h3>Docker-based application management</h3>
+                            <p>Gitea/Forgejo, Nextcloud, Ollama</p>
+                        </div>
+                        
+                        <div class="project-item">
+                            <div class="project-icon"><i class="fas fa-cogs"></i></div>
+                            <h3>Audio pipeline automation scripts</h3>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contact Section -->
+            <section id="contact" class="section">
+                <div class="section-content">
+                    <h2>Contact</h2>
+                    
+                    <div class="contact-container">
+                        <div class="contact-info">
+                            <div class="contact-item">
+                                <i class="fas fa-envelope"></i>
+                                <a href="mailto:daniel@danialrami.com">daniel@danialrami.com</a>
+                            </div>
+                        </div>
+                        
+                        <div class="social-links">
+                            <a href="https://github.com/danialrami" class="social-link" title="GitHub" target="_blank"><i class="fab fa-github"></i></a>
+                            <!-- <a href="https://youtube.com/c/yourchannel" class="social-link" title="YouTube" target="_blank"><i class="fab fa-youtube"></i></a> -->
+                            <a href="https://www.linkedin.com/in/danialrami/" class="social-link" title="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
+                            
+                            <!-- LUFS -->
+                            <a href="https://www.lufs.audio" class="social-link custom-icon" title="danialrami.com" target="_blank">
+                                <img src="Asset-3.svg" alt="Website Icon">
+                            </a>
+                            <!-- danialrami.com -->
+                            <a href="https://www.danialrami.com" class="social-link custom-icon small-icon" title="danialrami.com" target="_blank">
+                                <img src="svg-cloud-25.svg" alt="Website Icon">
+                            </a> 
+                            <!-- sample for expansion
+                            <a href="https://soundcloud.com/yourusername" class="social-link" title="SoundCloud" target="_blank"><i class="fab fa-soundcloud"></i></a> -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; <span id="current-year">2025</span> LUFS Audio. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <script src="script.js"></script>
+    <script src="three_effects.js"></script>
+</body>
+</html>

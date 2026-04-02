@@ -448,6 +448,11 @@ def copy_html_assets(base_dir: Path, audio_samples: list = None) -> None:
         audio_dst_dir = dist_html / "assets" / "audio"
         audio_dst_dir.mkdir(parents=True, exist_ok=True)
 
+        # Clean up old audio files first (dist should be a mirror of assets/audio)
+        print("  Cleaning old audio files...")
+        for old_file in audio_dst_dir.glob("*.opus"):
+            old_file.unlink()
+
         total_original = 0
         total_new = 0
 
