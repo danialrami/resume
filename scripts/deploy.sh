@@ -30,7 +30,6 @@ echo "============================================"
 
 git add -A
 git reset dist/
-git reset dist_html/
 
 if git diff --cached --quiet && git diff --quiet; then
     echo "No source code changes to commit."
