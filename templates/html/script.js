@@ -195,7 +195,9 @@ function loadAudioFromURL(url) {
             updatePlayPauseButton();
         },
         onplay: function() {
-            console.log('Audio started playing');
+            console.log('=== Audio started playing ===');
+            console.log('isPlaying set to:', true);
+            console.log('analyser exists:', !!analyser);
             isPlaying = true;
             updatePlayPauseButton();
         },
@@ -225,6 +227,15 @@ function loadAudioFromURL(url) {
 
 // Initialize Howler analyser for visualizations
 function initHowlerAnalyser() {
+    console.log('=== initHowlerAnalyser called ===');
+    console.log('Howler exists:', typeof Howler !== 'undefined');
+    
+    if (typeof Howler !== 'undefined') {
+        console.log('Howler.ctx exists:', !!Howler.ctx);
+        console.log('Howler.masterGain exists:', !!Howler.masterGain);
+        console.log('Howler version:', Howler.version);
+    }
+    
     // Create analyser using Howler's Web Audio context
     if (!howlerAnalyser && typeof Howler !== 'undefined' && Howler.ctx) {
         howlerAnalyser = Howler.ctx.createAnalyser();
@@ -241,8 +252,9 @@ function initHowlerAnalyser() {
         // Use this analyser for visualizations
         analyser = howlerAnalyser;
         console.log('Howler analyser initialized:', analyser);
-        console.log('Howler.ctx exists:', !!Howler.ctx);
-        console.log('Howler.masterGain exists:', !!Howler.masterGain);
+    } else {
+        console.log('Could not initialize analyser - conditions not met');
+        console.log('howlerAnalyser already exists:', !!howlerAnalyser);
     }
 }
 
@@ -372,6 +384,10 @@ function drawWaveform() {
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
         analyser.getByteTimeDomainData(dataArray);
+        
+        // Debug: check if we have actual audio data
+        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+        console.log('Waveform data - avg:', avg.toFixed(2), 'isPlaying:', isPlaying, 'analyser:', !!analyser);
         
         // Calculate step size
         const sliceWidth = width / bufferLength;
