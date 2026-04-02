@@ -1,114 +1,78 @@
 # Architecture Document
 
-## Current State Analysis
+## Overview
 
-### generate-resume-pdf
-- **YAML-driven** with LaTeX template system
-- Uses `yaml-resume` package + pdflatex
-- Clean separation: `resume.yaml` → template → PDF
-- Static, ATS-friendly output
+A single-source-of-truth resume system that generates both PDF and interactive HTML versions from `data/resume.yaml`.
 
-### interactive-resume  
-- **HTML/JS/CSS** with Three.js and Web Audio API
-- Resume data hardcoded in HTML
-- Audio-reactive 3D visualizations
-- Scroll-based animations and effects
-
-## Unified Architecture Plan
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    data/resume.yaml                         │
-│              (Single Source of Truth)                       │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-        ┌──────────────┴──────────────┐
-        │                             │
-        ▼                             ▼
-┌─────────────────┐         ┌──────────────────────┐
-│  YAML Parser    │         │   YAML Parser        │
-│  (shared)       │         │   (shared)           │
-└────────┬────────┘         └──────────────┬─────────┘
-         │                                 │
-         ▼                                 ▼
-┌──────────────────────┐    ┌──────────────────────┐
-│ LaTeX Template       │    │ HTML Template        │
-│ templates/latex/     │    │ templates/html/      │
-│ - resume.tex         │    │ - index.html         │
-│ - Style: Print/ATS   │    │ - Style: Interactive │
-└──────────┬───────────┘    └──────────────┬─────────┘
-           │                                │
-           ▼                                ▼
-    ┌──────────────┐                ┌──────────────┐
-    │ pdflatex     │                │  Browser     │
-    │ dist/pdf/    │                │  HTML Render │
-    └──────────────┘                └──────────────┘
+data/resume.yaml
+    ↓
+scripts/render_latex.py → dist/pdf/resume.tex → (xelatex) → dist/pdf/resume.pdf
+    ↓
+scripts/render_html.py  → dist/html/index.html (+ assets)
+
+assets/audio/*.wav → (ffmpeg) → dist/html/assets/audio/*.opus (~11x compression)
 ```
 
-## Data Flow
+## Components
 
-1. **Data Entry**: Single `data/resume.yaml` file
-2. **Processing**: YAML parser reads data once
-3. **Template Substitution**: Two separate templates render from same data
-4. **Output Generation**:
-   - PDF: LaTeX → pdflatex → static document
-   - HTML: Template + JS/CSS → interactive web page
+### Data Layer
+- **`data/resume.yaml`**: Single source of truth for all resume data
+- Schema includes: name, title, contact, profile, experience, skills, education, certifications, projects
 
-## Template Design Principles
+### Build Scripts
+- **`scripts/render_latex.py`**: Generates LaTeX from YAML data
+- **`scripts/render_html.py`**: Generates HTML from YAML data, converts audio
+- **`scripts/build_all.py`**: Orchestrates both builds
+- **`scripts/deploy.sh`**: Builds and deploys to `hostinger` branch
 
-### LaTeX Template (Print/ATS Focus)
-- Single column, vertical layout
-- Standard resume sections
-- ATS-friendly formatting
-- Optimized for paper/print
+### Templates
+- **`templates/latex/resume.tex`**: LaTeX template with placeholders
+- **`templates/html/`**: HTML, CSS, JS files for interactive resume
 
-### HTML Template (Interactive Focus)
-- Multi-section scroll navigation
-- Audio visualization components
-- Three.js 3D scene
-- Mobile-responsive design
-- Brand-specific interactivity
+### Assets
+- **`assets/audio/`**: High-quality source audio (WAV files, not committed)
+- **`dist/html/assets/audio/`**: Compressed OPUS files (committed to deploy branch)
 
-## Next Steps
+## Audio Pipeline
 
-1. ✅ Design unified YAML schema covering all data needs
-2. ✅ Create LaTeX template with LUFS branding
-3. ✅ Create HTML template with interactivity structure
-4. ⏳ Build shared YAML-to-output pipeline (partial)
-5. ⏳ Copy and adapt content from both repos
-6. ⏳ Test build pipeline with sample data
+### Build-time Conversion
+1. Scan `assets/audio/` for WAV/MP3/FLAC files
+2. Convert to OPUS format using ffmpeg (`libopus`, 192kbps)
+3. Copy to `dist/html/assets/audio/`
+4. Generate dropdown HTML with sample names and durations
 
-## Implementation Checklist
+### Runtime Loading
+- **Local mode** (default): Load from `assets/audio/*.opus`
+- **URL mode**: Set `AUDIO_BASE_URL` env var to load from CDN
 
-- [x] Repository structure created
-- [x] Unified YAML schema designed
-- [x] LaTeX template with variables
-- [x] HTML template with placeholders
-- [ ] Python build scripts complete
-- [ ] CSS styling ported
-- [ ] JavaScript files configured
-- [ ] Test build with sample data
-- [ ] Generate sample outputs to dist/
+### Browser Compatibility
+- OPUS supported in Chrome, Firefox, Safari, Edge
+- Audio visualizations require HTTP (not file://)
 
-## Migration Strategy
+## Deployment
 
-1. **Phase 1: Data Unification**
-   - Copy content from both repos to `data/resume.yaml`
-   - Ensure all data is accessible in one place
+The `deploy.sh` script:
+1. Runs `build_all.py` (converts audio to OPUS)
+2. Commits changes to `main` branch
+3. Uses `git subtree split` to extract `dist/html/` to temp branch
+4. Force pushes to `hostinger` branch on origin
 
-2. **Phase 2: Template Integration**
-   - Complete LaTeX template with all sections
-   - Complete HTML template with all interactive elements
+## File Sizes
 
-3. **Phase 3: Build Pipeline**
-   - Test PDF generation
-   - Test HTML generation
-   - Fix any issues
+| File Type | Typical Size | Notes |
+|-----------|--------------|-------|
+| WAV       | 30-110 MB    | Source files (not committed) |
+| OPUS      | 2-10 MB      | ~11x smaller, browser-compatible |
+| HTML/CSS/JS | <1 MB      | Template files |
 
-4. **Phase 4: Automation**
-   - Create npm scripts for easy building
-   - Set up CI/CD if needed
+## Dependencies
 
-5. **Phase 5: Output Customization**
-   - Fine-tune LaTeX for print
-   - Fine-tune HTML for web
+| Tool | Purpose |
+|------|---------|
+| Python 3.8+ | Build scripts |
+| PyYAML | YAML parsing |
+| xelatex/pdflatex | PDF generation |
+| ffmpeg | Audio conversion to OPUS |

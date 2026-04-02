@@ -2,10 +2,10 @@
 
 ## Build / Lint / Test
 - **Setup**: `./scripts/setup.sh` or `source .venv/bin/activate`
-- **Build both**: `./scripts/build.sh` or `python scripts/build_all.py`
-- **Build PDF only**: `./scripts/build_pdf.sh` or `python scripts/render_latex.py`
-- **Build HTML only**: `./scripts/build_html.sh` or `python scripts/render_html.py`
-- **Lint LaTeX**: Optional (pdflatex/xelatex will report errors)
+- **Build both**: `./scripts/build_all.py`
+- **Build HTML only**: `./scripts/build_html.sh`
+- **Build PDF only**: `./scripts/build_pdf.sh`
+- **Deploy to hostinger**: `./scripts/deploy.sh`
 - **Test**: Run build commands and inspect output files in `dist/`
 
 ## Code Style Guidelines
@@ -18,7 +18,7 @@
 
 ### LaTeX Template (`templates/latex/resume.tex`)
 - Follow standard LaTeX conventions
-- 4-space indentation, lines <80 chars  
+- 4-space indentation, lines <80 chars
 - Section titles Title Case
 - Comments with `%`
 - Output compiled to: `dist/pdf/resume.pdf`
@@ -37,13 +37,34 @@ data/resume.yaml
     ↓ (render_latex.py / render_html.py)
 templates/latex/resume.tex  →  dist/pdf/resume.pdf (via xelatex)
 templates/html/index.html   →  dist/html/index.html
+
+assets/audio/*.wav → (build) → dist/html/assets/audio/*.opus (~11x smaller)
 ```
+
+## Audio Pipeline
+
+### Local Audio (Default)
+- Place WAV files in `assets/audio/`
+- Build script converts to OPUS format using ffmpeg
+- OPUS files are included in `dist/html/assets/audio/`
+
+### URL-based Audio
+Set `AUDIO_BASE_URL` environment variable:
+```bash
+AUDIO_BASE_URL="https://cdn.example.com/audio" ./scripts/build_all.py
+```
+
+### Browser Limitations
+- **file:// protocol**: Audio plays but visualizations don't work (Web Audio API security)
+- **HTTP/HTTPS**: Full functionality including visualizations
+- **Format**: OPUS supported in all modern browsers
 
 ## Dependencies
 
 - Python 3.8+
 - PyYAML 6.0+ (installed via requirements.txt)
 - xelatex or pdflatex (for PDF generation)
+- ffmpeg (for OPUS audio conversion)
 
 For PDF generation:
 - **xelatex** (recommended if using fontspec)
@@ -52,9 +73,19 @@ For PDF generation:
 ## Adding New Features
 
 1. Update `data/resume.yaml` with new data
-2. Modify templates in respective `templates/` subdirectory
-3. Rebuild using scripts or `python scripts/build_all.py`
-4. Review outputs in `dist/`
+2. Add/modify audio files in `assets/audio/` (WAV recommended)
+3. Modify templates in respective `templates/` subdirectory
+4. Rebuild using `./scripts/build_all.py`
+5. Review outputs in `dist/`
+
+## Deployment
+
+The `deploy.sh` script:
+1. Builds both PDF and HTML outputs
+2. Converts audio to OPUS (~11x compression)
+3. Commits to main branch
+4. Pushes to origin
+5. Splits and deploys HTML to `hostinger` branch
 
 ## Migration Notes
 
@@ -67,3 +98,4 @@ The unified system uses:
 - Single source of truth: `data/resume.yaml`
 - Separate templates for print (LaTeX) and web (HTML)
 - Shared Python build scripts for consistent generation
+- OPUS audio format for efficient web delivery

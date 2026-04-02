@@ -18,10 +18,13 @@ def build_all():
     """Build both PDF and HTML resumes."""
     print("Building resume...")
     print("""
-NOTE: Audio visualizations require the site to be served via HTTP.
+NOTE: 
+- Audio files are automatically converted to OPUS format (~11x compression)
+- Audio visualizations require the site to be served via HTTP
 - Opening dist/html/index.html directly (file://) will play audio but without visualizations
 - For full functionality, serve via HTTP: cd dist/html && python3 -m http.server 8080
 - On Hostinger (or any web server), everything works including visualizations
+- Set AUDIO_BASE_URL environment variable to load audio from a CDN/URL instead of local files
 """)
 
     base_dir = Path(__file__).parent.parent

@@ -7,7 +7,11 @@ import subprocess
 import re
 import os
 import yaml
+import shutil
 from pathlib import Path
+
+
+AUDIO_BASE_URL = os.environ.get("AUDIO_BASE_URL", "")
 
 
 def load_yaml_data(yaml_path: str) -> dict:
@@ -281,6 +285,38 @@ def get_audio_duration(file_path: str) -> float:
     return 0.0
 
 
+def convert_to_opus(input_path: Path, output_path: Path) -> bool:
+    """Convert audio file to OPUS format using ffmpeg with high quality settings."""
+    try:
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            str(input_path),
+            "-c:a",
+            "libopus",
+            "-b:a",
+            "192k",
+            "-vn",
+            str(output_path),
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        if result.returncode == 0 and output_path.exists():
+            return True
+        else:
+            print(
+                f"  FFmpeg error: {result.stderr[:200] if result.stderr else 'unknown error'}"
+            )
+    except Exception as e:
+        print(f"  Conversion error: {e}")
+    return False
+
+
+def get_audio_size_mb(file_path: str) -> float:
+    """Get audio file size in MB."""
+    return os.path.getsize(file_path) / (1024 * 1024)
+
+
 def format_duration(seconds: float) -> str:
     """Format duration in seconds to MM:SS format."""
     if seconds <= 0:
@@ -309,42 +345,80 @@ def filename_to_title(filename: str) -> str:
 
 
 def scan_audio_samples(audio_dir: Path) -> list:
-    """Scan audio directory and return list of sample info."""
+    """Scan audio directory and return list of sample info.
+
+    Prioritizes OPUS files over other formats. If both .wav and .opus exist
+    for the same base name, only the .opus is included.
+    """
     samples = []
-    audio_extensions = {".wav", ".mp3", ".ogg", ".m4a", ".flac", ".aac"}
+    audio_extensions = {".wav", ".mp3", ".opus", ".ogg", ".m4a", ".flac", ".aac"}
 
     if not audio_dir.exists():
         print(f"Warning: Audio directory not found: {audio_dir}")
         return samples
 
+    source_files = {}
     for file_path in sorted(audio_dir.iterdir()):
         if file_path.is_file() and file_path.suffix.lower() in audio_extensions:
-            duration = get_audio_duration(str(file_path))
-            title = filename_to_title(file_path.name)
-            samples.append(
-                {
-                    "filename": file_path.name,
-                    "title": title,
-                    "duration": duration,
-                    "formatted_duration": format_duration(duration),
+            base_name = file_path.stem
+
+            if file_path.suffix.lower() == ".opus":
+                source_files[base_name] = {
+                    "file": file_path,
+                    "format": "opus",
+                    "preferred": True,
                 }
-            )
+            elif base_name not in source_files:
+                source_files[base_name] = {
+                    "file": file_path,
+                    "format": file_path.suffix.lower()[1:],
+                    "preferred": False,
+                }
+
+    for base_name, info in sorted(source_files.items()):
+        file_path = info["file"]
+        duration = get_audio_duration(str(file_path))
+        title = filename_to_title(base_name)
+
+        opus_filename = f"{base_name}.opus"
+
+        samples.append(
+            {
+                "title": title,
+                "source_file": file_path.name,
+                "filename": opus_filename,
+                "format": info["format"],
+                "duration": duration,
+                "formatted_duration": format_duration(duration),
+            }
+        )
 
     return samples
 
 
 def render_audio_samples_dropdown(audio_samples: list) -> str:
-    """Render audio samples dropdown options HTML."""
+    """Render audio samples dropdown options HTML.
+
+    Uses AUDIO_BASE_URL if set, otherwise falls back to local assets/audio/ path.
+    """
     options = []
     for sample in audio_samples:
         label = f"{sample['title']} ({sample['formatted_duration']})"
-        value = f"assets/audio/{sample['filename']}"
+
+        if AUDIO_BASE_URL:
+            value = f"{AUDIO_BASE_URL.rstrip('/')}/{sample['filename']}"
+        else:
+            value = f"assets/audio/{sample['filename']}"
+
         options.append(f'<option value="{value}">{label}</option>')
     return "\n".join(options)
 
 
 def copy_html_assets(base_dir: Path, audio_samples: list = None) -> None:
-    """Copy CSS, JS, and other assets to dist/html."""
+    """Copy CSS, JS, and other assets to dist/html.
+
+    Converts audio files to OGG format for the dist folder.
+    """
     html_dir = base_dir / "templates" / "html"
     dist_html = base_dir / "dist" / "html"
 
@@ -368,20 +442,42 @@ def copy_html_assets(base_dir: Path, audio_samples: list = None) -> None:
         with open(dst, "w") as f:
             f.write(content)
 
-    # Copy audio assets
+    # Copy and convert audio assets to OPUS
     if audio_samples:
         audio_src_dir = base_dir / "assets" / "audio"
         audio_dst_dir = dist_html / "assets" / "audio"
         audio_dst_dir.mkdir(parents=True, exist_ok=True)
 
-        for sample in audio_samples:
-            src = audio_src_dir / sample["filename"]
-            dst = audio_dst_dir / sample["filename"]
-            if src.exists():
-                import shutil
+        total_original = 0
+        total_new = 0
 
-                shutil.copy2(src, dst)
-                print(f"  Copied: {sample['filename']}")
+        for sample in audio_samples:
+            src = audio_src_dir / sample["source_file"]
+            dst = audio_dst_dir / sample["filename"]
+
+            if src.exists():
+                if src.suffix.lower() == ".opus":
+                    shutil.copy2(src, dst)
+                    size = get_audio_size_mb(dst)
+                    total_original += size
+                    total_new += size
+                    print(f"  Copied: {sample['filename']} ({size:.1f} MB)")
+                else:
+                    print(f"  Converting: {src.name} -> {sample['filename']}...")
+                    if convert_to_opus(src, dst):
+                        original_size = get_audio_size_mb(src)
+                        new_size = get_audio_size_mb(dst)
+                        total_original += original_size
+                        total_new += new_size
+                        ratio = original_size / new_size if new_size > 0 else 0
+                        print(
+                            f"  Converted: {sample['filename']} ({original_size:.1f} MB -> {new_size:.1f} MB, {ratio:.1f}x smaller)"
+                        )
+                    else:
+                        print(f"  Warning: Could not convert {src.name}")
+
+        if total_original > 0:
+            print(f"  Total audio: {total_original:.1f} MB -> {total_new:.1f} MB")
 
 
 def generate_html(data: dict) -> str:
@@ -404,6 +500,13 @@ def generate_html(data: dict) -> str:
     print(f"Found {len(audio_samples)} audio samples:")
     for sample in audio_samples:
         print(f"  - {sample['title']} ({sample['formatted_duration']})")
+
+    if AUDIO_BASE_URL:
+        print(f"Audio base URL: {AUDIO_BASE_URL}")
+    else:
+        print(
+            "Audio: Using local files (set AUDIO_BASE_URL env var for URL-based audio)"
+        )
 
     substitutions = {
         "RESUME_NAME": name,
