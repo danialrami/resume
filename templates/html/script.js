@@ -179,8 +179,9 @@ function handleSampleSelection(e) {
 // Hidden audio element for Web Audio API connection
 let hiddenAudio = null;
 let mediaSource = null;
+let gainNode = null;
 
-// Load audio from URL using Howler with Web Audio API analyser connection
+// Load audio from URL using native Audio element with Web Audio API
 function loadAudioFromURL(url) {
     console.log('Loading audio from URL:', url);
     
@@ -210,10 +211,11 @@ function loadAudioFromURL(url) {
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 2048;
     
-    // Connect: mediaSource -> analyser -> gain -> destination
-    const gainNode = audioContext.createGain();
+    // Create gain node for volume control
+    gainNode = audioContext.createGain();
     gainNode.gain.value = document.getElementById('volume').value;
     
+    // Connect: mediaSource -> analyser -> gain -> destination
     mediaSource.connect(analyser);
     analyser.connect(gainNode);
     gainNode.connect(audioContext.destination);
@@ -221,79 +223,71 @@ function loadAudioFromURL(url) {
     // Store gain node for volume control
     audioSource = { gainNode: gainNode };
     
-    // Create Howl instance that plays our hidden audio element
-    howl = new Howl({
-        src: [url],
-        html5: true,  // Needed for file:// protocol
-        format: ['wav', 'mp3', 'ogg', 'm4a', 'flac', 'aac'],
-        volume: document.getElementById('volume').value,
-        onload: function() {
-            console.log('Audio loaded successfully, duration:', howl.duration(), 'seconds');
-            
-            // Update UI
-            const playPauseButton = document.getElementById('play-pause');
-            playPauseButton.disabled = false;
-            
-            // Clear file input
-            document.getElementById('audio-file').value = '';
-            
-            // Auto-play the audio
-            playAudio();
-        },
-        onloaderror: function(id, error) {
-            console.error('Error loading audio:', error);
-            alert('Error loading audio sample. Please try again.');
-            // Reset dropdown
-            const select = document.getElementById('audio-samples-select');
-            if (select) select.value = '';
-        },
-        onplay: function() {
-            console.log('Audio started playing');
-            isPlaying = true;
-            updatePlayPauseButton();
-        },
-        onpause: function() {
+    // Wait for audio to be ready to play
+    hiddenAudio.addEventListener('canplay', function onCanPlay() {
+        hiddenAudio.removeEventListener('canplay', onCanPlay);
+        console.log('Audio loaded successfully, duration:', hiddenAudio.duration, 'seconds');
+        
+        // Update UI
+        const playPauseButton = document.getElementById('play-pause');
+        playPauseButton.disabled = false;
+        
+        // Clear file input
+        document.getElementById('audio-file').value = '';
+        
+        // Auto-play the audio
+        playAudio();
+    });
+    
+    hiddenAudio.addEventListener('ended', function() {
+        console.log('Audio ended');
+        isPlaying = false;
+        updatePlayPauseButton();
+    });
+    
+    hiddenAudio.addEventListener('pause', function() {
+        if (hiddenAudio && hiddenAudio.src) {  // Only if actually playing audio
             console.log('Audio paused');
-            isPlaying = false;
-            updatePlayPauseButton();
-        },
-        onstop: function() {
-            console.log('Audio stopped');
-            isPlaying = false;
-            updatePlayPauseButton();
-        },
-        onend: function() {
-            console.log('Audio ended');
             isPlaying = false;
             updatePlayPauseButton();
         }
     });
+    
+    hiddenAudio.addEventListener('play', function() {
+        console.log('Audio playing');
+        isPlaying = true;
+        updatePlayPauseButton();
+    });
+    
+    hiddenAudio.addEventListener('error', function(e) {
+        console.error('Error loading audio:', e);
+        alert('Error loading audio sample. Please try again.');
+        const select = document.getElementById('audio-samples-select');
+        if (select) select.value = '';
+    });
 }
 
-// Stop current audio (either Howler or Web Audio API)
+// Stop current audio
 function stopCurrentAudio() {
-    if (howl) {
-        howl.stop();
-        howl.unload();
-        howl = null;
-    }
-    
-    // Clean up hidden audio element
     if (hiddenAudio) {
         hiddenAudio.pause();
         hiddenAudio.src = '';
-        hiddenAudio = null;
     }
     
-    // Disconnect media source
+    if (howl) {
+        howl.stop();
+        howl = null;
+    }
+    
+    // Disconnect audio nodes
     if (mediaSource) {
-        mediaSource.disconnect();
+        try { mediaSource.disconnect(); } catch(e) {}
         mediaSource = null;
     }
     
-    // Disconnect analyser
     if (analyser) {
-        analyser.disconnect();
+        try { analyser.disconnect(); } catch(e) {}
+        analyser = null;
     }
     
     if (audioSource && audioSource.source) {
@@ -302,23 +296,28 @@ function stopCurrentAudio() {
     isPlaying = false;
 }
 
-// Play audio using Howler
+// Play audio
 function playAudio() {
-    if (!howl) return;
-    howl.play();
-    isPlaying = true;
-    updatePlayPauseButton();
+    if (!hiddenAudio) return;
+    
+    hiddenAudio.play().then(() => {
+        console.log('Audio started playing');
+        isPlaying = true;
+        updatePlayPauseButton();
+    }).catch(err => {
+        console.error('Error playing audio:', err);
+    });
 }
 
 // Toggle audio playback
 function togglePlayback() {
-    if (!howl && !audioBuffer) return;
+    if (!hiddenAudio && !audioBuffer) return;
     
-    if (howl) {
-        if (howl.playing()) {
-            howl.pause();
+    if (hiddenAudio && hiddenAudio.src) {
+        if (hiddenAudio.paused) {
+            hiddenAudio.play();
         } else {
-            howl.play();
+            hiddenAudio.pause();
         }
     } else if (audioBuffer) {
         // Fallback to Web Audio API for uploaded files
