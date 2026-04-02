@@ -97,26 +97,13 @@ function initAudio() {
         if (howl) {
             howl.volume(volume);
         }
-        if (gainNode) {
-            gainNode.gain.value = volume;
-        }
-        if (audioSource && audioSource.gainNode && audioSource.gainNode !== gainNode) {
-            audioSource.gainNode.gain.value = volume;
-        }
     });
     
     // Double-click to reset volume to default
     volumeControl.addEventListener('dblclick', (e) => {
         e.target.value = defaultVolume;
-        const volume = defaultVolume;
         if (howl) {
-            howl.volume(volume);
-        }
-        if (gainNode) {
-            gainNode.gain.value = volume;
-        }
-        if (audioSource && audioSource.gainNode && audioSource.gainNode !== gainNode) {
-            audioSource.gainNode.gain.value = volume;
+            howl.volume(defaultVolume);
         }
     });
     
@@ -201,68 +188,88 @@ let hiddenAudio = null;
 let mediaSource = null;
 let gainNode = null;
 let bufferSource = null;
+let howlerAnalyser = null;
 
-// Load audio from URL - hybrid approach for both file:// and HTTP
+// Load audio from URL using Howler.js
 function loadAudioFromURL(url) {
     console.log('Loading audio from URL:', url);
     
     // Stop any currently playing audio
     stopCurrentAudio();
     
-    // Check if we're on file:// protocol
-    const isFileProtocol = window.location.protocol === 'file:';
+    // Initialize Web Audio API analyser for visualizations
+    initHowlerAnalyser();
     
-    // For file://: Use native Audio element (no visualizations, but audio works)
-    console.log('Using native Audio element');
+    // Stop any existing Howl
+    if (howl) {
+        howl.stop();
+    }
     
-    // Create audio element
-    hiddenAudio = new Audio();
-    hiddenAudio.src = url;
-    hiddenAudio.preload = 'auto';
-    hiddenAudio.volume = document.getElementById('volume').value;
-    
-    hiddenAudio.addEventListener('loadedmetadata', function onLoad() {
-        hiddenAudio.removeEventListener('loadedmetadata', onLoad);
-        console.log('Audio loaded successfully, duration:', hiddenAudio.duration, 'seconds');
-        
-        // Update UI
-        const playPauseButton = document.getElementById('play-pause');
-        playPauseButton.disabled = false;
-        
-        // Clear file input
-        document.getElementById('audio-file').value = '';
-        
-        // Auto-play the audio
-        playAudio();
-    });
-    
-    hiddenAudio.addEventListener('ended', function() {
-        console.log('Audio ended');
-        isPlaying = false;
-        updatePlayPauseButton();
-    });
-    
-    hiddenAudio.addEventListener('pause', function() {
-        if (hiddenAudio && hiddenAudio.src && !hiddenAudio.ended) {
+    // Create new Howl instance
+    howl = new Howl({
+        src: [url],
+        html5: true,  // Critical: enables file:// protocol support
+        format: ['wav', 'mp3', 'ogg', 'm4a', 'flac', 'aac'],
+        volume: document.getElementById('volume').value,
+        onload: function() {
+            console.log('Audio loaded successfully, duration:', howl.duration(), 'seconds');
+            
+            // Update UI
+            const playPauseButton = document.getElementById('play-pause');
+            playPauseButton.disabled = false;
+            
+            // Clear file input
+            document.getElementById('audio-file').value = '';
+            
+            // Auto-play the audio
+            howl.play();
+            isPlaying = true;
+            updatePlayPauseButton();
+        },
+        onplay: function() {
+            console.log('Audio started playing');
+            isPlaying = true;
+            updatePlayPauseButton();
+        },
+        onpause: function() {
             console.log('Audio paused');
             isPlaying = false;
             updatePlayPauseButton();
+        },
+        onstop: function() {
+            console.log('Audio stopped');
+            isPlaying = false;
+            updatePlayPauseButton();
+        },
+        onend: function() {
+            console.log('Audio ended');
+            isPlaying = false;
+            updatePlayPauseButton();
+        },
+        onloaderror: function(id, error) {
+            console.error('Error loading audio:', error);
+            alert('Error loading audio sample. Please try again.');
+            const select = document.getElementById('audio-samples-select');
+            if (select) select.value = '';
         }
     });
-    
-    hiddenAudio.addEventListener('play', function() {
-        console.log('Audio playing');
-        isPlaying = true;
-        updatePlayPauseButton();
-    });
-    
-    hiddenAudio.addEventListener('error', function(e) {
-        console.error('Error loading audio:', e);
-        console.error('Error code:', hiddenAudio.error ? hiddenAudio.error.code : 'unknown');
-        alert('Error loading audio sample. Please try again.');
-        const select = document.getElementById('audio-samples-select');
-        if (select) select.value = '';
-    });
+}
+
+// Initialize Howler analyser for visualizations
+function initHowlerAnalyser() {
+    // Create analyser using Howler's Web Audio context
+    if (!howlerAnalyser && Howler.ctx) {
+        howlerAnalyser = Howler.ctx.createAnalyser();
+        howlerAnalyser.fftSize = 2048;
+        
+        // Connect Howler.masterGain -> analyser -> destination
+        Howler.masterGain.connect(howlerAnalyser);
+        howlerAnalyser.connect(Howler.ctx.destination);
+        
+        // Use this analyser for visualizations
+        analyser = howlerAnalyser;
+        console.log('Howler analyser initialized');
+    }
 }
 
 // Stop current audio
@@ -275,33 +282,19 @@ function stopCurrentAudio() {
     
     if (howl) {
         howl.stop();
-        howl = null;
     }
     
     isPlaying = false;
 }
 
-// Play audio using native Audio element
-function playAudio() {
-    if (!hiddenAudio || !hiddenAudio.src) return;
-    
-    hiddenAudio.play().then(() => {
-        console.log('Audio playing');
-        isPlaying = true;
-        updatePlayPauseButton();
-    }).catch(err => {
-        console.error('Error playing audio:', err);
-    });
-}
-
 // Toggle audio playback
 function togglePlayback() {
-    if (!hiddenAudio || !hiddenAudio.src) return;
+    if (!howl || !howl.state() || howl.state() === 'unloaded') return;
     
-    if (hiddenAudio.paused) {
-        hiddenAudio.play();
+    if (howl.playing()) {
+        howl.pause();
     } else {
-        hiddenAudio.pause();
+        howl.play();
     }
 }
 
