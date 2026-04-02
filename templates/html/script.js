@@ -205,56 +205,66 @@ let hiddenAudio = null;
 let mediaSource = null;
 let gainNode = null;
 
-// Load audio from URL using native Audio element with Web Audio API
+// Load audio from URL using native Audio element
 function loadAudioFromURL(url) {
     console.log('Loading audio from URL:', url);
     
     // Stop any currently playing audio
     stopCurrentAudio();
     
-    // Initialize Web Audio API context if needed
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
+    // Check if we're on file:// protocol (can't use MediaElementSource with file://)
+    const isFileProtocol = window.location.protocol === 'file:';
     
-    // Resume audio context (required after user interaction)
-    if (audioContext.state === 'suspended') {
-        audioContext.resume();
-    }
-    
-    // Create hidden audio element (no crossOrigin for local files)
+    // Create hidden audio element
     hiddenAudio = new Audio();
     hiddenAudio.src = url;
     hiddenAudio.preload = 'auto';
     hiddenAudio.volume = document.getElementById('volume').value;
     
-    // Set up event listeners first
+    // Set up Web Audio API for visualizations (only if not file://)
+    if (!isFileProtocol) {
+        // Initialize Web Audio API context if needed
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        // Resume audio context (required after user interaction)
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    }
+    
+    // Set up event listeners
     hiddenAudio.addEventListener('canplaythrough', function onCanPlay() {
         hiddenAudio.removeEventListener('canplaythrough', onCanPlay);
         console.log('Audio loaded successfully, duration:', hiddenAudio.duration, 'seconds');
         
-        // Create MediaElementSource AFTER audio is loaded (avoids CORS issues)
-        try {
-            mediaSource = audioContext.createMediaElementSource(hiddenAudio);
-            
-            // Create analyser node
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 2048;
-            
-            // Create gain node for volume control
-            gainNode = audioContext.createGain();
-            gainNode.gain.value = document.getElementById('volume').value;
-            
-            // Connect: mediaSource -> analyser -> gain -> destination
-            mediaSource.connect(analyser);
-            analyser.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            // Store gain node for volume control
-            audioSource = { gainNode: gainNode };
-        } catch (e) {
-            console.error('Error connecting to Web Audio API:', e);
-            // Continue anyway - audio will still play, just no visualizations
+        // Connect to Web Audio API only if NOT using file:// protocol
+        if (!isFileProtocol) {
+            try {
+                // Create MediaElementSource AFTER audio is loaded
+                mediaSource = audioContext.createMediaElementSource(hiddenAudio);
+                
+                // Create analyser node
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                
+                // Create gain node for volume control
+                gainNode = audioContext.createGain();
+                gainNode.gain.value = document.getElementById('volume').value;
+                
+                // Connect: mediaSource -> analyser -> gain -> destination
+                mediaSource.connect(analyser);
+                analyser.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Store gain node for volume control
+                audioSource = { gainNode: gainNode };
+            } catch (e) {
+                console.error('Error connecting to Web Audio API:', e);
+            }
+        } else {
+            console.log('file:// protocol detected - skipping analyser for visualizations');
         }
         
         // Update UI
@@ -292,8 +302,6 @@ function loadAudioFromURL(url) {
         console.error('Error loading audio:', e);
         console.error('Audio error code:', hiddenAudio.error ? hiddenAudio.error.code : 'unknown');
         console.error('Audio error message:', hiddenAudio.error ? hiddenAudio.error.message : 'unknown');
-        console.error('Audio src:', hiddenAudio.src);
-        console.error('Audio currentSrc:', hiddenAudio.currentSrc);
         alert('Error loading audio sample. Please try again.');
         const select = document.getElementById('audio-samples-select');
         if (select) select.value = '';
