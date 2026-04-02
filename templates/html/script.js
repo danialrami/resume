@@ -186,8 +186,18 @@ function handleSampleSelection(e) {
     const url = e.target.value;
     if (!url) return;
     
-    console.log('Loading audio from URL:', url);
-    loadAudioFromURL(url);
+    console.log('Selected audio URL:', url);
+    
+    // Convert relative URL to absolute if needed (for file:// protocol)
+    let fullUrl = url;
+    if (window.location.protocol === 'file:') {
+        // Get the directory of the current HTML file
+        const htmlDir = window.location.pathname.replace(/[/][^/]*$/, '');
+        fullUrl = htmlDir + '/' + url;
+        console.log('Full file:// URL:', fullUrl);
+    }
+    
+    loadAudioFromURL(fullUrl);
 }
 
 // Hidden audio element for Web Audio API connection
@@ -281,6 +291,9 @@ function loadAudioFromURL(url) {
     hiddenAudio.addEventListener('error', function(e) {
         console.error('Error loading audio:', e);
         console.error('Audio error code:', hiddenAudio.error ? hiddenAudio.error.code : 'unknown');
+        console.error('Audio error message:', hiddenAudio.error ? hiddenAudio.error.message : 'unknown');
+        console.error('Audio src:', hiddenAudio.src);
+        console.error('Audio currentSrc:', hiddenAudio.currentSrc);
         alert('Error loading audio sample. Please try again.');
         const select = document.getElementById('audio-samples-select');
         if (select) select.value = '';

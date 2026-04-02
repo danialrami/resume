@@ -292,12 +292,20 @@ def format_duration(seconds: float) -> str:
 
 def filename_to_title(filename: str) -> str:
     """Convert filename to a readable title."""
+    # Get filename without extension
     name = os.path.splitext(filename)[0]
-    title = re.sub(r"[-_]", " ", name)
-    title = re.sub(r"(\d+[-.]\d+)", "", title)
+
+    # Replace common separators with spaces
+    title = re.sub(r"[-_]+", " ", name)
+
+    # Capitalize each word
     title = " ".join(word.capitalize() for word in title.split())
-    title = title.strip()
-    return title if title else os.path.splitext(filename)[0]
+
+    # If title is empty or only numbers, use the original name
+    if not title.strip() or re.match(r"^[\d\s]+$", title):
+        return name
+
+    return title
 
 
 def scan_audio_samples(audio_dir: Path) -> list:
