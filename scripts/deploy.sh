@@ -1,5 +1,9 @@
 #!/bin/bash
 # deploy.sh - Build and deploy resume to hostinger branch
+# 
+# IMPORTANT: The main branch contains ONLY source code (templates, scripts, data).
+#            The dist/ folder is built locally and deployed to hostinger branch only.
+#            Never commit dist/ to main - it's in .gitignore.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,15 +25,18 @@ echo ""
 
 echo ""
 echo "============================================"
-echo "Committing changes to main branch..."
+echo "Checking for source code changes..."
 echo "============================================"
 
 git add -A
+git reset dist/
+git reset dist_html/
+
 if git diff --cached --quiet && git diff --quiet; then
-    echo "No changes to commit."
+    echo "No source code changes to commit."
 else
     git commit -m "Production build $(date +'%Y-%m-%d %H:%M:%S')"
-    echo "Pushing to origin main..."
+    echo "Pushing source changes to origin main..."
     git push origin main
 fi
 
@@ -38,31 +45,26 @@ echo "============================================"
 echo "Deploying to hostinger branch..."
 echo "============================================"
 
-echo "Splitting dist/html to $DEPLOY_BRANCH branch..."
-TEMP_BRANCH="temp-$(date +%s)"
-git add dist/html --force
-git commit -m "Deploy $(date +'%Y-%m-%d %H:%M:%S')" || true
+echo "Creating clean deploy from dist/html..."
+TEMP_DIR=$(mktemp -d)
+cp -r dist/html/* "$TEMP_DIR/"
 
-if ! git subtree split --prefix dist/html -b "$TEMP_BRANCH"; then
-    echo "Subtree split failed."
-    git reset HEAD dist/html
-    git reset --soft HEAD~1 2>/dev/null || true
-    exit 1
-fi
+cd "$TEMP_DIR"
+git init
+git add -A
+git commit -m "Deploy $(date +'%Y-%m-%d %H:%M:%S')"
 
-echo "Force pushing to origin $DEPLOY_BRANCH..."
-if ! git push origin "$TEMP_BRANCH:hostinger" --force; then
-    echo "Failed to push to hostinger branch."
-    git branch -D "$TEMP_BRANCH" 2>/dev/null || true
-    git reset --soft HEAD~1 2>/dev/null || true
-    exit 1
-fi
+echo "Pushing to origin $DEPLOY_BRANCH..."
+git push origin master:$DEPLOY_BRANCH --force
 
-git branch -D "$TEMP_BRANCH" 2>/dev/null || true
-git reset --soft HEAD~1 2>/dev/null || true
+cd "$RESUME_DIR"
+rm -rf "$TEMP_DIR"
 
 echo ""
 echo "============================================"
 echo "Deployment complete!"
 echo "============================================"
 echo "Hostinger branch updated with latest build."
+echo ""
+echo "NOTE: The hostinger branch contains ONLY the built website."
+echo "      Source code remains on the main branch."
