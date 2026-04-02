@@ -54,7 +54,7 @@ git add -A
 git commit -m "Deploy $(date +'%Y-%m-%d %H:%M:%S')"
 
 echo "Pushing to origin $DEPLOY_BRANCH..."
-git push origin master:$DEPLOY_BRANCH --force
+git push origin HEAD:$DEPLOY_BRANCH --force
 
 cd "$RESUME_DIR"
 rm -rf "$TEMP_DIR"
