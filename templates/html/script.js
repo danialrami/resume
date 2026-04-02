@@ -90,8 +90,22 @@ function initAudio() {
     
     // Volume control
     const volumeControl = document.getElementById('volume');
+    const defaultVolume = 0.5;
+    
     volumeControl.addEventListener('input', (e) => {
         const volume = parseFloat(e.target.value);
+        if (howl) {
+            howl.volume(volume);
+        }
+        if (audioSource && audioSource.gainNode) {
+            audioSource.gainNode.gain.value = volume;
+        }
+    });
+    
+    // Double-click to reset volume to default
+    volumeControl.addEventListener('dblclick', (e) => {
+        e.target.value = defaultVolume;
+        const volume = defaultVolume;
         if (howl) {
             howl.volume(volume);
         }
