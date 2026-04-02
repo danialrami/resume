@@ -53,6 +53,10 @@ git init
 git add -A
 git commit -m "Deploy $(date +'%Y-%m-%d %H:%M:%S')"
 
+# Add remote
+GIT_REPO=$(git -C "$RESUME_DIR" remote get-url origin)
+git remote add origin "$GIT_REPO"
+
 echo "Pushing to origin $DEPLOY_BRANCH..."
 git push origin HEAD:$DEPLOY_BRANCH --force
 
