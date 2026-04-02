@@ -77,6 +77,10 @@ function initAudio() {
     const audioFileInput = document.getElementById('audio-file');
     audioFileInput.addEventListener('change', handleAudioUpload);
     
+    // Audio samples dropdown
+    const audioSamplesSelect = document.getElementById('audio-samples-select');
+    audioSamplesSelect.addEventListener('change', handleSampleSelection);
+    
     // Playback controls
     const playPauseButton = document.getElementById('play-pause');
     playPauseButton.addEventListener('click', togglePlayback);
@@ -114,6 +118,8 @@ function handleAudioUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
     
+    console.log('Uploading audio file:', file.name);
+    
     const reader = new FileReader();
     reader.onload = (event) => {
         const arrayBuffer = event.target.result;
@@ -133,10 +139,14 @@ function handleAudioUpload(e) {
         // Decode audio data
         audioContext.decodeAudioData(arrayBuffer, (buffer) => {
             audioBuffer = buffer;
+            console.log('Audio decoded successfully, duration:', buffer.duration, 'seconds');
             
             // Update UI
             const playPauseButton = document.getElementById('play-pause');
             playPauseButton.disabled = false;
+            
+            // Clear dropdown selection
+            document.getElementById('audio-samples-select').value = '';
             
             // Auto-play the uploaded audio
             playAudio();
@@ -146,6 +156,63 @@ function handleAudioUpload(e) {
     };
     
     reader.readAsArrayBuffer(file);
+}
+
+// Handle audio sample selection from dropdown
+function handleSampleSelection(e) {
+    const url = e.target.value;
+    if (!url) return;
+    
+    console.log('Loading audio from URL:', url);
+    loadAudioFromURL(url);
+}
+
+// Load audio from URL
+function loadAudioFromURL(url) {
+    // Initialize audio context if not already created
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    // Stop any currently playing audio
+    if (audioSource && audioSource.source) {
+        audioSource.source.stop();
+        isPlaying = false;
+        updatePlayPauseButton();
+    }
+    
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            console.log('Fetch response OK, loading audio data...');
+            return response.arrayBuffer();
+        })
+        .then(arrayBuffer => {
+            return audioContext.decodeAudioData(arrayBuffer);
+        })
+        .then(buffer => {
+            audioBuffer = buffer;
+            console.log('Audio from URL decoded successfully, duration:', buffer.duration, 'seconds');
+            
+            // Update UI
+            const playPauseButton = document.getElementById('play-pause');
+            playPauseButton.disabled = false;
+            
+            // Clear file input
+            document.getElementById('audio-file').value = '';
+            
+            // Auto-play the audio
+            playAudio();
+        })
+        .catch(error => {
+            console.error('Error loading audio from URL:', error);
+            alert('Error loading audio sample. Please try again.');
+            // Reset dropdown
+            const select = document.getElementById('audio-samples-select');
+            if (select) select.value = '';
+        });
 }
 
 // Play audio

@@ -64,12 +64,21 @@
 
         <!-- Audio Controls -->
         <div class="audio-controls">
-            <div class="audio-upload">
-                <label for="audio-file">
-                    <i class="fas fa-upload"></i>
-                    <span>Upload Audio</span>
-                </label>
-                <input type="file" id="audio-file" accept="audio/*">
+            <div class="audio-source-controls">
+                <div class="audio-samples">
+                    <select id="audio-samples-select">
+                        <option value="">Select a sample...</option>
+                        AUDIO_SAMPLES_OPTIONS
+                    </select>
+                </div>
+                <span class="audio-or">or</span>
+                <div class="audio-upload">
+                    <label for="audio-file">
+                        <i class="fas fa-upload"></i>
+                        <span>Upload Audio</span>
+                    </label>
+                    <input type="file" id="audio-file" accept="audio/*">
+                </div>
             </div>
             <div class="playback-controls">
                 <button id="play-pause"><i class="fas fa-play"></i></button>
