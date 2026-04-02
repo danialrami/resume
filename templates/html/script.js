@@ -212,35 +212,40 @@ function loadAudioFromURL(url) {
         audioContext.resume();
     }
     
-    // Create hidden audio element
+    // Create hidden audio element (no crossOrigin for local files)
     hiddenAudio = new Audio();
-    hiddenAudio.crossOrigin = 'anonymous';
     hiddenAudio.src = url;
     hiddenAudio.preload = 'auto';
+    hiddenAudio.volume = document.getElementById('volume').value;
     
-    // Create MediaElementSource to connect to Web Audio API
-    mediaSource = audioContext.createMediaElementSource(hiddenAudio);
-    
-    // Create analyser node
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 2048;
-    
-    // Create gain node for volume control
-    gainNode = audioContext.createGain();
-    gainNode.gain.value = document.getElementById('volume').value;
-    
-    // Connect: mediaSource -> analyser -> gain -> destination
-    mediaSource.connect(analyser);
-    analyser.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    // Store gain node for volume control
-    audioSource = { gainNode: gainNode };
-    
-    // Wait for audio to be ready to play
-    hiddenAudio.addEventListener('canplay', function onCanPlay() {
-        hiddenAudio.removeEventListener('canplay', onCanPlay);
+    // Set up event listeners first
+    hiddenAudio.addEventListener('canplaythrough', function onCanPlay() {
+        hiddenAudio.removeEventListener('canplaythrough', onCanPlay);
         console.log('Audio loaded successfully, duration:', hiddenAudio.duration, 'seconds');
+        
+        // Create MediaElementSource AFTER audio is loaded (avoids CORS issues)
+        try {
+            mediaSource = audioContext.createMediaElementSource(hiddenAudio);
+            
+            // Create analyser node
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+            
+            // Create gain node for volume control
+            gainNode = audioContext.createGain();
+            gainNode.gain.value = document.getElementById('volume').value;
+            
+            // Connect: mediaSource -> analyser -> gain -> destination
+            mediaSource.connect(analyser);
+            analyser.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Store gain node for volume control
+            audioSource = { gainNode: gainNode };
+        } catch (e) {
+            console.error('Error connecting to Web Audio API:', e);
+            // Continue anyway - audio will still play, just no visualizations
+        }
         
         // Update UI
         const playPauseButton = document.getElementById('play-pause');
@@ -260,7 +265,7 @@ function loadAudioFromURL(url) {
     });
     
     hiddenAudio.addEventListener('pause', function() {
-        if (hiddenAudio && hiddenAudio.src) {  // Only if actually playing audio
+        if (hiddenAudio && hiddenAudio.src && !hiddenAudio.ended) {
             console.log('Audio paused');
             isPlaying = false;
             updatePlayPauseButton();
@@ -275,6 +280,7 @@ function loadAudioFromURL(url) {
     
     hiddenAudio.addEventListener('error', function(e) {
         console.error('Error loading audio:', e);
+        console.error('Audio error code:', hiddenAudio.error ? hiddenAudio.error.code : 'unknown');
         alert('Error loading audio sample. Please try again.');
         const select = document.getElementById('audio-samples-select');
         if (select) select.value = '';
@@ -286,6 +292,7 @@ function stopCurrentAudio() {
     if (hiddenAudio) {
         hiddenAudio.pause();
         hiddenAudio.src = '';
+        hiddenAudio = null;
     }
     
     if (howl) {
@@ -293,7 +300,7 @@ function stopCurrentAudio() {
         howl = null;
     }
     
-    // Disconnect audio nodes
+    // Disconnect and reset audio nodes
     if (mediaSource) {
         try { mediaSource.disconnect(); } catch(e) {}
         mediaSource = null;
@@ -304,9 +311,15 @@ function stopCurrentAudio() {
         analyser = null;
     }
     
+    if (gainNode) {
+        try { gainNode.disconnect(); } catch(e) {}
+        gainNode = null;
+    }
+    
     if (audioSource && audioSource.source) {
         audioSource.source.stop();
     }
+    audioSource = null;
     isPlaying = false;
 }
 
