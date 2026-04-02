@@ -38,28 +38,28 @@ echo "============================================"
 echo "Deploying to hostinger branch..."
 echo "============================================"
 
-if git branch --list | grep -q "$DEPLOY_BRANCH"; then
-    echo "Removing existing $DEPLOY_BRANCH branch..."
-    git branch -D "$DEPLOY_BRANCH"
-fi
-
 echo "Splitting dist/html to $DEPLOY_BRANCH branch..."
+TEMP_BRANCH="temp-$(date +%s)"
 git add dist/html --force
-if ! git subtree split --prefix dist/html -b "$DEPLOY_BRANCH"; then
+git commit -m "Deploy $(date +'%Y-%m-%d %H:%M:%S')" || true
+
+if ! git subtree split --prefix dist/html -b "$TEMP_BRANCH"; then
     echo "Subtree split failed."
     git reset HEAD dist/html
+    git reset --soft HEAD~1 2>/dev/null || true
     exit 1
 fi
-git reset HEAD dist/html
 
 echo "Force pushing to origin $DEPLOY_BRANCH..."
-if ! git push origin "$DEPLOY_BRANCH:hostinger" --force; then
+if ! git push origin "$TEMP_BRANCH:hostinger" --force; then
     echo "Failed to push to hostinger branch."
-    git branch -D "$DEPLOY_BRANCH"
+    git branch -D "$TEMP_BRANCH" 2>/dev/null || true
+    git reset --soft HEAD~1 2>/dev/null || true
     exit 1
 fi
 
-git branch -D "$DEPLOY_BRANCH"
+git branch -D "$TEMP_BRANCH" 2>/dev/null || true
+git reset --soft HEAD~1 2>/dev/null || true
 
 echo ""
 echo "============================================"
