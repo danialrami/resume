@@ -193,17 +193,7 @@ function handleSampleSelection(e) {
     if (!url) return;
     
     console.log('Selected audio URL:', url);
-    
-    // Convert relative URL to absolute if needed (for file:// protocol)
-    let fullUrl = url;
-    if (window.location.protocol === 'file:') {
-        // Get the directory of the current HTML file
-        const htmlDir = window.location.pathname.replace(/[/][^/]*$/, '');
-        fullUrl = htmlDir + '/' + url;
-        console.log('Full file:// URL:', fullUrl);
-    }
-    
-    loadAudioFromURL(fullUrl);
+    loadAudioFromURL(url);
 }
 
 // Hidden audio element for Web Audio API connection
@@ -213,7 +203,7 @@ let gainNode = null;
 let bufferSource = null;
 
 // Load audio from URL - hybrid approach for both file:// and HTTP
-async function loadAudioFromURL(url) {
+function loadAudioFromURL(url) {
     console.log('Loading audio from URL:', url);
     
     // Stop any currently playing audio
@@ -222,288 +212,97 @@ async function loadAudioFromURL(url) {
     // Check if we're on file:// protocol
     const isFileProtocol = window.location.protocol === 'file:';
     
-    // Initialize Web Audio API context
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
+    // For file://: Use native Audio element (no visualizations, but audio works)
+    console.log('Using native Audio element');
     
-    // Resume audio context (required after user interaction)
-    if (audioContext.state === 'suspended') {
-        await audioContext.resume();
-    }
+    // Create audio element
+    hiddenAudio = new Audio();
+    hiddenAudio.src = url;
+    hiddenAudio.preload = 'auto';
+    hiddenAudio.volume = document.getElementById('volume').value;
     
-    if (isFileProtocol) {
-        // For file://: Use fetch + decodeAudioData for full Web Audio API support
-        console.log('Using Web Audio API (fetch + decode) for file:// protocol');
+    hiddenAudio.addEventListener('loadedmetadata', function onLoad() {
+        hiddenAudio.removeEventListener('loadedmetadata', onLoad);
+        console.log('Audio loaded successfully, duration:', hiddenAudio.duration, 'seconds');
         
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const arrayBuffer = await response.arrayBuffer();
-            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            
-            console.log('Audio decoded successfully, duration:', audioBuffer.duration, 'seconds');
-            
-            // Store buffer for playback
-            window.currentAudioBuffer = audioBuffer;
-            
-            // Create gain node for volume control
-            gainNode = audioContext.createGain();
-            gainNode.gain.value = document.getElementById('volume').value;
-            
-            // Create analyser node
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 2048;
-            
-            // Connect: gain -> analyser -> destination
-            gainNode.connect(analyser);
-            analyser.connect(audioContext.destination);
-            
-            // Store reference
-            audioSource = { gainNode: gainNode };
-            
-            // Update UI
-            const playPauseButton = document.getElementById('play-pause');
-            playPauseButton.disabled = false;
-            
-            // Clear file input
-            document.getElementById('audio-file').value = '';
-            
-            // Auto-play the audio
-            playAudio();
-            
-        } catch (e) {
-            console.error('Error loading audio:', e);
-            alert('Error loading audio sample. Please try again.');
-            const select = document.getElementById('audio-samples-select');
-            if (select) select.value = '';
-        }
+        // Update UI
+        const playPauseButton = document.getElementById('play-pause');
+        playPauseButton.disabled = false;
         
-    } else {
-        // For HTTP: Use native Audio element with MediaElementSource
-        console.log('Using native Audio element for HTTP protocol');
+        // Clear file input
+        document.getElementById('audio-file').value = '';
         
-        // Create hidden audio element
-        hiddenAudio = new Audio();
-        hiddenAudio.src = url;
-        hiddenAudio.preload = 'auto';
-        hiddenAudio.volume = document.getElementById('volume').value;
-        
-        hiddenAudio.addEventListener('canplaythrough', function onCanPlay() {
-            hiddenAudio.removeEventListener('canplaythrough', onCanPlay);
-            console.log('Audio loaded successfully, duration:', hiddenAudio.duration, 'seconds');
-            
-            try {
-                // Create MediaElementSource
-                mediaSource = audioContext.createMediaElementSource(hiddenAudio);
-                
-                // Create analyser node
-                analyser = audioContext.createAnalyser();
-                analyser.fftSize = 2048;
-                
-                // Create gain node for volume control
-                gainNode = audioContext.createGain();
-                gainNode.gain.value = document.getElementById('volume').value;
-                
-                // Connect: mediaSource -> analyser -> gain -> destination
-                mediaSource.connect(analyser);
-                analyser.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                // Store gain node for volume control
-                audioSource = { gainNode: gainNode };
-            } catch (e) {
-                console.error('Error connecting to Web Audio API:', e);
-            }
-            
-            // Update UI
-            const playPauseButton = document.getElementById('play-pause');
-            playPauseButton.disabled = false;
-            
-            // Clear file input
-            document.getElementById('audio-file').value = '';
-            
-            // Auto-play the audio
-            playAudio();
-        });
-        
-        hiddenAudio.addEventListener('ended', function() {
-            console.log('Audio ended');
+        // Auto-play the audio
+        playAudio();
+    });
+    
+    hiddenAudio.addEventListener('ended', function() {
+        console.log('Audio ended');
+        isPlaying = false;
+        updatePlayPauseButton();
+    });
+    
+    hiddenAudio.addEventListener('pause', function() {
+        if (hiddenAudio && hiddenAudio.src && !hiddenAudio.ended) {
+            console.log('Audio paused');
             isPlaying = false;
             updatePlayPauseButton();
-        });
-        
-        hiddenAudio.addEventListener('pause', function() {
-            if (hiddenAudio && hiddenAudio.src && !hiddenAudio.ended) {
-                console.log('Audio paused');
-                isPlaying = false;
-                updatePlayPauseButton();
-            }
-        });
-        
-        hiddenAudio.addEventListener('play', function() {
-            console.log('Audio playing');
-            isPlaying = true;
-            updatePlayPauseButton();
-        });
-        
-        hiddenAudio.addEventListener('error', function(e) {
-            console.error('Error loading audio:', e);
-            alert('Error loading audio sample. Please try again.');
-            const select = document.getElementById('audio-samples-select');
-            if (select) select.value = '';
-        });
-    }
+        }
+    });
+    
+    hiddenAudio.addEventListener('play', function() {
+        console.log('Audio playing');
+        isPlaying = true;
+        updatePlayPauseButton();
+    });
+    
+    hiddenAudio.addEventListener('error', function(e) {
+        console.error('Error loading audio:', e);
+        console.error('Error code:', hiddenAudio.error ? hiddenAudio.error.code : 'unknown');
+        alert('Error loading audio sample. Please try again.');
+        const select = document.getElementById('audio-samples-select');
+        if (select) select.value = '';
+    });
 }
 
 // Stop current audio
 function stopCurrentAudio() {
-    // Stop native audio element
     if (hiddenAudio) {
         hiddenAudio.pause();
         hiddenAudio.src = '';
         hiddenAudio = null;
     }
     
-    // Stop Howler
     if (howl) {
         howl.stop();
         howl = null;
     }
     
-    // Stop BufferSource (for file:// protocol)
-    if (bufferSource) {
-        try {
-            bufferSource.stop();
-            bufferSource.disconnect();
-        } catch(e) {}
-        bufferSource = null;
-    }
-    
-    // Disconnect and reset audio nodes
-    if (mediaSource) {
-        try { mediaSource.disconnect(); } catch(e) {}
-        mediaSource = null;
-    }
-    
-    if (analyser) {
-        try { analyser.disconnect(); } catch(e) {}
-        analyser = null;
-    }
-    
-    if (gainNode) {
-        try { gainNode.disconnect(); } catch(e) {}
-        gainNode = null;
-    }
-    
-    if (audioSource && audioSource.source) {
-        try { audioSource.source.stop(); } catch(e) {}
-    }
-    audioSource = null;
     isPlaying = false;
 }
 
-// Play audio - handles both file:// (BufferSource) and HTTP (native Audio)
+// Play audio using native Audio element
 function playAudio() {
-    const isFileProtocol = window.location.protocol === 'file:';
+    if (!hiddenAudio || !hiddenAudio.src) return;
     
-    if (isFileProtocol && window.currentAudioBuffer) {
-        // Play using BufferSourceNode (for file:// protocol)
-        bufferSource = audioContext.createBufferSource();
-        bufferSource.buffer = window.currentAudioBuffer;
-        
-        // Reconnect gain node if it was disconnected
-        if (gainNode && !gainNode.context) {
-            gainNode = audioContext.createGain();
-            gainNode.gain.value = document.getElementById('volume').value;
-        }
-        
-        // Connect: bufferSource -> gain -> analyser -> destination
-        bufferSource.connect(gainNode);
-        if (analyser && gainNode) {
-            gainNode.connect(analyser);
-            analyser.connect(audioContext.destination);
-        } else if (gainNode) {
-            gainNode.connect(audioContext.destination);
-        }
-        
-        // Handle audio end
-        bufferSource.onended = () => {
-            console.log('Audio ended');
-            isPlaying = false;
-            updatePlayPauseButton();
-            bufferSource = null;
-        };
-        
-        // Start playback
-        bufferSource.start(0);
+    hiddenAudio.play().then(() => {
+        console.log('Audio playing');
         isPlaying = true;
         updatePlayPauseButton();
-        console.log('Playing audio via BufferSource');
-        
-    } else if (hiddenAudio && hiddenAudio.src) {
-        // Play using native Audio element (for HTTP protocol)
-        hiddenAudio.play().then(() => {
-            console.log('Playing audio via native Audio element');
-        }).catch(err => {
-            console.error('Error playing audio:', err);
-        });
-    }
-}
-
-// Pause audio
-function pauseAudio() {
-    const isFileProtocol = window.location.protocol === 'file:';
-    
-    if (isFileProtocol && bufferSource) {
-        // For BufferSource, we need to stop it (can't truly pause)
-        bufferSource.stop();
-        bufferSource = null;
-        isPlaying = false;
-        updatePlayPauseButton();
-    } else if (hiddenAudio) {
-        hiddenAudio.pause();
-    }
+    }).catch(err => {
+        console.error('Error playing audio:', err);
+    });
 }
 
 // Toggle audio playback
 function togglePlayback() {
-    if (!hiddenAudio && !window.currentAudioBuffer && !audioBuffer) return;
+    if (!hiddenAudio || !hiddenAudio.src) return;
     
-    const isFileProtocol = window.location.protocol === 'file:';
-    
-    if (isFileProtocol) {
-        // For file://: use BufferSource
-        if (isPlaying) {
-            pauseAudio();
-        } else {
-            playAudio();
-        }
+    if (hiddenAudio.paused) {
+        hiddenAudio.play();
     } else {
-        // For HTTP: use native Audio
-        if (hiddenAudio && hiddenAudio.src) {
-            if (hiddenAudio.paused) {
-                hiddenAudio.play();
-            } else {
-                hiddenAudio.pause();
-            }
-        } else if (audioBuffer) {
-            // Fallback to Web Audio API for uploaded files
-            if (isPlaying) {
-                if (audioSource && audioSource.source) {
-                    audioSource.source.stop();
-                    isPlaying = false;
-                }
-            } else {
-                playAudioWebAPI();
-            }
-        }
+        hiddenAudio.pause();
     }
-    
-    updatePlayPauseButton();
 }
 
 // Play audio using Web Audio API (for uploaded files)
