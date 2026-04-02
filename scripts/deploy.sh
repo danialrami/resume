@@ -29,11 +29,15 @@ echo "Checking for source code changes..."
 echo "============================================"
 
 git add -A
-git reset dist/
+git reset dist/ 2>/dev/null || true
 
-if git diff --cached --quiet && git diff --quiet; then
+STAGED=$(git diff --cached --name-only 2>/dev/null | wc -l | tr -d ' ')
+UNSTAGED=$(git diff --name-only 2>/dev/null | wc -l | tr -d ' ')
+
+if [ "$STAGED" -eq 0 ] && [ "$UNSTAGED" -eq 0 ]; then
     echo "No source code changes to commit."
 else
+    echo "Committing source code changes..."
     git commit -m "Production build $(date +'%Y-%m-%d %H:%M:%S')"
     echo "Pushing source changes to origin main..."
     git push origin main
