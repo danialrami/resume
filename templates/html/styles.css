@@ -70,69 +70,27 @@ ul {
     margin-bottom: 1rem;
 }
 
-/* Loading Screen */
-.loading-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--bg-color);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    transition: opacity 0.5s ease;
-}
-
-.cloud-logo {
-    width: 150px;
-    height: 150px;
-    margin-bottom: 2rem;
-    animation: pulse 2s infinite;
-}
-
-.loading-text {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-    color: var(--primary-accent);
-}
-
-.loading-bar {
-    width: 300px;
-    height: 10px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 5px;
-    overflow: hidden;
-}
-
-.loading-progress {
-    height: 100%;
-    width: 0;
-    background-color: var(--primary-accent);
-    transition: width 0.5s ease;
-}
-
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.05);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
 /* Container */
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 3rem; /* Increased from 2rem to 3rem */
-    opacity: 0;
-    transition: opacity 1s ease;
+    padding: 0 3rem;
+}
+
+/* Fade-in animation for page load */
+.container.visible {
+    animation: fadeIn 0.8s ease forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Updated navigation styling with tighter spacing */

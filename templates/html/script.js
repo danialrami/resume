@@ -18,9 +18,6 @@ let howl = null;
 
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize loading screen
-    initLoading();
-    
     // Initialize audio elements
     initAudio();
     
@@ -33,35 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize navigation
     initNavigation();
 });
-
-// Loading screen initialization
-function initLoading() {
-    const loadingScreen = document.querySelector('.loading-screen');
-    const container = document.querySelector('.container');
-    const loadingProgress = document.querySelector('.loading-progress');
-    
-    // Simulate loading progress
-    let progress = 0;
-    const loadingInterval = setInterval(() => {
-        progress += Math.random() * 10;
-        if (progress >= 100) {
-            progress = 100;
-            clearInterval(loadingInterval);
-            
-            // Hide loading screen after a short delay
-            setTimeout(() => {
-                loadingScreen.style.opacity = '0';
-                container.style.opacity = '1';
-                
-                setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                    isLoaded = true;
-                }, 500);
-            }, 500);
-        }
-        loadingProgress.style.width = `${progress}%`;
-    }, 200);
-}
 
 // Audio initialization
 function initAudio() {
@@ -258,17 +226,23 @@ function loadAudioFromURL(url) {
 // Initialize Howler analyser for visualizations
 function initHowlerAnalyser() {
     // Create analyser using Howler's Web Audio context
-    if (!howlerAnalyser && Howler.ctx) {
+    if (!howlerAnalyser && typeof Howler !== 'undefined' && Howler.ctx) {
         howlerAnalyser = Howler.ctx.createAnalyser();
         howlerAnalyser.fftSize = 2048;
+        howlerAnalyser.smoothingTimeConstant = 0.8;
         
-        // Connect Howler.masterGain -> analyser -> destination
-        Howler.masterGain.connect(howlerAnalyser);
+        // Connect through Howler's masterGain
+        if (Howler.masterGain) {
+            Howler.masterGain.connect(howlerAnalyser);
+            console.log('Connected analyser to Howler.masterGain');
+        }
         howlerAnalyser.connect(Howler.ctx.destination);
         
         // Use this analyser for visualizations
         analyser = howlerAnalyser;
-        console.log('Howler analyser initialized');
+        console.log('Howler analyser initialized:', analyser);
+        console.log('Howler.ctx exists:', !!Howler.ctx);
+        console.log('Howler.masterGain exists:', !!Howler.masterGain);
     }
 }
 
