@@ -44,10 +44,13 @@ if git branch --list | grep -q "$DEPLOY_BRANCH"; then
 fi
 
 echo "Splitting dist/html to $DEPLOY_BRANCH branch..."
+git add dist/html --force
 if ! git subtree split --prefix dist/html -b "$DEPLOY_BRANCH"; then
     echo "Subtree split failed."
+    git reset HEAD dist/html
     exit 1
 fi
+git reset HEAD dist/html
 
 echo "Force pushing to origin $DEPLOY_BRANCH..."
 if ! git push origin "$DEPLOY_BRANCH:hostinger" --force; then
