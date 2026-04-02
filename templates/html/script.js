@@ -91,10 +91,12 @@ function initAudio() {
     // Volume control
     const volumeControl = document.getElementById('volume');
     volumeControl.addEventListener('input', (e) => {
+        const volume = parseFloat(e.target.value);
         if (howl) {
-            howl.volume(parseFloat(e.target.value));
-        } else if (audioContext && audioSource) {
-            audioSource.gainNode.gain.value = e.target.value;
+            howl.volume(volume);
+        }
+        if (audioSource && audioSource.gainNode) {
+            audioSource.gainNode.gain.value = volume;
         }
     });
     
@@ -174,17 +176,55 @@ function handleSampleSelection(e) {
     loadAudioFromURL(url);
 }
 
-// Load audio from URL using Howler
+// Hidden audio element for Web Audio API connection
+let hiddenAudio = null;
+let mediaSource = null;
+
+// Load audio from URL using Howler with Web Audio API analyser connection
 function loadAudioFromURL(url) {
     console.log('Loading audio from URL:', url);
     
     // Stop any currently playing audio
     stopCurrentAudio();
     
-    // Create new Howl instance
+    // Initialize Web Audio API context if needed
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    // Resume audio context (required after user interaction)
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+    
+    // Create hidden audio element
+    hiddenAudio = new Audio();
+    hiddenAudio.crossOrigin = 'anonymous';
+    hiddenAudio.src = url;
+    hiddenAudio.preload = 'auto';
+    
+    // Create MediaElementSource to connect to Web Audio API
+    mediaSource = audioContext.createMediaElementSource(hiddenAudio);
+    
+    // Create analyser node
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    
+    // Connect: mediaSource -> analyser -> gain -> destination
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = document.getElementById('volume').value;
+    
+    mediaSource.connect(analyser);
+    analyser.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Store gain node for volume control
+    audioSource = { gainNode: gainNode };
+    
+    // Create Howl instance that plays our hidden audio element
     howl = new Howl({
         src: [url],
-        html5: true,  // Critical: enables file:// protocol support
+        html5: true,  // Needed for file:// protocol
         format: ['wav', 'mp3', 'ogg', 'm4a', 'flac', 'aac'],
         volume: document.getElementById('volume').value,
         onload: function() {
@@ -234,7 +274,28 @@ function loadAudioFromURL(url) {
 function stopCurrentAudio() {
     if (howl) {
         howl.stop();
+        howl.unload();
+        howl = null;
     }
+    
+    // Clean up hidden audio element
+    if (hiddenAudio) {
+        hiddenAudio.pause();
+        hiddenAudio.src = '';
+        hiddenAudio = null;
+    }
+    
+    // Disconnect media source
+    if (mediaSource) {
+        mediaSource.disconnect();
+        mediaSource = null;
+    }
+    
+    // Disconnect analyser
+    if (analyser) {
+        analyser.disconnect();
+    }
+    
     if (audioSource && audioSource.source) {
         audioSource.source.stop();
     }
