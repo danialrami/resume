@@ -13,6 +13,9 @@ let composer;
 let audioData = [];
 let isLoaded = false;
 
+// Howler instance for audio playback
+let howl = null;
+
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize loading screen
@@ -88,7 +91,9 @@ function initAudio() {
     // Volume control
     const volumeControl = document.getElementById('volume');
     volumeControl.addEventListener('input', (e) => {
-        if (audioContext && audioSource) {
+        if (howl) {
+            howl.volume(parseFloat(e.target.value));
+        } else if (audioContext && audioSource) {
             audioSource.gainNode.gain.value = e.target.value;
         }
     });
@@ -120,6 +125,12 @@ function handleAudioUpload(e) {
     
     console.log('Uploading audio file:', file.name);
     
+    // Stop any currently playing Howl
+    if (howl) {
+        howl.stop();
+        howl = null;
+    }
+    
     const reader = new FileReader();
     reader.onload = (event) => {
         const arrayBuffer = event.target.result;
@@ -130,11 +141,7 @@ function handleAudioUpload(e) {
         }
         
         // Stop any currently playing audio
-        if (audioSource && audioSource.source) {
-            audioSource.source.stop();
-            isPlaying = false;
-            updatePlayPauseButton();
-        }
+        stopCurrentAudio();
         
         // Decode audio data
         audioContext.decodeAudioData(arrayBuffer, (buffer) => {
@@ -149,7 +156,7 @@ function handleAudioUpload(e) {
             document.getElementById('audio-samples-select').value = '';
             
             // Auto-play the uploaded audio
-            playAudio();
+            playAudioWebAPI();
         }, (error) => {
             console.error('Error decoding audio data:', error);
         });
@@ -167,34 +174,21 @@ function handleSampleSelection(e) {
     loadAudioFromURL(url);
 }
 
-// Load audio from URL
+// Load audio from URL using Howler
 function loadAudioFromURL(url) {
-    // Initialize audio context if not already created
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
+    console.log('Loading audio from URL:', url);
     
     // Stop any currently playing audio
-    if (audioSource && audioSource.source) {
-        audioSource.source.stop();
-        isPlaying = false;
-        updatePlayPauseButton();
-    }
+    stopCurrentAudio();
     
-    fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            console.log('Fetch response OK, loading audio data...');
-            return response.arrayBuffer();
-        })
-        .then(arrayBuffer => {
-            return audioContext.decodeAudioData(arrayBuffer);
-        })
-        .then(buffer => {
-            audioBuffer = buffer;
-            console.log('Audio from URL decoded successfully, duration:', buffer.duration, 'seconds');
+    // Create new Howl instance
+    howl = new Howl({
+        src: [url],
+        html5: true,  // Critical: enables file:// protocol support
+        format: ['wav', 'mp3', 'ogg', 'm4a', 'flac', 'aac'],
+        volume: document.getElementById('volume').value,
+        onload: function() {
+            console.log('Audio loaded successfully, duration:', howl.duration(), 'seconds');
             
             // Update UI
             const playPauseButton = document.getElementById('play-pause');
@@ -205,18 +199,83 @@ function loadAudioFromURL(url) {
             
             // Auto-play the audio
             playAudio();
-        })
-        .catch(error => {
-            console.error('Error loading audio from URL:', error);
+        },
+        onloaderror: function(id, error) {
+            console.error('Error loading audio:', error);
             alert('Error loading audio sample. Please try again.');
             // Reset dropdown
             const select = document.getElementById('audio-samples-select');
             if (select) select.value = '';
-        });
+        },
+        onplay: function() {
+            console.log('Audio started playing');
+            isPlaying = true;
+            updatePlayPauseButton();
+        },
+        onpause: function() {
+            console.log('Audio paused');
+            isPlaying = false;
+            updatePlayPauseButton();
+        },
+        onstop: function() {
+            console.log('Audio stopped');
+            isPlaying = false;
+            updatePlayPauseButton();
+        },
+        onend: function() {
+            console.log('Audio ended');
+            isPlaying = false;
+            updatePlayPauseButton();
+        }
+    });
 }
 
-// Play audio
+// Stop current audio (either Howler or Web Audio API)
+function stopCurrentAudio() {
+    if (howl) {
+        howl.stop();
+    }
+    if (audioSource && audioSource.source) {
+        audioSource.source.stop();
+    }
+    isPlaying = false;
+}
+
+// Play audio using Howler
 function playAudio() {
+    if (!howl) return;
+    howl.play();
+    isPlaying = true;
+    updatePlayPauseButton();
+}
+
+// Toggle audio playback
+function togglePlayback() {
+    if (!howl && !audioBuffer) return;
+    
+    if (howl) {
+        if (howl.playing()) {
+            howl.pause();
+        } else {
+            howl.play();
+        }
+    } else if (audioBuffer) {
+        // Fallback to Web Audio API for uploaded files
+        if (isPlaying) {
+            if (audioSource && audioSource.source) {
+                audioSource.source.stop();
+                isPlaying = false;
+            }
+        } else {
+            playAudioWebAPI();
+        }
+    }
+    
+    updatePlayPauseButton();
+}
+
+// Play audio using Web Audio API (for uploaded files)
+function playAudioWebAPI() {
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
@@ -254,24 +313,6 @@ function playAudio() {
         isPlaying = false;
         updatePlayPauseButton();
     };
-}
-
-// Toggle audio playback
-function togglePlayback() {
-    if (!audioBuffer) return;
-    
-    if (isPlaying) {
-        // Pause audio
-        if (audioSource && audioSource.source) {
-            audioSource.source.stop();
-            isPlaying = false;
-        }
-    } else {
-        // Play audio
-        playAudio();
-    }
-    
-    updatePlayPauseButton();
 }
 
 // Update play/pause button icon

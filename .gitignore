@@ -13,3 +13,8 @@ dist/
 # OS files
 .DS_Store
 Thumbs.db
+assets/audio/*.wav
+assets/audio/*.mp3
+assets/audio/*.ogg
+assets/audio/*.flac
+dist/html/assets/
