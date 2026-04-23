@@ -1,8 +1,14 @@
 # Virtual Environment
 .venv/
 
+# Environment variables (contains API keys)
+.env
+
 # Generated outputs (built sites)
 dist/
+
+# ChromaDB embeddings database
+db/chroma/
 
 # Source audio files (kept as high-quality WAV locally)
 assets/audio/*.wav
