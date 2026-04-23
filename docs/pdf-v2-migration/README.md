@@ -15,6 +15,7 @@ Build a modular pipeline that takes a job description URL or text, uses semantic
 5. [V2 Architecture](#v2-architecture)
 6. [Implementation Plan](#implementation-plan)
 7. [Configuration Reference](#configuration-reference)
+8. [V3: Web Enrichment & Application History](#v3-web-enrichment--application-history)
 
 ---
 
@@ -540,12 +541,255 @@ python -m scripts.pdf_v2.pipeline --jd job-posting.txt
 
 ---
 
+## V3: Web Enrichment & Application History
+
+*This section documents Version 3 features: web content scraping, application history tracking, and enhanced tagging.*
+
+### V3 Overview
+
+```
+Job Description
+       │
+       ▼
+┌─────────────────────────────────────────────────────────┐
+│ 1. SCRAPING: Check data/scraping_sources.yaml          │
+│    → Scrape new/stale sites from daniel-ramirez.io     │
+│    → Save to db/content/{domain}/                     │
+└─────────────────────┬───────────────────────────────────┘
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│ 2. ENRICHMENT: LLM extracts transferable   │
+│    tags from scraped content                  │
+│    → Update data/resume.yaml                │
+│    → Rebuild ChromaDB                       │
+└─────────────────────┬───────────────────────────────────┘
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│ 3. SELECTION: Enhanced scoring          │
+│    Direct (1.0x) + Transferable (0.7x) │
+│    + Web Context Boost                       │
+└─────────────────────┬───────────────────────────────────┘
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│ 4. APPLICATION HISTORY (Optional)      │
+│    → Check prior applications              │
+│    → Log new applications             │
+│    → Enable similarity search         │
+└─────────────────────┬───────────────────────────────────┘
+                     ▼
+       ▼
+   Generated Resume
+```
+
+### New Components
+
+| Component | Script | Purpose |
+|-----------|--------|---------|
+| Web Scraper | `scripts/pdf_v2/web_content.py` | Scrape daniel-ramirez.io → subsites |
+| Tag Expander | `scripts/pdf_v2/tag_expander.py` | LLM-assisted tag generation |
+| Application History | `scripts/pdf_v2/history.py` | Track applications |
+| Vision Validation | Updated `validator.py` | Using LLM_VISION_MODEL |
+
+---
+
+### Data Sources (from daniel-ramirez.io)
+
+```yaml
+# data/scraping_sources.yaml
+
+sources:
+  - url: https://daniel-ramirez.io
+    type: directory
+    description: Central link directory
+    parse_mode: extract_links
+  
+  - url: https://lufs.audio
+    type: main_site
+    description: Main portfolio
+  
+  - url: https://portfolio.lufs.audio  
+    type: portfolio
+    description: Detailed portfolio work
+    
+  - url: https://danialrami.com
+    type: personal
+    description: Personal site
+    
+  - url: https://github.com/danialrami
+    type: github
+    description: Public repos via GitHub API
+```
+
+**Note:** LinkedIn skipped for now - content available on other sites.
+
+---
+
+### Application History DB
+
+**Purpose:** Track generated resumes for:
+- Semantic similarity to avoid duplicate applications
+- Logging of what was sent to each job
+- Future analytics on application success
+
+**Storage:** ChromaDB (flexible, feature-rich)
+
+**Schema:**
+```python
+{
+    "id": "job_url_hash",
+    "job_url": "https://...",
+    "job_title": "Stage Coordinator",
+    "applied_date": "2026-04-23",
+    "pdf_path": "dist/pdf/v2/tailored_san_antonio.pdf",
+    "match_score": 0.85,
+    "status": "applied",  # applied/interested/not-fit
+    "notes": ""
+}
+```
+
+---
+
+### Enhanced Content Model
+
+```yaml
+# Enhanced bullet format with multi-field tagging
+
+experience:
+  - company: LUFS Audio
+    role: Sound Designer
+    dates: "July 2024 – Present"
+    summary: "Lead sound designer for Hinge Health, xAI, Meta, Roblox"
+    description:
+      - Lead sound designer for tech clients...
+    tags:           # Direct role keywords
+      - wwise
+      - mobile-audio
+    transferable:    # KEY: Keywords for adjacent roles
+      - client-coordination
+      - team-leadership
+      - project-management
+    industries:     # Industry-specific
+      - tech
+      - health-tech
+```
+
+---
+
+### Pipeline Flow (Updated)
+
+```
+1. LOAD JOB DESCRIPTION
+   └─ Load JD from URL or text file
+   
+2. CHECK HISTORY (NEW)
+   └─ If already applied: warn user, show prior score
+   └─ If new: continue
+   
+3. SCRAPE (if stale)
+   └─ Check data/scraping_sources.yaml
+   └─ Scrape new/stale sites → db/content/
+   
+4. SEMANTIC SEARCH  
+   └─ Query ChromaDB with enhanced content
+   
+5. CONTENT SELECTION (Enhanced)
+   └─ Score: direct (1.0x) + transferable (0.7x)
+   
+6. LLM REWRITE
+   └─ Guardrailed bullet rewriting
+   
+7. ITERATION LOOP
+   └─ Compile → check → drop → repeat
+   
+8. VALIDATION
+   ├─ Simple: Regex check for RESUME_* placeholders
+   └─ Vision: LLM_VISION_MODEL (if enabled)
+   
+9. SAVE HISTORY (NEW)
+   └─ Log application to ChromaDB
+   
+10. OUTPUT PDF
+```
+
+---
+
+### Configuration (.env)
+
+```bash
+# ====== SCRAPING ======
+SCRAPING_SOURCES=data/scraping_sources.yaml
+CONTENT_CACHE_DIR=db/content
+
+# ====== LLM CONFIG ======
+LLM_BASE_URL=http://100.89.168.11:6280/v1
+LLM_API_KEY=your-api-key
+LLM_MODEL=coder
+LLM_VISION_MODEL=vision  # Vision-capable model
+
+# ====== APPLICATION HISTORY ======
+HISTORY_DB_ENABLED=true
+HISTORY_DB_PATH=db/history
+
+# ====== VALIDATION ======
+VALIDATION_ENABLED=true
+VALIDATION_VISION_ENABLED=false  # Set true when ready
+```
+
+---
+
+### New Scripts Usage
+
+```bash
+# Scrape and enrich content (one-time)
+python -m scripts.pdf_v2.web_content scrape
+
+# Rebuild ChromaDB with enriched data
+python -m scripts.pdf_v2.db_manager rebuild
+
+# Check application history
+python -m scripts.pdf_v2.history check "https://jobposting.url"
+
+# Run full pipeline
+python -m scripts.pdf_v2.pipeline --jd "https://jobposting.url"
+```
+
+---
+
+### File Structure (V3)
+
+```
+resume/
+├── data/
+│   ├── resume.yaml
+│   └── scraping_sources.yaml   # NEW
+├── db/
+│   ├── chroma/               # Resume embeddings
+│   ├── content/              # NEW: Scraped content per site
+│   │   ├── daniel-ramirez.io/
+│   │   ├── lufs.audio/
+│   │   └── github.com/
+│   └── history/              # NEW: Application tracking
+├── scripts/
+│   ├── pdf_v2/
+│   │   ├── web_content.py   # NEW
+│   │   ├── tag_expander.py  # NEW
+│   │   ├── history.py       # NEW
+│   │   └── ...
+│   └── prompts/
+│       └── extract_profile.md # NEW
+└── docs/
+    └── pdf-v2-migration/
+```
+
+---
+
 ## References
 
-- [AutoCustomizeResume](https://github.com/avishj/AutoCustomizeResume) - Iteration loop inspiration
-- [ChromaDB Docs](https://docs.trychroma.com/) - Vector DB
-- [TeX StackExchange: Force one page](https://tex.stackexchange.com/questions/389766) - LaTeX enforcement
-- Gemini conversation: `docs/gemini/locking-to-1-page.md`
+- Web scraping: BeautifulSoup, requests
+- GitHub API: https://api.github.com/users/{username}/repos
+- ChromaDB for embeddings: docs.trychroma.com
+- [LUFS Blog Pipeline](https://github.com/danialramirez/lufs-blog-pipeline) - Web scraping patterns
+- Previous sections document V1-V2 features
 
 ---
 
