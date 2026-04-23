@@ -10,6 +10,12 @@ dist/
 # ChromaDB embeddings database
 db/chroma/
 
+# Scraped content cache
+db/content/
+
+# Application history
+db/history/
+
 # Source audio files (kept as high-quality WAV locally)
 assets/audio/*.wav
 assets/audio/*.mp3

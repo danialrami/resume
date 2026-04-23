@@ -1,0 +1,38 @@
+# Web scraping sources configuration
+# Defines websites to scrape for profile content enrichment
+
+sources:
+  - url: https://daniel-ramirez.io
+    type: directory
+    description: Central link directory - parse to get subsite URLs
+    parse_mode: extract_links
+    enabled: true
+
+  - url: https://lufs.audio
+    type: main_site
+    description: Main portfolio and services
+    parse_mode: full_content
+    enabled: true
+
+  - url: https://portfolio.lufs.audio
+    type: portfolio
+    description: Detailed portfolio work
+    parse_mode: full_content
+    enabled: true
+
+  - url: https://danialrami.com
+    type: personal
+    description: Personal site
+    parse_mode: full_content
+    enabled: true
+
+  - url: https://github.com/danialrami
+    type: github
+    description: Public repositories via GitHub API
+    parse_mode: api
+    enabled: true
+
+# LinkedIn - requires auth, skip for now
+# - url: https://www.linkedin.com/in/danialrami
+#   type: linkedin
+#   requires_auth: true

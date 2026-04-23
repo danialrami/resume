@@ -35,6 +35,11 @@ VALIDATION_VISION_ENABLED = os.getenv("VALIDATION_VISION_ENABLED", "false").lowe
 VALIDATION_REFERENCE_PDF = BASE_DIR / os.getenv("VALIDATION_REFERENCE_PDF", "dist/pdf/resume.pdf")
 PROMPTS_DIR = BASE_DIR / os.getenv("PROMPTS_DIR", "scripts/prompts")
 
+SCRAPING_SOURCES = DATA_DIR / "scraping_sources.yaml"
+CONTENT_CACHE_DIR = BASE_DIR / os.getenv("CONTENT_CACHE_DIR", "db/content")
+HISTORY_DB_DIR = BASE_DIR / os.getenv("HISTORY_DB_PATH", "db/history")
+HISTORY_DB_ENABLED = os.getenv("HISTORY_DB_ENABLED", "true").lower() == "true"
+
 LATEX_COMPILER = os.getenv("LATEX_COMPILER", "xelatex")
 
 def get_llm_client():
