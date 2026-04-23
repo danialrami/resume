@@ -1,38 +1,61 @@
 # Web scraping sources configuration
 # Defines websites to scrape for profile content enrichment
 
+# Version 2: Enhanced with depth configuration
+
 sources:
+  # Directory - scan for subsites first
   - url: https://daniel-ramirez.io
     type: directory
-    description: Central link directory - parse to get subsite URLs
-    parse_mode: extract_links
+    description: Central link directory
     enabled: true
+
+  # Main sites to deeply mirror
+  - url: https://danialrami.com
+    type: website
+    description: Personal blog and site
+    enabled: true
+    max_depth: 5
+    exclude:
+      - /tag/*
+      - /category/*
+      - /archive/*
+      - /feed*
+      - /page/*
 
   - url: https://lufs.audio
-    type: main_site
-    description: Main portfolio and services
-    parse_mode: full_content
+    type: website
+    description: Main portfolio
     enabled: true
+    max_depth: 3
+    priority: high
 
   - url: https://portfolio.lufs.audio
-    type: portfolio
+    type: website
     description: Detailed portfolio work
-    parse_mode: full_content
     enabled: true
-
-  - url: https://danialrami.com
-    type: personal
-    description: Personal site
-    parse_mode: full_content
-    enabled: true
+    max_depth: 5
+    priority: high
 
   - url: https://github.com/danialrami
     type: github
     description: Public repositories via GitHub API
-    parse_mode: api
     enabled: true
+    include_forks: false
+    max_repos: 50
 
-# LinkedIn - requires auth, skip for now
-# - url: https://www.linkedin.com/in/danialrami
-#   type: linkedin
-#   requires_auth: true
+# Skip LinkedIn - content available elsewhere
+
+# Settings for all scrapers
+settings:
+  # Delay between requests (seconds)
+  rate_limit_delay: 1.5
+  
+  # User agent
+  user_agent: "Mozilla/5.0 (compatible; ResumeBot/1.0)"
+  
+  # Cache duration before re-scrape (days)
+  cache_max_age: 7
+  
+  # Timeout per page (seconds)
+  request_timeout: 30
