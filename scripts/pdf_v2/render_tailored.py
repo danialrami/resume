@@ -1,134 +1,13 @@
-"""Tailored LaTeX rendering for V2 pipeline."""
+"""Tailored LaTeX rendering - uses V1 template as base."""
 
-import shutil
+import yaml
 from pathlib import Path
-from typing import List
-from datetime import datetime
-
-from .config import BASE_DIR, OUTPUT_DIR
-
-
-LATEX_TEMPLATE = r"""\documentclass[letterpaper,10pt]{article}
-
-\usepackage{latexsym}
-\usepackage[empty]{fullpage}
-\usepackage{titlesec}
-\usepackage{marvosym}
-\usepackage[usenames,dvipsnames]{color}
-\usepackage{verbatim}
-\usepackage{enumitem}
-\usepackage[hidelinks]{hyperref}
-\usepackage{fancyhdr}
-\usepackage[english]{babel}
-\usepackage{tabularx}
-\usepackage{fontawesome5}
-\usepackage{xcolor}
-\usepackage{setspace}
-
-\definecolor{teal}{HTML}{78BEBA}
-\definecolor{red}{HTML}{D35233}
-\definecolor{blue}{HTML}{2C5AA0}
-\definecolor{black}{HTML}{111111}
-
-\pagestyle{fancy}
-\fancyhf{}
-\fancyfoot{}
-\renewcommand{\headrulewidth}{0pt}
-\renewcommand{\footrulewidth}{0pt}
-
-\addtolength{\oddsidemargin}{-0.6in}
-\addtolength{\evensidemargin}{-0.6in}
-\addtolength{\textwidth}{1.2in}
-\addtolength{\topmargin}{-0.6in}
-\addtolength{\textheight}{1.2in}
-
-\urlstyle{same}
-\raggedbottom
-\raggedright
-\setlength{\tabcolsep}{0in}
-
-\titleformat{\section}{
-  \vspace{-4pt}\scshape\raggedright\large\color{red}
-}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
-
-\newcommand{\resumeItem}[1]{
-  \item\footnotesize{#1 \vspace{-3pt}}
-}
-
-\newcommand{\resumeSubheading}[4]{
-  \vspace{-3pt}\item
-  \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
-    \textbf{\color{teal}#1} & \textcolor{blue}{\textit{#2}} \\
-    \textit{\footnotesize#3} & \textit{\footnotesiz #4} \\
-  \end{tabular*}\vspace{-8pt}
-}
-
-\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
-
-\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in]}
-\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
-\newcommand{\resumeItemListStart}{\begin{itemize}}
-\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
-
-\begin{document}
-
-\begin{center}
-    {\Huge \textbf{DANIEL RAMIREZ}} \\
-    \vspace{3pt}
-    {\Large \textcolor{teal}{Sound Designer}} \\
-    \vspace{10pt}
-    \href{daniel@danialrami.com}{\faEnvelope\ daniel@danialrami.com} $
-    |$ \href{tel:+17146161558}{\faMobile\ (714) 616-1558} $
-    |$ \href{https://danialramirez.com}{\faGlobe\ danialramirez.com}
-\end{center}
-
-\section{PROFESSIONAL PROFILE}
-\vspace{3pt}
-TAILORED_PROFILE
-
-\section{EXPERIENCE}
-\resumeSubHeadingListStart
-
-EXPERIENCE_ITEMS
-
-\resumeSubHeadingListEnd
-
-\section{TECHNICAL SKILLS}
-\resumeSubHeadingListStart}
-\begin{tabular}{ @{} >{\bfseries\color{teal}}l @{\hspace{4pt}} l }
-SKILLS_SECTION
-\end{tabular}
-\resumeSubHeadingListEnd
-
-\section{EDUCATION}
-\resumeSubHeadingListStart
-
-EDUCATION_ITEMS
-
-\resumeSubHeadingListEnd
-
-\section{PROJECTS}
-\resumeSubHeadingListStart
-
-PROJECT_ITEMS
-
-\resumeSubHeadingListEnd
-
-\AtEndDocument{%
-    \ifnum\value{page}>1%
-        \PackageError{ResumeLength}{Resume exceeds one page!}{}%
-    \fi%
-}%
-
-\end{document}
-"""
 
 
 def escape_latex(text: str) -> str:
     """Escape special LaTeX characters."""
     if not text:
         return ""
-    
     if isinstance(text, (int, float)):
         text = str(text)
     
@@ -145,7 +24,6 @@ def escape_latex(text: str) -> str:
     ]
     for old, new in replacements:
         text = text.replace(old, new)
-    
     return text
 
 
@@ -155,61 +33,61 @@ def generate_latex(
     output_path: Path
 ) -> Path:
     """
-    Generate tailored LaTeX from selected content.
+    Generate tailored LaTeX.
     
-    Args:
-        content: List of bullet dicts with content, metadata
-        template_path: Path to template file
-        output_path: Output .tex path
-    
-    Returns:
-        Path to generated .tex file
+    Uses existing V1 template as base, replaces only experience section.
     """
+    import yaml
+    
+    base_dir = template_path.parent.parent.parent
+    yaml_path = base_dir / "data" / "resume.yaml"
+    yaml_data = yaml.safe_load(yaml_path.read_text())
+    
     if not output_path.parent.exists():
         output_path.parent.mkdir(parents=True, exist_ok=True)
     
     if template_path.exists():
         template = template_path.read_text()
     else:
+        from .render_tailored import LATEX_TEMPLATE
         template = LATEX_TEMPLATE
     
+    # Build experience from selected content
     experience_items = []
     skills_set = set()
     
     for item in content:
-        bullet = escape_latex(item.get("content", ""))
         meta = item.get("metadata", {})
-        company = escape_latex(meta.get("company", ""))
+        company = meta.get("company", "")
+        if not company:
+            continue
         
-        if meta.get("category") == "experience" and company:
-            experience_items.append(
-                f"\\resumeSubheading{{{company}}}{{2022–2024}}"
-                f"{{Sound Designer}}{{San Francisco, CA}}"
-                f"\\resumeItemListStart"
-                f"\\resumeItem{{{bullet}}}"
-                f"\\resumeItemListEnd"
-            )
+        bullet = escape_latex(item.get("content", ""))[:180]
         
-        tags_str = meta.get("tags", "")
-        if tags_str:
-            for tag in tags_str.split(","):
-                if tag.strip():
-                    skills_set.add(tag.strip())
+        # Add skills
+        tags = meta.get("tags", "")
+        if tags:
+            for tag in tags.split(","):
+                t = tag.strip()
+                if t:
+                    skills_set.add(t.capitalize())
+        
+        experience_items.append("\\resumeSubheading")
+        experience_items.append(f"{{{escape_latex(meta.get('role', 'Sound Designer'))}}}{{{meta.get('dates', '2024–Present')}}}")
+        experience_items.append(f"{{{escape_latex(company)}}}{{{escape_latex(meta.get('location', 'Remote'))}}}")
+        experience_items.append("\\resumeItemListStart")
+        experience_items.append(f"\\resumeItem{{{bullet}}}")
+        experience_items.append("\\resumeItemListEnd")
     
-    skills_str = ", ".join(sorted(skills_set))
+    skills_str = ", ".join(sorted(skills_set)) if skills_set else "Wwise, FMOD"
     
-    template = template.replace("TAILORED_PROFILE", 
-        "Sound Designer with expertise in interactive audio and UX sound design.")
-    template = template.replace("EXPERIENCE_ITEMS", 
-        "\n".join(experience_items) if experience_items else 
-        "\\resumeSubheading{Company}{Dates}{Role}{Location}")
-    template = template.replace("SKILLS_SECTION", 
-        f"Tools & {skills_str}")
-    template = template.replace("EDUCATION_ITEMS", 
-        "\\resumeSubheading{NYU Steinhardt}{2019}{B.M. Music Theory}{}")
-    template = template.replace("PROJECT_ITEMS", 
-        "\\resumeSubheading{Projects}{}{}{}")
+    # Replace in template
+    exp_section = '\n'.join(experience_items)
+    profile = yaml_data.get('profile', 'Sound Designer')[0:300]
+    
+    template = template.replace('RESUME_EXPERIENCE', exp_section)
+    template = template.replace('RESUME_PROFILE', escape_latex(profile))
+    template = template.replace('RESUME_SKILLS', skills_str)
     
     output_path.write_text(template)
-    
     return output_path

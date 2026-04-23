@@ -10,12 +10,14 @@ BASE_DIR = Path(__file__).parent.parent.parent
 
 DATA_DIR = BASE_DIR / os.getenv("DATA_PATH", "data")
 DB_DIR = BASE_DIR / os.getenv("DB_PATH", "db/chroma")
-OUTPUT_DIR = BASE_DIR / "dist" / "pdf" / "v2"
+OUTPUT_DIR = BASE_DIR / os.getenv("OUTPUT_PATH", "dist/pdf/v2")
 
 DATA_PATH = DATA_DIR / "resume.yaml"
 DB_PATH = DB_DIR
-OUTPUT_PATH = os.getenv("OUTPUT_PATH", "dist/pdf/tailored_resume.pdf")
+OUTPUT_PATH = OUTPUT_DIR
+
 TEMPLATE_PATH = BASE_DIR / os.getenv("TEMPLATE_PATH", "templates/latex/resume_tailored.tex")
+REFERENCE_PDF = BASE_DIR / os.getenv("REFERENCE_PDF", "dist/pdf/resume.pdf")
 
 LLM_BASE_URL = os.getenv("LLM_BASE_URL")
 LLM_API_KEY = os.getenv("LLM_API_KEY")
@@ -27,6 +29,11 @@ EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", 1536))
 MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", 5))
 MAX_BULLETS = int(os.getenv("MAX_BULLETS", 12))
 MAX_BULLET_CHARS = int(os.getenv("MAX_BULLET_CHARS", 150))
+
+VALIDATION_ENABLED = os.getenv("VALIDATION_ENABLED", "true").lower() == "true"
+VALIDATION_VISION_ENABLED = os.getenv("VALIDATION_VISION_ENABLED", "false").lower() == "true"
+VALIDATION_REFERENCE_PDF = BASE_DIR / os.getenv("VALIDATION_REFERENCE_PDF", "dist/pdf/resume.pdf")
+PROMPTS_DIR = BASE_DIR / os.getenv("PROMPTS_DIR", "scripts/prompts")
 
 LATEX_COMPILER = os.getenv("LATEX_COMPILER", "xelatex")
 

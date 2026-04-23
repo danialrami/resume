@@ -17,6 +17,7 @@ from .llm_rewriter import rewrite_all_bullets, test_connection
 from .iteration_loop import compile_and_check
 from .render_tailored import generate_latex
 from .iteration_loop import iterative_compile
+from .validator import validate
 
 
 @click.command()
@@ -117,8 +118,16 @@ def main(jd: str, output: str, max_bullets: int, no_rewrite: bool):
     pdf_output = OUTPUT_DIR / f"{base_name}.pdf"
     
     if pdf_output.exists():
-        print(f"\n✓ Success! Output: {pdf_output}")
-        print(f"  Page count: {page_count}")
+        # Validation step
+        is_valid, feedback = validate(tex_file, template_path, pdf_output)
+        
+        if is_valid:
+            print(f"\n✓ Success! Output: {pdf_output}")
+            print(f"  Page count: {page_count}")
+            print(f"  Validation: {feedback}")
+        else:
+            print(f"\n⚠ Validation issues: {feedback}")
+            print(f"  PDF generated but has formatting issues")
     else:
         print(f"\n✗ Error: PDF not generated")
         sys.exit(1)
