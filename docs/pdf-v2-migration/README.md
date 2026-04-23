@@ -594,8 +594,10 @@ Job Description
 
 ### Data Sources (from daniel-ramirez.io)
 
+**Current (shallow - homepage only):**
+
 ```yaml
-# data/scraping_sources.yaml
+# data/scraping_sources.yaml - current format
 
 sources:
   - url: https://daniel-ramirez.io
@@ -607,20 +609,115 @@ sources:
     type: main_site
     description: Main portfolio
   
-  - url: https://portfolio.lufs.audio  
-    type: portfolio
-    description: Detailed portfolio work
-    
-  - url: https://danialrami.com
-    type: personal
-    description: Personal site
-    
   - url: https://github.com/danialrami
     type: github
     description: Public repos via GitHub API
 ```
 
-**Note:** LinkedIn skipped for now - content available on other sites.
+---
+
+### Planned: Deep Mirror Scraper (V2 Enhancement)
+
+**Purpose:** Mirror complete website content into structured JSON files.
+
+**Desired Output Structure:**
+
+```
+db/content/
+├── danialrami_com/
+│   ├── index.json              # Homepage
+│   ├── blog/
+│   │   ├── 2024-01-01-post-title.json
+│   │   ├── 2024-02-15-another-post.json
+│   │   └── ...
+│   └── pages/
+│       ├── about.json
+│       └── resume.json
+├── lufs_audio/
+│   ├── index.json
+│   ├── projects/
+│   │   ├── project-alpha.json
+│   │   ├── project-beta.json
+│   │   └── ...
+│   └── services/
+│       └── ...
+├── github_com/
+│   └── repositories.json     # Full repo list
+└── portfolio_lufs_audio/
+    └── ...
+```
+
+**Workflow:**
+
+```
+1. START: Parse daniel-ramirez.io → get list of all site URLs
+
+2. FOR EACH subsite:
+   a. Queue = [homepage URL]
+   b. While Queue not empty:
+      - Pop next URL
+      - If already visited: skip
+      - Fetch page
+      - Extract main content (remove nav/footer/ads)
+      - Save to structured path
+      - Find links on page → add to Queue
+      - Rate limit (delay between requests)
+   
+3. OUTPUT: Full site mirror in db/content/{domain}/
+```
+
+**Key Enhancements:**
+
+| Feature | Implementation |
+|---------|----------------|
+| **Recursive crawling** | Queue-based BFS traversal |
+| **Content isolation** | Remove nav/footer/scripts |
+| **Structured paths** | `/blog/{slug}.json`, `/projects/{name}.json` |
+| **Rate limiting** | 1-2 second delays per domain |
+| **Incremental updates** | Track last scraped, only new pages |
+| **GitHub API** | Full repo data via GitHub API |
+
+**New Script: `scripts/pdf_v2/deep_mirror.py`**
+
+```bash
+# Mirror all sites deeply
+python -m scripts.pdf_v2.deep_mirror
+
+# Mirror single site
+python -m scripts.pdf_v2.deep_mirror --domain danialrami_com
+
+# Resume interrupted mirror
+python -m scripts.pdf_v2.deep_mirror --resume
+```
+
+**Configuration Options:**
+
+```yaml
+# data/scraping_sources.yaml - enhanced
+
+sources:
+  - url: https://daniel-ramirez.io
+    type: directory
+    max_depth: 3          # NEW: How deep to crawl
+    exclude:             # NEW: Patterns to skip
+      - /tag/*
+      - /category/*
+      - /.*archive.*
+    
+  - url: https://lufs.audio
+    type: website
+    max_depth: 5
+    priority: high
+    
+  - url: https://github.com/danialrami
+    type: github
+    include_forks: false
+```
+
+**Notes:**
+- LinkedIn skipped for now - content available on other sites.
+- Current homepage-only scraper preserved in `web_content.py`
+- Deep mirror is enhancement for comprehensive content
 
 ---
 
