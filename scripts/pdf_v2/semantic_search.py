@@ -110,8 +110,11 @@ def delete_bullet(bullet_id: str):
 
 def clear_collection():
     """Clear all bullets (for rebuilding)."""
-    client = get_client()
-    client.delete_collection(name=COLLECTION_NAME)
+    try:
+        client = get_client()
+        client.delete_collection(name=COLLECTION_NAME)
+    except Exception:
+        pass
 
 
 def get_all_bullets() -> list[dict]:

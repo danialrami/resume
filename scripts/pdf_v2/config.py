@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).parent.parent.parent
 
 DATA_DIR = BASE_DIR / os.getenv("DATA_PATH", "data")
 DB_DIR = BASE_DIR / os.getenv("DB_PATH", "db/chroma")
-OUTPUT_DIR = BASE_DIR / "dist" / "pdf"
+OUTPUT_DIR = BASE_DIR / "dist" / "pdf" / "v2"
 
 DATA_PATH = DATA_DIR / "resume.yaml"
 DB_PATH = DB_DIR

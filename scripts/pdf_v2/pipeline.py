@@ -9,12 +9,13 @@ from .config import (
     OUTPUT_DIR,
     MAX_BULLETS,
     MAX_ITERATIONS,
-    test_connection as test_llm,
 )
 from .job_loader import load_jd, extract_keywords
 from .semantic_search import search
 from .content_selector import select_content
-from .llm_rewriter import rewrite_all_bullets
+from .llm_rewriter import rewrite_all_bullets, test_connection
+from .iteration_loop import compile_and_check
+from .render_tailored import generate_latex
 from .iteration_loop import iterative_compile
 
 
@@ -79,8 +80,8 @@ def main(jd: str, output: str, max_bullets: int, no_rewrite: bool):
     if not no_rewrite:
         print(f"\n[4/5] Rewriting bullets with LLM...")
         try:
-            test_llm()
-            print("  LLM connection OK")
+            if test_connection():
+                print("  LLM connection OK")
             
             for i, item in enumerate(selected[:5]):
                 print(f"  Rewriting bullet {i+1}/5...")
@@ -101,33 +102,25 @@ def main(jd: str, output: str, max_bullets: int, no_rewrite: bool):
     else:
         content_for_latex = selected
     
-    print(f"\n[5/5] Compiling with iteration loop...")
-    output_path = BASE_DIR / output
+    print(f"\n[5/5] Compiling...")
     template_path = BASE_DIR / "templates" / "latex" / "resume_tailored.tex"
-    tex_path = output_path.with_suffix(".tex")
     
-    if not template_path.exists():
-        print("  WARNING: Template not found, using default")
-        template_path = None
+    from .render_tailored import generate_latex
     
-    try:
-        pdf_path, iterations = iterative_compile(
-            content_for_latex,
-            tex_path,
-            template_path or output_path.with_suffix(".tex"),
-            OUTPUT_DIR,
-            MAX_ITERATIONS
-        )
-        
-        if pdf_path.exists():
-            import shutil
-            shutil.copy(pdf_path, output_path)
-            print(f"\n✓ Success! Output: {output_path}")
-        else:
-            print(f"\n✗ Error: PDF not generated")
-            sys.exit(1)
-    except Exception as e:
-        print(f"\n✗ Error: {e}")
+    # Generate to v2 folder with base name from output path
+    base_name = Path(output).stem if output else "tailored"
+    tex_path = OUTPUT_DIR / f"{base_name}.tex"
+    
+    tex_file = generate_latex(content_for_latex, template_path, tex_path)
+    success, page_count, _ = compile_and_check(tex_file, OUTPUT_DIR)
+    
+    pdf_output = OUTPUT_DIR / f"{base_name}.pdf"
+    
+    if pdf_output.exists():
+        print(f"\n✓ Success! Output: {pdf_output}")
+        print(f"  Page count: {page_count}")
+    else:
+        print(f"\n✗ Error: PDF not generated")
         sys.exit(1)
 
 
