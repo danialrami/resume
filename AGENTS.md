@@ -2,11 +2,9 @@
 
 ## Build / Lint / Test
 - **Setup**: `./scripts/setup.sh` or `source .venv/bin/activate`
-- **Build both**: `./scripts/build_all.py`
-- **Build HTML only**: `./scripts/build_html.sh`
-- **Build PDF only**: `./scripts/build_pdf.sh`
+- **Build HTML**: `./scripts/build_all.py` or `./scripts/build_html.sh`
 - **Deploy to hostinger**: `./scripts/deploy.sh`
-- **Test**: Run build commands and inspect output files in `dist/`
+- **Test**: Run build commands and inspect output files in `dist/html/`
 
 ## Code Style Guidelines
 
@@ -15,13 +13,6 @@
 - Keep lines <80 chars
 - Use descriptive keys with underscores or hyphens
 - Date format: `"YYYY – YYYY"` or single year without quotes
-
-### LaTeX Template (`templates/latex/resume.tex`)
-- Follow standard LaTeX conventions
-- 4-space indentation, lines <80 chars
-- Section titles Title Case
-- Comments with `%`
-- Output compiled to: `dist/pdf/resume.pdf`
 
 ### HTML Template (`templates/html/index.html`)
 - Semantic HTML5 structure
@@ -34,11 +25,11 @@
 
 ```
 data/resume.yaml
-    ↓ (render_latex.py / render_html.py)
-templates/latex/resume.tex  →  dist/pdf/resume.pdf (via xelatex)
+    ↓ (render_html.py)
 templates/html/index.html   →  dist/html/index.html
 
 assets/audio/*.wav → (build) → dist/html/assets/audio/*.opus (~11x smaller)
+assets/pdf/resume.pdf → (build) → dist/html/assets/pdf/resume.pdf
 ```
 
 ## Audio Pipeline
@@ -59,43 +50,41 @@ AUDIO_BASE_URL="https://cdn.example.com/audio" ./scripts/build_all.py
 - **HTTP/HTTPS**: Full functionality including visualizations
 - **Format**: OPUS supported in all modern browsers
 
+## PDF Download
+
+- Place PDF file in `assets/pdf/resume.pdf`
+- Build script copies it to `dist/html/assets/pdf/resume.pdf`
+- Website header includes "Download PDF" button linking to the PDF
+
 ## Dependencies
 
 - Python 3.8+
 - PyYAML 6.0+ (installed via requirements.txt)
-- xelatex or pdflatex (for PDF generation)
 - ffmpeg (for OPUS audio conversion)
-
-For PDF generation:
-- **xelatex** (recommended if using fontspec)
-- **pdflatex** (fallback, may need to remove fontspec package)
 
 ## Adding New Features
 
 1. Update `data/resume.yaml` with new data
 2. Add/modify audio files in `assets/audio/` (WAV recommended)
-3. Modify templates in respective `templates/` subdirectory
-4. Rebuild using `./scripts/build_all.py`
-5. Review outputs in `dist/`
+3. Update PDF in `assets/pdf/resume.pdf` (for download button)
+4. Modify HTML template in `templates/html/`
+5. Rebuild using `./scripts/build_all.py`
+6. Review outputs in `dist/`
 
 ## Deployment
 
 The `deploy.sh` script:
-1. Builds both PDF and HTML outputs
+1. Builds HTML output
 2. Converts audio to OPUS (~11x compression)
-3. Commits to main branch
-4. Pushes to origin
-5. Splits and deploys HTML to `hostinger` branch
+3. Copies PDF to dist folder
+4. Commits to main branch
+5. Pushes to origin
+6. Splits and deploys HTML to `hostinger` branch
 
-## Migration Notes
+## Archived Components
 
-This repository unifies two previous repositories:
+PDF generation components have been archived to `archived/` directory:
+- `archived/pdf-v1/`: Original LaTeX-based PDF generation
+- `archived/pdf-v2/`: AI-driven tailored PDF pipeline
 
-- **generate-resume-pdf**: PDF-only resume generator using YAML → LaTeX
-- **interactive-resume**: Interactive HTML5 resume with audio visualizations
-
-The unified system uses:
-- Single source of truth: `data/resume.yaml`
-- Separate templates for print (LaTeX) and web (HTML)
-- Shared Python build scripts for consistent generation
-- OPUS audio format for efficient web delivery
+The new PDF system is located at `~/repos/resume-builder-workspace` using Gotenberg API.

@@ -17,6 +17,13 @@ echo "Building HTML resume..."
 if [ -f "dist/html/index.html" ]; then
     echo "HTML generated: dist/html/index.html"
     
+    # Copy PDF from assets if it exists
+    if [ -f "assets/pdf/resume.pdf" ]; then
+        mkdir -p "dist/html/assets/pdf"
+        cp "assets/pdf/resume.pdf" "dist/html/assets/pdf/resume.pdf"
+        echo "PDF copied to: dist/html/assets/pdf/resume.pdf"
+    fi
+    
     # Open in browser if on macOS
     if [[ "$OSTYPE" == "darwin"* ]]; then
         open dist/html/index.html

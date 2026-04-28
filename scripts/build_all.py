@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Build script for generating both PDF and HTML resumes from YAML data.
+Build script for generating HTML resume from YAML data.
 """
 
 import os
@@ -10,13 +10,12 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from render_latex import generate_latex
 from render_html import generate_html
 
 
 def build_all():
-    """Build both PDF and HTML resumes."""
-    print("Building resume...")
+    """Build HTML resume."""
+    print("Building HTML resume...")
     print("""
 NOTE: 
 - Audio files are automatically converted to OPUS format (~11x compression)
@@ -42,11 +41,18 @@ NOTE:
 
     print(f"Loaded resume data for: {data['name']}")
 
-    # Generate outputs
-    latex_output = generate_latex(data)
+    # Generate HTML output
     html_output = generate_html(data)
 
-    print(f"LaTeX output: {latex_output}")
+    # Copy PDF from assets if it exists
+    pdf_source = base_dir / "assets" / "pdf" / "resume.pdf"
+    if pdf_source.exists():
+        import shutil
+        pdf_dest_dir = base_dir / "dist" / "html" / "assets" / "pdf"
+        pdf_dest_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(pdf_source, pdf_dest_dir / "resume.pdf")
+        print(f"PDF copied to: {pdf_dest_dir / 'resume.pdf'}")
+
     print(f"HTML output: {html_output}")
     print("Build complete!")
 
