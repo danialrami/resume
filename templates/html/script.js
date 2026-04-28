@@ -638,6 +638,11 @@ function initNavigation() {
     
     // Add click event listeners to navigation links
     navLinks.forEach(link => {
+        // Skip download button - let it work normally
+        if (link.classList.contains('download-btn')) {
+            return;
+        }
+        
         link.addEventListener('click', (e) => {
             e.preventDefault();
             
