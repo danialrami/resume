@@ -45,13 +45,13 @@ NOTE:
     html_output = generate_html(data)
 
     # Copy PDF from assets if it exists
-    pdf_source = base_dir / "assets" / "pdf" / "resume.pdf"
+    pdf_source = base_dir / "assets" / "pdf" / "Ramirez-Daniel_resume.pdf"
     if pdf_source.exists():
         import shutil
         pdf_dest_dir = base_dir / "dist" / "html" / "assets" / "pdf"
         pdf_dest_dir.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(pdf_source, pdf_dest_dir / "resume.pdf")
-        print(f"PDF copied to: {pdf_dest_dir / 'resume.pdf'}")
+        shutil.copy2(pdf_source, pdf_dest_dir / "Ramirez-Daniel_resume.pdf")
+        print(f"PDF copied to: {pdf_dest_dir / 'Ramirez-Daniel_resume.pdf'}")
 
     print(f"HTML output: {html_output}")
     print("Build complete!")
