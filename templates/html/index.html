@@ -303,7 +303,7 @@ footer .mono{font-size:.6rem;text-transform:uppercase;letter-spacing:.14em;color
 <script>
 /* Live Dial Tuning Panel — PARAMS = single source of truth (default = current value, ranges to extremes) */
 var PARAMS = {
-  pointCount:  { v:2600,  min:800,  max:8000,  step:100,  g:'Cloud', label:'Particles' },
+  pointCount:  { v:8000,  min:800,  max:12000, step:100,  g:'Cloud', label:'Particles' },
   pointSize:   { v:1.15,  min:0.5,  max:6,     step:0.05, g:'Cloud', label:'Point size' },
   rotateSpeed: { v:0.06,  min:0,    max:0.4, step:0.005, g:'Cloud', label:'Rotate speed' },
   morphHold:   { v:5.5,   min:0.5,  max:10,  step:0.1,   g:'Cloud', label:'Morph hold (s)' },
@@ -482,7 +482,7 @@ window.AUDIO = window.AUDIO || { L:{bass:0,mid:0,treble:0,energy:0,centroid:0.5,
       var DPR=Math.min(devicePixelRatio,2);
       function size(){ cv.width=(cv.clientWidth||300)*DPR; cv.height=(cv.clientHeight||300)*DPR; }
       size(); addEventListener('resize',size); addEventListener('orientationchange',size); if(window.ResizeObserver) new ResizeObserver(size).observe(cv);
-      var MAX2D=8000, PAL=['#d9a23d','#8c8a6b','#9fc1d0','#c8654a'];
+      var MAX2D=12000, PAL=['#d9a23d','#8c8a6b','#9fc1d0','#c8654a'];
       function sph(n){var a=[];for(var i=0;i<n;i++){var y=1-(i/(n-1))*2,r=Math.sqrt(1-y*y),t=i*2.399963;a.push([Math.cos(t)*r*1.5,y*1.5,Math.sin(t)*r*1.5]);}return a;}
       function tor(n){var a=[];for(var i=0;i<n;i++){var u=Math.random()*6.2832,v=Math.random()*6.2832,R=1.25,r=.5;a.push([(R+r*Math.cos(v))*Math.cos(u),r*Math.sin(v),(R+r*Math.cos(v))*Math.sin(u)]);}return a;}
       function wav(n){var a=[],s=Math.ceil(Math.sqrt(n));for(var i=0;i<n;i++){var gx=(i%s)/s-.5,gz=Math.floor(i/s)/s-.5;a.push([gx*3.2,Math.sin(gx*7)*Math.cos(gz*7)*.5,gz*3.2]);}return a;}
