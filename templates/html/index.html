@@ -1,376 +1,650 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daniel Ramirez | Sound Designer</title>
-    <link rel="stylesheet" href="styles.css">
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Daniel Ramirez — Dossier (v2)</title>
+<meta name="description" content="The deep dossier: sound design + infrastructure engineering. The audio, and the systems it runs on." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800&family=Public+Sans:wght@300;400;500;600&family=Space+Mono&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%231e1c19'/%3E%3Cellipse cx='32' cy='32' rx='24' ry='19' fill='none' stroke='%23d9a23d' stroke-width='2.5'/%3E%3Ctext x='32' y='40' font-family='Georgia,serif' font-size='21' font-weight='700' fill='%23e8e4d4' text-anchor='middle'%3EDR%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#201e1b; --bg-alt:#262420; --panel:rgba(30,28,24,.78);
+  --text:#e8e4d4; --muted:rgba(232,228,212,.56); --dim:rgba(232,228,212,.30);
+  --hair:rgba(232,228,212,.10);
+  --gold:#d9a23d; --sage:#8c8a6b; --blue:#9fc1d0; --terra:#c8654a;
+  --rail:340px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Public Sans',system-ui,sans-serif;font-weight:300;line-height:1.62;-webkit-font-smoothing:antialiased;overflow-x:hidden;cursor:none}
+@media (pointer:coarse){body{cursor:auto}}
+::selection{background:var(--gold);color:#1e1c19}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+h1,h2,h3{font-family:'Host Grotesk',sans-serif;font-weight:800;letter-spacing:-.02em;line-height:1.04}
+.mono{font-family:'Space Mono',monospace}
+.sec-label{font-family:'Space Mono',monospace;font-size:.66rem;text-transform:uppercase;letter-spacing:.26em;color:var(--gold)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
+
+/* ---- UNIFORM custom cursor (dot + lagging ring) — brand default everywhere except lufs.audio front pages ---- */
+.cur-dot,.cur-ring{position:fixed;top:0;left:0;border-radius:50%;pointer-events:none;z-index:9999;mix-blend-mode:difference}
+.cur-dot{width:7px;height:7px;background:#fff}
+.cur-ring{width:32px;height:32px;border:1px solid rgba(255,255,255,.6);transition:width .25s,height .25s,border-color .25s}
+.cur-ring.hot{width:52px;height:52px;border-color:var(--gold)}
+@media (pointer:coarse){.cur-dot,.cur-ring{display:none}}
+
+/* ---- shell: two-pane dossier ---- */
+.shell{display:grid;grid-template-columns:var(--rail) 1fr;min-height:100vh}
+.rail{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;border-right:1px solid var(--hair);padding:28px 26px;overflow:hidden;background:var(--bg)}
+.rail-id{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.rail-id svg{width:42px;height:42px;flex:none}
+.logo-cloud{animation:cloudFloat 6s ease-in-out infinite}
+.logo-cloud .eye{transform-box:fill-box;transform-origin:center;animation:cloudBlink 7s infinite}
+@keyframes cloudFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes cloudBlink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.12)}}
+@media (prefers-reduced-motion:reduce){.logo-cloud,.logo-cloud .eye{animation:none}}
+.rail-id .nm{font-family:'Host Grotesk';font-weight:800;font-size:1.18rem;line-height:1.05}
+.rail-id .nm .dot{color:var(--gold)}
+.rail-role{font-family:'Space Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);margin-bottom:18px;line-height:1.7}
+.viz-wrap{position:relative;flex:1 1 auto;min-height:140px;border:1px solid var(--hair);border-radius:8px;overflow:hidden;background:var(--bg-alt)}
+#cloud{position:absolute;inset:0;width:100%;height:100%;display:block}
+.viz-tag{position:absolute;left:10px;bottom:8px;z-index:2;font-family:'Space Mono',monospace;font-size:.54rem;text-transform:uppercase;letter-spacing:.18em;color:var(--dim)}
+.rail-nav{margin:20px 0;display:flex;flex-direction:column;gap:2px}
+.rail-nav a{font-family:'Space Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);padding:6px 0;display:flex;gap:10px;align-items:baseline;transition:color .2s}
+.rail-nav a .n{color:var(--dim);font-size:.58rem;width:18px}
+.rail-nav a:hover,.rail-nav a.active{color:var(--gold)}
+
+/* ---- player ---- */
+.player{border-top:1px solid var(--hair);padding-top:14px;margin-top:auto}
+.pl-enable{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+  font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.14em;font-size:.72rem;
+  padding:12px 16px;border:1px solid var(--gold);background:var(--gold);color:#1e1c19;border-radius:3px;cursor:none;
+  transition:transform .2s,background .2s,color .2s}
+.pl-enable:hover{transform:translateY(-2px)}
+.pl-enable.on{background:transparent;color:var(--gold)}
+.pl-track{position:relative;margin-top:12px}
+.pl-toggle{width:100%;display:flex;align-items:center;gap:10px;background:transparent;border:1px solid var(--hair);border-radius:6px;padding:7px 9px;cursor:none;text-align:left;transition:border-color .2s}
+.pl-toggle:hover{border-color:var(--gold)}
+.pl-cover{width:38px;height:38px;border-radius:4px;background:var(--bg-alt);object-fit:cover;flex:none;border:1px solid var(--hair)}
+.pl-meta{min-width:0;flex:1;display:flex;flex-direction:column}
+.pl-title{font-family:'Host Grotesk';font-weight:600;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-sub{font-family:'Space Mono',monospace;font-size:.54rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-chev{margin-left:auto;color:var(--muted);font-size:.7rem;flex:none;transition:transform .2s,color .2s}
+.pl-track.open .pl-chev{transform:rotate(180deg);color:var(--gold)}
+.pl-menu{position:absolute;left:0;right:0;bottom:calc(100% + 8px);background:var(--panel);border:1px solid var(--hair);border-radius:8px;padding:6px;backdrop-filter:blur(14px);display:none;max-height:54vh;overflow:auto;z-index:210}
+.pl-track.open .pl-menu{display:block}
+.pl-menu button{width:100%;text-align:left;background:transparent;border:0;color:var(--text);font-family:'Public Sans',sans-serif;font-size:.82rem;padding:8px 10px;border-radius:5px;cursor:none;display:flex;align-items:center;gap:9px;transition:background .15s,color .15s}
+.pl-menu button:hover,.pl-menu button.sel{background:var(--bg-alt);color:var(--gold)}
+.pl-menu button .num{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--dim);width:18px;flex:none}
+.pl-menu button.add{border-top:1px solid var(--hair);margin-top:4px;padding-top:10px;color:var(--muted);font-family:'Space Mono',monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.13em}
+.pl-menu button.add:hover{color:var(--gold)}
+.pl-seek{margin-top:11px;height:3px;background:var(--hair);border-radius:3px;position:relative;cursor:none}
+.pl-seek .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--gold);border-radius:3px}
+.pl-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.pl-time{font-family:'Space Mono',monospace;font-size:.54rem;color:var(--muted)}
+.pl-vol{width:64px;height:3px;-webkit-appearance:none;appearance:none;background:var(--hair);border-radius:3px;cursor:none}
+.pl-vol::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:var(--gold)}
+
+/* ---- content ---- */
+.content{padding:0 clamp(22px,5vw,72px)}
+.hero{min-height:62vh;display:flex;flex-direction:column;justify-content:center;padding:64px 0 40px}
+.hero .eyebrow{margin-bottom:20px}
+h1.big{font-size:clamp(2.6rem,7vw,5.6rem);line-height:.96}
+h1.big .dot{color:var(--gold)}
+.hero .lead{font-size:clamp(1.04rem,1.6vw,1.28rem);color:var(--muted);max-width:60ch;margin:24px 0 30px;font-weight:300}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+.btn{font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.13em;font-size:.7rem;padding:12px 20px;border:1px solid var(--gold);color:#1e1c19;background:var(--gold);border-radius:3px;transition:transform .2s,background .2s,color .2s;display:inline-flex;align-items:center;gap:8px;cursor:none}
+.btn:hover{transform:translateY(-2px)}
+.btn.ghost{background:transparent;color:var(--text);border-color:var(--hair)}
+.btn.ghost:hover{border-color:var(--gold);color:var(--gold)}
+section.blk{padding:clamp(48px,7vh,90px) 0;border-top:1px solid var(--hair)}
+.blk-head{display:flex;align-items:baseline;gap:16px;margin-bottom:36px}
+.blk-head .num{font-family:'Space Mono',monospace;font-size:.66rem;color:var(--gold)}
+.blk-head h2{font-size:clamp(1.7rem,4vw,2.7rem)}
+.prose{font-size:1.02rem;color:var(--muted);max-width:64ch}
+.prose strong{color:var(--text);font-weight:600}
+.stats{display:flex;gap:clamp(22px,4vw,52px);flex-wrap:wrap;margin-top:30px}
+.stat .n{font-family:'Host Grotesk';font-weight:800;font-size:clamp(1.8rem,4vw,2.7rem);color:var(--gold);line-height:1}
+.stat .l{font-family:'Space Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);margin-top:8px}
+.grid{display:grid;gap:16px}
+.g-3{grid-template-columns:repeat(3,1fr)}
+.g-2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:1100px){.g-3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:540px){.g-3,.g-2{grid-template-columns:1fr}}
+.card{background:var(--bg-alt);border:1px solid var(--hair);border-radius:8px;padding:22px;transition:transform .2s,border-color .2s}
+.card:hover{transform:translateY(-3px);border-color:var(--gold)}
+.card .k{font-family:'Space Mono',monospace;font-size:.56rem;text-transform:uppercase;letter-spacing:.18em;color:var(--gold);display:block;margin-bottom:12px}
+.card h3{font-size:1.02rem;margin-bottom:7px;font-weight:700}
+.card p{font-size:.88rem;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tag{font-family:'Space Mono',monospace;font-size:.54rem;text-transform:uppercase;letter-spacing:.1em;padding:4px 8px;border:1px solid var(--hair);border-radius:99px;color:var(--muted)}
+.tl{position:relative;padding-left:24px}
+.tl::before{content:'';position:absolute;left:5px;top:6px;bottom:6px;width:1px;background:var(--hair)}
+.tl-item{position:relative;padding-bottom:30px}
+.tl-item::before{content:'';position:absolute;left:-22px;top:7px;width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.tl-item:last-child{padding-bottom:0}
+.tl-item .when{font-family:'Space Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.16em;color:var(--muted)}
+.tl-item h3{font-size:1.1rem;margin:5px 0 2px}
+.tl-item .org{color:var(--gold);font-size:.82rem;font-family:'Space Mono',monospace}
+.tl-item p{font-size:.9rem;color:var(--muted);margin-top:8px;max-width:60ch}
+.tl-item ul.bul{margin:9px 0 0;padding-left:16px;max-width:64ch}
+.tl-item ul.bul li{font-size:.9rem;color:var(--muted);margin-bottom:5px;list-style:disc}
+.tl-item ul.bul li::marker{color:var(--gold)}
+.cert-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:26px;padding-top:18px;border-top:1px solid var(--hair)}
+.cert-label{font-family:'Space Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.2em;color:var(--gold)}
+.contact-links{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+footer{border-top:1px solid var(--hair);padding:30px 0;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
+footer .mono{font-size:.6rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+
+/* ---- proto note + dial toggle ---- */
+.proto-note{position:fixed;right:14px;bottom:12px;z-index:60;font-family:'Space Mono',monospace;font-size:.52rem;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);background:var(--panel);border:1px solid var(--hair);border-radius:99px;padding:5px 12px;backdrop-filter:blur(8px)}
+.dial-toggle{position:fixed;right:14px;top:14px;z-index:320;font-family:'Space Mono',monospace;font-size:.56rem;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);background:var(--panel);border:1px solid var(--hair);border-radius:99px;padding:6px 12px;cursor:none;backdrop-filter:blur(8px)}
+.dial-toggle:hover{color:var(--gold);border-color:var(--gold)}
+
+/* ---- dial tuning panel ---- */
+#panel{position:fixed;right:14px;top:48px;z-index:300;width:300px;max-width:92vw;max-height:80vh;overflow:auto;
+  background:var(--panel);border:1px solid var(--hair);border-radius:10px;padding:16px;backdrop-filter:blur(14px);display:none}
+#panel.open{display:block}
+#panel h4{font-family:'Space Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.2em;color:var(--gold);margin:14px 0 8px}
+#panel h4:first-child{margin-top:0}
+#panel .row{margin-bottom:9px}
+#panel .lab{display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted);margin-bottom:3px}
+#panel .lab b{color:var(--text);font-weight:400}
+#panel input[type=range]{width:100%;height:3px;-webkit-appearance:none;appearance:none;background:var(--hair);border-radius:3px;cursor:none}
+#panel input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--gold)}
+#panel .pbtns{display:flex;gap:8px;margin-top:12px}
+#panel button{flex:1;font-family:'Space Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.12em;padding:8px;border:1px solid var(--hair);background:transparent;color:var(--text);border-radius:3px;cursor:none}
+#panel button:hover{border-color:var(--gold);color:var(--gold)}
+#panel textarea{width:100%;height:54px;margin-top:10px;background:var(--bg);border:1px solid var(--hair);border-radius:4px;color:var(--muted);font-family:'Space Mono',monospace;font-size:.54rem;padding:7px;resize:none}
+
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .65s ease,transform .65s ease}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1!important;transform:none!important;transition:none}html{scroll-behavior:auto}}
+
+@media(max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .rail{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--hair)}
+  .viz-wrap{height:180px;flex:none}
+  .rail-nav{display:none}
+  .player{margin-top:16px}
+  .content{padding:0 clamp(20px,6vw,40px)}
+}
+@media(max-width:760px){ .content{padding:0 clamp(18px,6vw,32px)} }
+@media(max-width:680px){ h1.big{font-size:clamp(2.2rem,9vw,3.4rem)} }
+@media(max-width:540px){ .hero{min-height:54vh} }
+</style>
 </head>
 <body>
-    <!-- Main Container -->
-    <div class="container visible">
-        <!-- Navigation -->
-        <nav>
-            <a href="#" class="logo-link">
-                <div class="logo">
-                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M100,30 C130,30 150,50 150,80 C180,80 200,100 200,130 C200,160 180,180 150,180 L50,180 C20,180 0,160 0,130 C0,100 20,80 50,80 C50,50 70,30 100,30 Z" fill="#fbf9e2"/>
-                        <circle cx="70" cy="100" r="15" fill="#000"/>
-                        <circle cx="130" cy="100" r="15" fill="#000"/>
-                    </svg>
-                    <div class="brand-text">DANIALRAMI</div>
-                    <div class="color-squares">
-                        <span class="square yellow"></span>
-                        <span class="square teal"></span>
-                        <span class="square blue"></span>
-                        <span class="square red"></span>
-                    </div>
-                </div>
-            </a>
-            <ul class="nav-links">
-                <li><a href="#about" class="active">About</a></li>
-                <li><a href="#skills">Skills</a></li>
-                <li><a href="#experience">Experience</a></li>
-                <li><a href="#education">Education</a></li>
-                <li><a href="#projects">Projects</a></li>
-                <li><a href="#contact">Contact</a></li>
-                <li><a href="assets/pdf/Ramirez-Daniel_resume.pdf" class="download-btn" download><i class="fas fa-download"></i> PDF</a></li>
-            </ul>
-        </nav>
 
-        <!-- Audio Controls -->
-        <div class="audio-controls">
-            <div class="audio-source-controls">
-                <div class="audio-samples">
-                    <select id="audio-samples-select">
-                        <option value="">Select a sample...</option>
-                        AUDIO_SAMPLES_OPTIONS
-                    </select>
-                </div>
-                <span class="audio-or">or</span>
-                <div class="audio-upload">
-                    <label for="audio-file">
-                        <i class="fas fa-upload"></i>
-                        <span>Upload Audio</span>
-                    </label>
-                    <input type="file" id="audio-file" accept="audio/*">
-                </div>
-            </div>
-            <div class="playback-controls">
-                <button id="play-pause"><i class="fas fa-play"></i></button>
-                <div class="volume-control">
-                    <i class="fas fa-volume-up"></i>
-                    <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5">
-                </div>
-            </div>
-        </div>
+<div class="cur-dot"></div><div class="cur-ring"></div>
+<div class="dial-toggle" id="dialToggle" data-hover>⚙ Tune</div>
+<div class="proto-note">v2 · layout + system preview · copy syncs from resume.yaml</div>
 
-        <!-- Audio Visualization -->
-        <div class="visualization-container">
-            <canvas id="waveform"></canvas>
-            <canvas id="frequency"></canvas>
-        </div>
+<!-- dial tuning panel -->
+<div id="panel">
+  <div id="panelBody"></div>
+  <div class="pbtns"><button id="panelCopy" data-hover>Copy settings</button><button id="panelReset" data-hover>Reset</button></div>
+  <textarea id="panelJSON" readonly></textarea>
+</div>
 
-        <!-- 3D Scene Container -->
-        <div id="three-container"></div>
-
-        <!-- Main Content -->
-        <main>
-            <!-- About Section -->
-            <section id="about" class="section">
-                <div class="section-content">
-                    <h1>Daniel Ramirez</h1>
-                    <h2>Sound Designer</h2>
-                    <p>Sound Designer specializing in interactive audio implementation, sound synthesis, and audio pipeline development for mobile applications and live performances. Experienced in working with industry-leading professionals and managing complex audio workflows.</p>
-                    <!-- <div class="contact-info">
-                         <a href="mailto:daniel@danialrami.com">daniel@danialrami.com</a> 
-                    </div> -->
-                </div>
-            </section>
-
-            <!-- Skills Section -->
-            <section id="skills" class="section">
-                <div class="section-content">
-                    <h2>Technical Proficiency</h2>
-                    
-                    <div class="skills-category">
-                        <h3>Audio Software & Hardware</h3>
-                        <div class="skills-grid">
-                            <div class="skill-item" data-sound="daw">
-                                <div class="skill-icon"><i class="fas fa-music"></i></div>
-                                <div class="skill-name">Recording</div>
-                                <div class="skill-details">Logic Pro X, Pro Tools, Cubase/Nuendo, Ableton Live, REAPER</div>
-                            </div>
-                            <!--
-                            <div class="skill-item" data-sound="maxmsp">
-                                <div class="skill-icon"><i class="fas fa-project-diagram"></i></div>
-                                <div class="skill-name">Max/MSP, Pure Data</div>
-                            </div> -->
-                            <div class="skill-item" data-sound="modular">
-                                <div class="skill-icon"><i class="fas fa-plug"></i></div>
-                                <div class="skill-name">Synthesis</div>
-                                <div class="skill-details">Eurorack/Buchla/MOTM systems, Supercollider</div>
-                            </div>
-                            <div class="skill-item" data-sound="wwise">
-                                <div class="skill-icon"><i class="fas fa-sliders-h"></i></div>
-                                <div class="skill-name">Implementation</div>
-                                <div class="skill-details">Wwise, FMOD</div>
-                                
-                            </div>
-                            <div class="skill-item" data-sound="gameengine">
-                                <div class="skill-icon"><i class="fas fa-gamepad"></i></div>
-                                <div class="skill-name">Game Engines</div>
-                                <div class="skill-details">Unreal Engine 5, Unity</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="skills-category">
-                        <h3>Development Tools</h3>
-                        <div class="skills-grid">
-                            <div class="skill-item" data-sound="python">
-                                <div class="skill-icon"><i class="fas fa-code"></i></div>
-                                <div class="skill-name">Audio Scripting and Automation</div>
-                                <div class="skill-details">Python, Lua</div>
-                            </div>
-                            <div class="skill-item" data-sound="node">
-                                <div class="skill-icon"><i class="fas fa-sitemap"></i></div>
-                                <div class="skill-name">Node-based Audio Systems</div>
-                                <div class="skill-details">Max/MSP, Pure Data, Metasounds</div>
-                            </div>
-                            <div class="skill-item" data-sound="tools">
-                                <div class="skill-icon"><i class="fas fa-tools"></i></div>
-                                <div class="skill-name">Server-side</div>
-                                <div class="skill-details">Jira, Docker, Arch Linux</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Experience Section -->
-            <section id="experience" class="section">
-                <div class="section-content">
-                    <h2>Professional Experience</h2>
-                    
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-content">
-                                <h3>Sound Designer | LUFS Audio</h3>
-                                <p class="timeline-date">July 2024–Present</p>
-                                <ul>
-                                    <li>Clients include Hinge Health and xAI</li>
-                                </ul>
-                            </div>
-                        </div>
-                        
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-content">
-                                <h3>Sound Designer (Contract) | Hinge Health</h3>
-                                <p class="timeline-date">San Francisco, CA | May 2022–July 2024</p>
-                                <ul>
-                                    <li>Designed interaction sounds for mobile apps serving 70k+ daily users</li>
-                                    <li>Built scalable Wwise workflows and audio pipelines</li>
-                                    <li>Implemented audio assets using Unity and React Native</li>
-                                    <li>Developed automated workflows for sound library management</li>
-                                    <li>Maintained direct communication and managed tasks through Jira</li>
-                                </ul>
-                            </div>
-                        </div>
-                        
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-content">
-                                <h3>A1/A2 Audio Tech | Sunnyvale Theater</h3>
-                                <p class="timeline-date">Sunnyvale, CA | January 2022–May 2022</p>
-                                <ul>
-                                    <li>Conducted real-time mixing and soundchecks for live musical performances</li>
-                                    <li>Managed QLab integration for live audio playback</li>
-                                    <li>Planned and executed audio setups, managing signal paths</li>
-                                    <li>Coordinated with clients to ensure seamless technical delivery</li>
-                                </ul>
-                            </div>
-                        </div>
-                        
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-content">
-                                <h3>Sales Associate & Customer Service Rep | Perfect Circuit Audio</h3>
-                                <p class="timeline-date">Burbank, CA | June 2020–January 2021</p>
-                                <ul>
-                                    <li>Provided support and guidance for customers on music technology products</li>
-                                    <li>Stayed current with industry developments during COVID-19 pandemic</li>
-                                </ul>
-                            </div>
-                        </div>
-                        
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-content">
-                                <h3>Studio Operations Intern | Sacred Tiger Music Publishing</h3>
-                                <p class="timeline-date">Santa Monica, CA | 2018</p>
-                                <ul>
-                                    <li>Assisted composer Henry Jackman in audio production</li>
-                                    <li>Managed synthesizer setup and sound asset organization</li>
-                                    <li>Developed skills in sound synthesis, Foley, and surround mixing</li>
-                                </ul>
-                            </div>
-                        </div>
-                        
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-content">
-                                <h3>Studio Operations Intern | Remote Control Productions</h3>
-                                <p class="timeline-date">Santa Monica, CA | 2018</p>
-                                <ul>
-                                    <li>Supported Hans Zimmer's music composition team</li>
-                                    <li>Worked alongside industry experts Alan Meyerson, Benjamin Wallfisch, and Ramin Djawadi</li>
-                                    <li>Organized and managed sound libraries maintaining audio asset quality</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Education Section -->
-            <section id="education" class="section">
-                <div class="section-content">
-                    <h2>Education</h2>
-                    
-                    <div class="education-item">
-                        <h3>NYU Steinhardt</h3>
-                        <p class="education-degree">B.M. Music Theory and Composition for Film and Multimedia</p>
-                        <p class="education-location">New York, New York | 2015–2019</p>
-                    </div>
-                    
-                    <div class="education-item">
-                        <h3>IRCAM</h3>
-                        <p class="education-degree">Sound Spatialization and Synthesis</p>
-                        <p class="education-location">Paris, France | 2017</p>
-                        <p>Specialized in Max/MSP and IRCAM tools</p>
-                    </div>
-                    
-                    <div class="education-item">
-                        <h3>L'École Normale de Musique de Paris</h3>
-                        <p class="education-degree">Composition and Orchestration</p>
-                        <p class="education-location">Paris, France | 2017</p>
-                        <p>Private instruction under Michel Merlet, student of Olivier Messiaen</p>
-                    </div>
-                    
-                    <h2>Certifications</h2>
-                    
-                    <div class="certifications">
-                        <div class="certification-item">
-                            <h3>Audiokinetic Wwise</h3>
-                            <ul>
-                                <li>Wwise-101 Fundamentals</li>
-                                <li>Wwise-201 Interactive Music</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="certification-item">
-                            <h3>School of Video Game Audio</h3>
-                            <ul>
-                                <li>Unreal Engine 5</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Projects Section -->
-            <section id="projects" class="section">
-                <div class="section-content">
-                    <h2>Technical Projects</h2>
-                    
-                    <div class="projects-grid">
-                        <div class="project-item">
-                            <div class="project-icon"><i class="fas fa-microchip"></i></div>
-                            <h3>Custom Eurorack module and mixer design/construction</h3>
-                        </div>
-                        
-                        <div class="project-item">
-                            <div class="project-icon"><i class="fas fa-code"></i></div>
-                            <h3>Python-based audio tools development</h3>
-                        </div>
-                        
-                        <div class="project-item">
-                            <div class="project-icon"><i class="fas fa-server"></i></div>
-                            <h3>Docker-based application management</h3>
-                            <p>Gitea/Forgejo, Nextcloud, Ollama</p>
-                        </div>
-                        
-                        <div class="project-item">
-                            <div class="project-icon"><i class="fas fa-cogs"></i></div>
-                            <h3>Audio pipeline automation scripts</h3>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Contact Section -->
-            <section id="contact" class="section">
-                <div class="section-content">
-                    <h2>Contact</h2>
-                    
-                    <div class="contact-container">
-                        <div class="contact-info">
-                            <div class="contact-item">
-                                <i class="fas fa-envelope"></i>
-                                <a href="mailto:daniel@danialrami.com">daniel@danialrami.com</a>
-                            </div>
-                        </div>
-                        
-                        <div class="social-links">
-                            <a href="https://github.com/danialrami" class="social-link" title="GitHub" target="_blank"><i class="fab fa-github"></i></a>
-                            <!-- <a href="https://youtube.com/c/yourchannel" class="social-link" title="YouTube" target="_blank"><i class="fab fa-youtube"></i></a> -->
-                            <a href="https://www.linkedin.com/in/danialrami/" class="social-link" title="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
-                            
-                            <!-- LUFS -->
-                            <a href="https://www.lufs.audio" class="social-link custom-icon" title="danialrami.com" target="_blank">
-                                <img src="Asset-3.svg" alt="Website Icon">
-                            </a>
-                            <!-- danialrami.com -->
-                            <a href="https://www.danialrami.com" class="social-link custom-icon small-icon" title="danialrami.com" target="_blank">
-                                <img src="svg-cloud-25.svg" alt="Website Icon">
-                            </a> 
-                            <!-- sample for expansion
-                            <a href="https://soundcloud.com/yourusername" class="social-link" title="SoundCloud" target="_blank"><i class="fab fa-soundcloud"></i></a> -->
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <!-- Footer -->
-        <footer>
-            <p>&copy; <span id="current-year">2025</span> LUFS Audio. All rights reserved.</p>
-        </footer>
+<div class="shell">
+  <aside class="rail">
+    <div class="rail-id">
+      <svg class="logo-cloud" viewBox="0 0 200 200" aria-label="Daniel Ramirez — cloud mark">
+        <path d="M100,30 C130,30 150,50 150,80 C180,80 200,100 200,130 C200,160 180,180 150,180 L50,180 C20,180 0,160 0,130 C0,100 20,80 50,80 C50,50 70,30 100,30 Z" fill="var(--text)"/>
+        <circle class="eye" cx="70" cy="100" r="15" fill="var(--bg)"/>
+        <circle class="eye" cx="130" cy="100" r="15" fill="var(--bg)"/>
+      </svg>
+      <div class="nm">Daniel<br>Ramirez<span class="dot">.</span></div>
     </div>
+    <div class="rail-role">RESUME_TITLE · Interactive Audio</div>
 
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-    <script src="script.js"></script>
-    <script src="three_effects.js"></script>
+    <div class="viz-wrap"><canvas id="cloud"></canvas><span class="viz-tag">SIG — LIVE CATALOG</span></div>
+
+    <nav class="rail-nav" id="railNav">
+      <a href="#about" data-hover><span class="n">01</span> About</a>
+      <a href="#skills" data-hover><span class="n">02</span> Skills</a>
+      <a href="#work" data-hover><span class="n">03</span> Experience</a>
+      <a href="#edu" data-hover><span class="n">04</span> Education</a>
+      <a href="#projects" data-hover><span class="n">05</span> Projects</a>
+      <a href="#contact" data-hover><span class="n">06</span> Contact</a>
+    </nav>
+
+    <div class="player">
+      <button class="pl-enable" id="plPlay" data-hover><span id="plIco">▶</span><span id="plLab">Enable audio</span></button>
+      <div class="pl-track" id="plTrack">
+        <div class="pl-menu" id="plMenu" role="menu"></div>
+        <button class="pl-toggle" id="plToggle" data-hover aria-haspopup="true" aria-expanded="false">
+          <img class="pl-cover" id="plCover" alt="" />
+          <span class="pl-meta"><span class="pl-title" id="plTitle">Game Audio Design</span><span class="pl-sub" id="plSub">LUFS Catalog · choose a track</span></span>
+          <span class="pl-chev" id="plChev">▴</span>
+        </button>
+      </div>
+      <input type="file" id="plFile" accept="audio/*" hidden />
+      <div class="pl-seek" id="plSeek" data-hover><div class="fill" id="plFill"></div></div>
+      <div class="pl-foot"><span class="pl-time" id="plTime">0:00</span><input class="pl-vol" id="plVol" type="range" min="0" max="1" step="0.01" value="0.8" data-hover aria-label="Volume" /></div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header class="hero" id="top">
+      <span class="sec-label eyebrow">RESUME_TITLE · Interactive Audio</span>
+      <h1 class="big">Interactive audio,<br>UX sound design,<br>sonic identity<span class="dot">.</span></h1>
+      <p class="lead">Sound Designer specializing in interactive audio implementation and UX sound design for mobile applications — crafting cohesive sonic identities that enhance engagement and give users clear interaction feedback.</p>
+      <div class="hero-cta">
+        <a class="btn" href="https://reel.danialrami.com" target="_blank" rel="noopener noreferrer" data-hover>▶ Play the reel</a>
+        <a class="btn ghost" href="#contact" data-hover>Contact</a>
+      </div>
+    </header>
+
+    <section class="blk" id="about">
+      <div class="blk-head reveal"><span class="num">01</span><h2>About</h2></div>
+      <p class="prose reveal">RESUME_PROFILE</p>
+    </section>
+
+    <section class="blk" id="skills">
+      <div class="blk-head reveal"><span class="num">02</span><h2>Skills</h2></div>
+      <div class="grid g-3">
+        RESUME_SKILLS_GRID
+      </div>
+    </section>
+
+    <section class="blk" id="work">
+      <div class="blk-head reveal"><span class="num">03</span><h2>Experience</h2></div>
+      <div class="tl reveal">
+        RESUME_EXPERIENCE_TIMELINE
+      </div>
+    </section>
+
+    <section class="blk" id="edu">
+      <div class="blk-head reveal"><span class="num">04</span><h2>Education &amp; Certs</h2></div>
+      <div class="tl reveal">
+        RESUME_EDUCATION_ITEMS
+      </div>
+      <div class="cert-row reveal">
+        <span class="cert-label">Certifications</span>
+        <div class="tags">RESUME_CERTIFICATIONS</div>
+      </div>
+    </section>
+
+    <section class="blk" id="projects">
+      <div class="blk-head reveal"><span class="num">05</span><h2>Selected projects</h2></div>
+      <div class="grid g-3">
+        RESUME_PROJECTS_GRID
+      </div>
+    </section>
+
+    <section class="blk" id="contact">
+      <div class="blk-head reveal"><span class="num">06</span><h2>Get in touch</h2></div>
+      <p class="prose reveal">Available for interactive audio and UX sound-design work — email is the fastest way to reach me.</p>
+      <p class="reveal mono" style="font-size:.78rem;letter-spacing:.04em;color:var(--muted);margin-top:6px">RESUME_EMAIL&nbsp;&nbsp;·&nbsp;&nbsp;RESUME_PHONE</p>
+      <div class="contact-links reveal">
+        <a class="btn" href="mailto:RESUME_EMAIL" data-hover>Email</a>
+        <a class="btn ghost" href="https://github.com/RESUME_GITHUB" target="_blank" rel="noopener noreferrer" data-hover>GitHub</a>
+        <a class="btn ghost" href="https://www.linkedin.com/in/RESUME_LINKEDIN" target="_blank" rel="noopener noreferrer" data-hover>LinkedIn</a>
+        <a class="btn ghost" href="https://github.com/danialrami/resume/raw/main/assets/pdf/Ramirez-Daniel_resume.pdf" target="_blank" rel="noopener noreferrer" data-hover>Download PDF</a>
+      </div>
+    </section>
+
+    <footer>
+      <span class="mono">© Daniel Ramirez — Sound &amp; Systems</span>
+      <span class="mono">Audio streamed from <a href="https://catalog.lufs.audio" target="_blank" rel="noopener noreferrer" data-hover style="color:var(--gold)">catalog.lufs.audio</a></span>
+    </footer>
+  </main>
+</div>
+
+<!-- ============================================================
+     SCRIPT 1 — PARAMS (Live Dial Tuning Panel) + reveal + UNIFORM
+     cursor + scroll-spy. No deps; runs first so content always shows.
+     ============================================================ -->
+<script>
+/* Live Dial Tuning Panel — PARAMS = single source of truth (default = current value, ranges to extremes) */
+var PARAMS = {
+  pointCount:  { v:40000, min:2000, max:40000, step:500,  g:'Cloud', label:'Particles' },
+  pointSize:   { v:1.15,  min:0.5,  max:6,     step:0.05, g:'Cloud', label:'Point size' },
+  rotateSpeed: { v:0.06,  min:0,    max:0.4, step:0.005, g:'Cloud', label:'Rotate speed' },
+  morphHold:   { v:5.5,   min:0.5,  max:10,  step:0.1,   g:'Cloud', label:'Morph hold (s)' },
+  morphDur:    { v:2,     min:0.4,  max:8,   step:0.1,   g:'Cloud', label:'Morph dur (s)' },
+  audioGain:   { v:5,     min:0,    max:6,   step:0.05,  g:'Reactivity', label:'Audio gain' },
+  engageTime:  { v:4,     min:0,    max:8,   step:0.1,   g:'Reactivity', label:'Engage ramp (s)' },
+  releaseTime: { v:4,     min:0,    max:10,  step:0.1,   g:'Reactivity', label:'Release (s)' },
+  idleDrift:   { v:0.3,   min:0,    max:1.5, step:0.01,  g:'Reactivity', label:'Idle drift' },
+  reactSmooth: { v:0.1,   min:0.02, max:0.6, step:0.01,  g:'Reactivity', label:'React smooth' }
+};
+var PV = function(k){ return PARAMS[k].v; };
+var DEF = {}; Object.keys(PARAMS).forEach(function(k){ DEF[k]=PARAMS[k].v; });
+
+/* shared audio-features contract (web-audio-reactivity); engine in SCRIPT 4 fills it */
+window.AUDIO = window.AUDIO || { L:{bass:0,mid:0,treble:0,energy:0,centroid:0.5,rms:0,beat:0,live:false,engage:0}, wave:{L:new Float32Array(2048),R:new Float32Array(2048),n:2048} };
+
+/* build the dial panel */
+(function(){
+  var body=document.getElementById('panelBody'), ta=document.getElementById('panelJSON');
+  if(!body) return;
+  var lastG=null, spans={};
+  var fmt=function(v){ return (Math.round(v*1000)/1000).toString(); };
+  function snapshot(){ var o={}; Object.keys(PARAMS).forEach(function(k){ o[k]=Math.round(PARAMS[k].v*1000)/1000; }); return o; }
+  function updateJSON(){ ta.value=JSON.stringify(snapshot()); }
+  Object.keys(PARAMS).forEach(function(k){
+    var d=PARAMS[k];
+    if(d.g!==lastG){ var h=document.createElement('h4'); h.textContent=d.g; body.appendChild(h); lastG=d.g; }
+    var row=document.createElement('div'); row.className='row';
+    var lab=document.createElement('div'); lab.className='lab';
+    var name=document.createElement('span'); name.textContent=d.label;
+    var span=document.createElement('b'); span.textContent=fmt(d.v); spans[k]=span;
+    lab.appendChild(name); lab.appendChild(span);
+    var inp=document.createElement('input'); inp.type='range'; inp.min=d.min; inp.max=d.max; inp.step=d.step; inp.value=d.v; inp.setAttribute('data-hover','');
+    inp.addEventListener('input',function(){ d.v=parseFloat(inp.value); span.textContent=fmt(d.v); updateJSON(); });
+    row.appendChild(lab); row.appendChild(inp); body.appendChild(row);
+  });
+  updateJSON();
+  document.getElementById('panelCopy').onclick=function(){ var s=JSON.stringify(snapshot(),null,2); ta.value=s; if(navigator.clipboard)navigator.clipboard.writeText(s); };
+  document.getElementById('panelReset').onclick=function(){ Object.keys(PARAMS).forEach(function(k){ PARAMS[k].v=DEF[k]; spans[k].textContent=fmt(DEF[k]); var i=body.querySelectorAll('input')[Object.keys(PARAMS).indexOf(k)]; if(i)i.value=DEF[k]; }); updateJSON(); };
+  var panel=document.getElementById('panel'), tog=document.getElementById('dialToggle');
+  function toggle(){ panel.classList.toggle('open'); }
+  tog.onclick=toggle;
+  addEventListener('keydown',function(e){ if((e.key==='d'||e.key==='D') && !/input|textarea/i.test((e.target.tagName||''))) toggle(); });
+})();
+
+/* scroll-reveal with force-show fallback + reduced-motion */
+(function(){
+  var els=document.querySelectorAll('.reveal');
+  function showAll(){ for(var i=0;i<els.length;i++) els[i].classList.add('in'); }
+  if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches){ showAll(); return; }
+  try{ var io=new IntersectionObserver(function(es){ es.forEach(function(x){ if(x.isIntersecting) x.target.classList.add('in'); }); },{threshold:.1});
+       for(var i=0;i<els.length;i++) io.observe(els[i]); }catch(e){ showAll(); }
+  setTimeout(showAll,800);
+})();
+
+/* UNIFORM custom cursor (Brand Design System §5) — dot + lagging ring; orbit variant is lufs.audio-only */
+(function(){
+  if(window.matchMedia && matchMedia('(pointer:coarse)').matches) return;
+  var d=document.querySelector('.cur-dot'), r=document.querySelector('.cur-ring');
+  if(!d||!r) return;
+  var mx=innerWidth/2,my=innerHeight/2,rx=mx,ry=my;
+  addEventListener('mousemove',function(e){ mx=e.clientX;my=e.clientY; d.style.transform='translate('+mx+'px,'+my+'px) translate(-50%,-50%)'; });
+  (function l(){ rx+=(mx-rx)*.18; ry+=(my-ry)*.18; r.style.transform='translate('+rx+'px,'+ry+'px) translate(-50%,-50%)'; requestAnimationFrame(l); })();
+  addEventListener('mouseover',function(e){ if(e.target.closest('[data-hover]')) r.classList.add('hot'); });
+  addEventListener('mouseout',function(e){ if(e.target.closest('[data-hover]')) r.classList.remove('hot'); });
+})();
+
+/* rail scroll-spy */
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#railNav a'));
+  var secs=links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  function spy(){ var y=scrollY+innerHeight*0.32, best=0; for(var i=0;i<secs.length;i++){ if(secs[i]&&secs[i].offsetTop<=y) best=i; } links.forEach(function(l,i){ l.classList.toggle('active', i===best); }); }
+  addEventListener('scroll',spy,{passive:true}); spy();
+})();
+</script>
+
+<!-- SCRIPT 2 — three@0.128.0 global build via jsDelivr (per reactive-webgl-background skill; NOT cdnjs) -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+
+<!-- ============================================================
+     SCRIPT 3 — Calm Studio point cloud (own identity vs vscope's
+     vectorscope). three global, NormalBlending, pixelRatio<=2,
+     reduced-motion, reads PARAMS live + AUDIO.L for engagement.
+     Guarded: if THREE didn't load, bail — page is still fine.
+     ============================================================ -->
+<script>
+(function(){
+  function initWebGL(){
+  try{
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var cv=document.getElementById('cloud');
+    var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+    renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+    var scene=new THREE.Scene(), cam=new THREE.PerspectiveCamera(55,1,.1,100); cam.position.z=4.2;
+
+    var MAX=40000;
+    var PAL=[[0.851,0.635,0.239],[0.549,0.541,0.420],[0.624,0.757,0.816],[0.784,0.396,0.290]]; // gold,sage,blue,terra
+    function sphere(n){var a=new Float32Array(n*3);for(var i=0;i<n;i++){var y=1-(i/(n-1))*2,r=Math.sqrt(1-y*y),t=i*2.399963;a[i*3]=Math.cos(t)*r*1.5;a[i*3+1]=y*1.5;a[i*3+2]=Math.sin(t)*r*1.5;}return a;}
+    function torus(n){var a=new Float32Array(n*3),R=1.25,r=.5;for(var i=0;i<n;i++){var u=Math.random()*6.2832,v=Math.random()*6.2832;a[i*3]=(R+r*Math.cos(v))*Math.cos(u);a[i*3+1]=r*Math.sin(v);a[i*3+2]=(R+r*Math.cos(v))*Math.sin(u);}return a;}
+    function wave(n){var a=new Float32Array(n*3),s=Math.ceil(Math.sqrt(n));for(var i=0;i<n;i++){var gx=(i%s)/s-.5,gz=Math.floor(i/s)/s-.5;a[i*3]=gx*3.2;a[i*3+1]=Math.sin(gx*7)*Math.cos(gz*7)*.5;a[i*3+2]=gz*3.2;}return a;}
+    function helix(n){var a=new Float32Array(n*3);for(var i=0;i<n;i++){var t=i/n*Math.PI*10,b=i%2?0:Math.PI;a[i*3]=Math.cos(t+b);a[i*3+1]=(i/n-.5)*3.0;a[i*3+2]=Math.sin(t+b);}return a;}
+    var shapes=[sphere(MAX),torus(MAX),wave(MAX),helix(MAX)], idxA=0, idxB=1;
+
+    var geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(shapes[idxA].slice(),3));
+    geo.setAttribute('aTarget',new THREE.BufferAttribute(shapes[idxB].slice(),3));
+    var col=new Float32Array(MAX*3),scl=new Float32Array(MAX),seed=new Float32Array(MAX);
+    for(var i=0;i<MAX;i++){var c=PAL[(Math.random()*PAL.length)|0];col[i*3]=c[0];col[i*3+1]=c[1];col[i*3+2]=c[2];scl[i]=.5+Math.random()*1.4;seed[i]=Math.random();}
+    geo.setAttribute('aColor',new THREE.BufferAttribute(col,3));
+    geo.setAttribute('aScale',new THREE.BufferAttribute(scl,1));
+    geo.setAttribute('aSeed',new THREE.BufferAttribute(seed,1));
+    geo.setDrawRange(0, Math.floor(PV('pointCount')));
+
+    var mat=new THREE.ShaderMaterial({
+      transparent:true, depthWrite:false, blending:THREE.NormalBlending,
+      uniforms:{uMorph:{value:0},uTime:{value:0},uAudio:{value:0},uSize:{value:PV('pointSize')}},
+      vertexShader:[
+        'attribute vec3 aTarget; attribute vec3 aColor; attribute float aScale; attribute float aSeed;',
+        'uniform float uMorph,uTime,uAudio,uSize; varying vec3 vColor; varying float vGlow;',
+        'void main(){',
+        '  vec3 p = mix(position,aTarget,uMorph);',
+        '  float n = sin(uTime*0.5 + aSeed*6.2831);',
+        '  p += normalize(p+0.0001)*n*(0.025 + uAudio*0.13);',
+        '  vColor=aColor;',
+        '  vec4 mv=modelViewMatrix*vec4(p,1.0);',
+        '  gl_PointSize=uSize*aScale*(1.0+uAudio*1.5)*(300.0/-mv.z);',
+        '  gl_Position=projectionMatrix*mv; vGlow=uAudio;',
+        '}'].join('\n'),
+      fragmentShader:[
+        'varying vec3 vColor; varying float vGlow;',
+        'void main(){',
+        '  vec2 c=gl_PointCoord-0.5; float d=length(c); if(d>0.5)discard;',
+        '  float a=smoothstep(0.5,0.0,d);',
+        '  gl_FragColor=vec4(vColor, a*(0.50+vGlow*0.45));',
+        '}'].join('\n')
+    });
+    var pts=new THREE.Points(geo,mat); scene.add(pts);
+
+    function resize(){var w=cv.clientWidth||300,h=cv.clientHeight||300;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
+    addEventListener('resize',resize); addEventListener('orientationchange',resize);
+    if(window.ResizeObserver){ new ResizeObserver(resize).observe(cv); }
+    resize();
+
+    var phase=0, phaseT=0;
+    function commit(){ idxA=idxB; idxB=(idxB+1)%shapes.length;
+      geo.attributes.position.array.set(shapes[idxA]); geo.attributes.position.needsUpdate=true;
+      geo.attributes.aTarget.array.set(shapes[idxB]); geo.attributes.aTarget.needsUpdate=true; mat.uniforms.uMorph.value=0; }
+
+    var last=performance.now();
+    function loop(now){
+      var dt=Math.min((now-last)/1000,.05); last=now; var t=now/1000;
+      mat.uniforms.uTime.value=t;
+      mat.uniforms.uSize.value=PV('pointSize');
+      geo.setDrawRange(0, Math.floor(PV('pointCount')));
+      var AL=(window.AUDIO&&AUDIO.L)||{energy:0,engage:0};
+      mat.uniforms.uAudio.value = Math.min(AL.energy*PV('audioGain'),1);   // idle→tiny wisp, ramps with the engine's engage-blended energy
+      pts.rotation.y += dt*(reduce?PV('rotateSpeed')*0.4:PV('rotateSpeed'))*(1+mat.uniforms.uAudio.value*0.8);
+      pts.rotation.x = Math.sin(t*0.1)*0.12;
+      phaseT+=dt;
+      if(phase===0){ if(phaseT>=PV('morphHold')){phase=1;phaseT=0;} }
+      else { var k=Math.min(phaseT/PV('morphDur'),1); mat.uniforms.uMorph.value=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2; if(k>=1){commit();phase=0;phaseT=0;} }
+      renderer.render(scene,cam); requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }catch(err){ if(window.console) console.warn('[viz] webgl disabled:', err); initFallback2D(); }
+  }
+
+  // No-CDN fallback: pseudo-3D point cloud in pure Canvas2D, reading PARAMS + AUDIO.L.
+  // Renders the same Calm Studio cloud wherever the WebGL CDN is blocked (e.g. the artifact/share sandbox),
+  // so the visualizer is never blank and the dials + audio reactivity still apply.
+  function initFallback2D(){
+    try{
+      var cv=document.getElementById('cloud'); if(!cv) return;
+      var ctx=cv.getContext('2d'); if(!ctx) return;
+      var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var DPR=Math.min(devicePixelRatio,2);
+      function size(){ cv.width=(cv.clientWidth||300)*DPR; cv.height=(cv.clientHeight||300)*DPR; }
+      size(); addEventListener('resize',size); addEventListener('orientationchange',size); if(window.ResizeObserver) new ResizeObserver(size).observe(cv);
+      var MAX2D=2200, PAL=['#d9a23d','#8c8a6b','#9fc1d0','#c8654a'];
+      function sph(n){var a=[];for(var i=0;i<n;i++){var y=1-(i/(n-1))*2,r=Math.sqrt(1-y*y),t=i*2.399963;a.push([Math.cos(t)*r*1.5,y*1.5,Math.sin(t)*r*1.5]);}return a;}
+      function tor(n){var a=[];for(var i=0;i<n;i++){var u=Math.random()*6.2832,v=Math.random()*6.2832,R=1.25,r=.5;a.push([(R+r*Math.cos(v))*Math.cos(u),r*Math.sin(v),(R+r*Math.cos(v))*Math.sin(u)]);}return a;}
+      function wav(n){var a=[],s=Math.ceil(Math.sqrt(n));for(var i=0;i<n;i++){var gx=(i%s)/s-.5,gz=Math.floor(i/s)/s-.5;a.push([gx*3.2,Math.sin(gx*7)*Math.cos(gz*7)*.5,gz*3.2]);}return a;}
+      function hel(n){var a=[];for(var i=0;i<n;i++){var t=i/n*Math.PI*10,b=i%2?0:Math.PI;a.push([Math.cos(t+b),(i/n-.5)*3,Math.sin(t+b)]);}return a;}
+      var shapes=[sph(MAX2D),tor(MAX2D),wav(MAX2D),hel(MAX2D)], cols=[]; for(var i=0;i<MAX2D;i++)cols.push(PAL[(Math.random()*4)|0]);
+      var idxA=0,idxB=1,phase=0,pt=0,last=performance.now(),rotY=0;
+      function ease(k){return k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;}
+      function loop(now){
+        var dt=Math.min((now-last)/1000,.05); last=now;
+        var AL=(window.AUDIO&&AUDIO.L)||{energy:0,engage:0};
+        var au=Math.min(AL.energy*PV('audioGain'),1), morph=0;
+        var count=Math.min(Math.floor(PV('pointCount')),MAX2D), baseS=PV('pointSize');
+        pt+=dt;
+        if(phase===0){ if(pt>=PV('morphHold')){phase=1;pt=0;} }
+        else { var k=Math.min(pt/PV('morphDur'),1); morph=ease(k); if(k>=1){idxA=idxB;idxB=(idxB+1)%shapes.length;phase=0;pt=0;} }
+        rotY+=dt*(reduce?PV('rotateSpeed')*0.4:PV('rotateSpeed'))*(1+au*0.8);
+        ctx.clearRect(0,0,cv.width,cv.height);
+        var cx=cv.width/2,cy=cv.height/2,fov=2.6,scale=Math.min(cv.width,cv.height)*0.34;
+        var A=shapes[idxA],B=shapes[idxB],cyR=Math.cos(rotY),syR=Math.sin(rotY);
+        for(var j=0;j<count;j++){
+          var ax=A[j][0]+(B[j][0]-A[j][0])*morph, ay=A[j][1]+(B[j][1]-A[j][1])*morph, az=A[j][2]+(B[j][2]-A[j][2])*morph;
+          var x=ax*cyR+az*syR, z=-ax*syR+az*cyR, p=fov/(fov+z);
+          var sx=cx+x*scale*p, sy=cy+ay*scale*p, s=Math.max(0.6,(baseS*0.5+au*1.4)*p*DPR);
+          ctx.globalAlpha=Math.min(0.85,(0.42+au*0.4)*p); ctx.fillStyle=cols[j]; ctx.fillRect(sx,sy,s,s);
+        }
+        ctx.globalAlpha=1; requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    }catch(e){ if(window.console) console.warn('[viz2d]',e); }
+  }
+
+  if(window.THREE){ initWebGL(); }
+  else { if(window.console) console.warn('[viz] THREE blocked (CDN) — using Canvas2D fallback'); initFallback2D(); }
+})();
+</script>
+
+<!-- ============================================================
+     SCRIPT 4 — Web Audio Reactivity Engine (exact spec) + player UI.
+     Full analyser + stereo splitter → per-channel analysers; band
+     features + centroid + beat + per-channel waveform; engage/release
+     envelope; calm idle generator (no fake beats); autoplay gesture
+     gate. Streams via lufs-catalog-streaming client pattern.
+     Fills the shared AUDIO.L / AUDIO.wave contract the cloud reads.
+     ============================================================ -->
+<script>
+(function(){
+  var A=window.AUDIO, L=A.L, wave=A.wave, N=wave.n;
+  L._avg=0; L._cool=0;
+  var STREAM='https://stream.lufsaud.io/api/stream/';
+  var TRACKS=[
+    {id:'lufs-38776972',title:'Game Audio Design'},
+    {id:'lufs-ff498289',title:'Generative — SuperCollider'},
+    {id:'lufs-10918ff3',title:'High Intensity — Marketing'},
+    {id:'lufs-290c4817',title:'Piano Solo'},
+    {id:'lufs-424b1054',title:'String + Samples'},
+    {id:'lufs-59b422dd',title:'Synth Improvisation'}
+  ];
+  var cur=0, ctx, el, full, anL, anR, splitter, srcNode, fb,
+      tL=new Float32Array(N), tR=new Float32Array(N),
+      corsOK=null, playing=false, wired=false, engage=0;
+
+  var $=function(id){return document.getElementById(id);};
+  var bPlay=$('plPlay'),bIco=$('plIco'),bLab=$('plLab'),
+      elTitle=$('plTitle'),elSub=$('plSub'),elCover=$('plCover'),
+      elFill=$('plFill'),elTime=$('plTime'),elSeek=$('plSeek'),elVol=$('plVol'),elHero=$('heroPlay'),
+      elTrack=$('plTrack'),elMenu=$('plMenu'),bToggle=$('plToggle'),elFile=$('plFile');
+  var baseSub='LUFS Catalog';
+
+  function fmt(s){s=Math.floor(s||0);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+  function band(a,lo,hi){var s=0,n=0;for(var i=lo;i<hi&&i<a.length;i++){s+=a[i];n++;}return n?s/n/255:0;}
+  function readFloat(an,arr){ if(an.getFloatTimeDomainData)an.getFloatTimeDomainData(arr); else{var b=new Uint8Array(arr.length);an.getByteTimeDomainData(b);for(var i=0;i<arr.length;i++)arr[i]=(b[i]-128)/128;} }
+
+  // CORS preflight probe (lufs-catalog-streaming): follows 302→R2; null while pending
+  try{ fetch(STREAM+TRACKS[0].id,{method:'GET',headers:{Range:'bytes=0-1'},mode:'cors'})
+        .then(function(r){corsOK=(r.status===206||r.status===200);}).catch(function(){corsOK=false;}); }catch(e){corsOK=false;}
+
+  function makeEl(){
+    if(el) return;
+    el=new Audio(); el.preload='none'; el.loop=false;
+    if(corsOK!==false) el.crossOrigin='anonymous';      // BEFORE .src (only skipped if CORS proven dead)
+    el.src=STREAM+TRACKS[cur].id; el.dataset.id=TRACKS[cur].id;
+    el.addEventListener('playing',function(){ elSub.textContent='● Streaming — LUFS Catalog'; });
+    el.addEventListener('waiting',function(){ elSub.textContent='Buffering…'; });
+    el.addEventListener('stalled',function(){ elSub.textContent='Buffering…'; });
+    el.addEventListener('error',function(){ elSub.textContent='Stream error — tap to retry'; });
+    el.addEventListener('ended', next);
+    el.addEventListener('timeupdate',function(){ if(el.duration){ elFill.style.width=(el.currentTime/el.duration*100)+'%'; elTime.textContent=fmt(el.currentTime);} });
+    el.volume=parseFloat((window.localStorage&&localStorage.getItem('dr_vol'))||'0.8'); elVol.value=el.volume;
+  }
+  function setSrc(){ if(el && el.dataset.id!==TRACKS[cur].id){ if(corsOK!==false) el.crossOrigin='anonymous'; el.src=STREAM+TRACKS[cur].id; el.dataset.id=TRACKS[cur].id; } }
+  // build the analyser graph lazily, on the first gesture (autoplay gate)
+  function buildGraph(){ if(wired||corsOK===false) return; try{
+      ctx=new (window.AudioContext||window.webkitAudioContext)();
+      full=ctx.createAnalyser(); full.fftSize=1024; full.smoothingTimeConstant=.8; fb=new Uint8Array(full.frequencyBinCount);
+      anL=ctx.createAnalyser(); anR=ctx.createAnalyser(); anL.fftSize=anR.fftSize=N;
+      splitter=ctx.createChannelSplitter(2); srcNode=ctx.createMediaElementSource(el);
+      srcNode.connect(full); full.connect(ctx.destination);            // audible
+      srcNode.connect(splitter); splitter.connect(anL,0); splitter.connect(anR,1);   // L/R taps (not routed to output)
+      wired=true;
+    }catch(e){ /* analyser blocked — audio still plays via the element */ } }
+  function loadMeta(i){ fetch(STREAM+TRACKS[i].id+'?format=json').then(function(r){return r.json();}).then(function(j){ if(j.cover)elCover.src=j.cover; baseSub='LUFS Catalog · '+fmt(j.duration); if(!playing)elSub.textContent=baseSub; }).catch(function(){ baseSub='LUFS Catalog'; if(!playing)elSub.textContent=baseSub; }); }
+  function setUI(){ bIco.textContent=playing?'❚❚':'▶'; bLab.textContent=playing?'Pause':'Enable audio'; bPlay.classList.toggle('on',playing); }
+  function play(){ makeEl(); buildGraph(); if(ctx&&ctx.state==='suspended')ctx.resume(); var p=el.play(); if(p&&p.catch)p.catch(function(){ elSub.textContent='Tap again to start'; }); playing=true; setUI(); }
+  function pause(){ if(el)el.pause(); playing=false; setUI(); elSub.textContent=baseSub; }
+  function toggle(){ if(!playing||(el&&el.paused)) play(); else pause(); }
+  function next(){ cur=(cur+1)%TRACKS.length; makeEl(); setSrc(); elTitle.textContent=TRACKS[cur].title; loadMeta(cur); markSel(cur); play(); }
+
+  // ---- the engine update loop (computes AUDIO.L + AUDIO.wave every frame) ----
+  var last=performance.now();
+  (function update(now){
+    var dt=Math.min((now-last)/1000,.05); last=now; var t=now/1000;
+    var id=PV('idleDrift'), sm=PV('reactSmooth');
+    // calm idle targets (slow sub-1Hz wisps — NO beat oscillator)
+    var ib=(0.05+0.035*Math.sin(t*0.25))*id, im=(0.10+0.05*Math.sin(t*0.4))*id, it=(0.07+0.04*Math.sin(t*0.6))*id;
+    var ie=(ib+im+it)/3, ic=0.5+0.12*Math.sin(t*0.3), iamp=0.045*id;
+    var lb=ib,lm=im,lt=it,le=ie,lc=ic,lrms=iamp*0.5,haveLive=false;
+    if(playing&&full){ full.getByteFrequencyData(fb);
+      var b=band(fb,1,8),m=band(fb,8,42),tr=band(fb,42,140),e=band(fb,1,160);
+      if((b+m+tr)>0.004){ haveLive=true; lb=b;lm=m;lt=tr;le=e;
+        var num=0,den=0; for(var i=1;i<fb.length;i++){num+=i*fb[i];den+=fb[i];} lc=den>0?(num/den)/fb.length:0.5;
+        readFloat(anL,tL); readFloat(anR,tR); var rms=0; for(var i2=0;i2<N;i2++)rms+=tL[i2]*tL[i2]+tR[i2]*tR[i2]; lrms=Math.sqrt(rms/(2*N)); }
+    }
+    L.live=haveLive;
+    var tgt=haveLive?1:0, tau=tgt>engage?PV('engageTime'):PV('releaseTime');
+    engage += (tgt-engage)*(1-Math.exp(-dt/Math.max(0.05,tau))); L.engage=engage;
+    var tb=ib+(lb-ib)*engage, tm=im+(lm-im)*engage, tt=it+(lt-it)*engage, te=ie+(le-ie)*engage, tc=ic+(lc-ic)*engage, trms=(iamp*0.5)+(lrms-iamp*0.5)*engage;
+    L.bass+=(tb-L.bass)*sm; L.mid+=(tm-L.mid)*sm; L.treble+=(tt-L.treble)*sm; L.energy+=(te-L.energy)*(sm*0.9); L.centroid+=(tc-L.centroid)*0.2; L.rms=trms;
+    L._avg += (L.energy-L._avg)*0.04; L.beat=(L.energy>L._avg*1.32 && L._cool<=0)?(L._cool=10,1):(L._cool--,0);
+    for(var i3=0;i3<N;i3++){ var u=i3/N*Math.PI*2.0; var iwL=Math.sin(u*2.0+t*0.7)*iamp, iwR=Math.sin(u*2.0+t*0.72+0.15)*iamp; var lwL=haveLive?tL[i3]:iwL, lwR=haveLive?tR[i3]:iwR; wave.L[i3]=iwL+(lwL-iwL)*engage; wave.R[i3]=iwR+(lwR-iwR)*engage; }
+    requestAnimationFrame(update);
+  })(performance.now());
+
+  // ---- track menu (expands upward) + "Add your own…" upload ----
+  function markSel(i){ [].forEach.call(elMenu.querySelectorAll('button[data-i]'),function(b){ b.classList.toggle('sel',parseInt(b.getAttribute('data-i'),10)===i); }); }
+  function closeMenu(){ elTrack.classList.remove('open'); bToggle.setAttribute('aria-expanded','false'); }
+  function toggleMenu(){ var open=elTrack.classList.toggle('open'); bToggle.setAttribute('aria-expanded',open?'true':'false'); }
+  function selectTrack(i){ cur=i; makeEl(); setSrc(); elTitle.textContent=TRACKS[cur].title; loadMeta(cur); markSel(cur); closeMenu(); play(); }
+  (function buildMenu(){
+    var html=''; TRACKS.forEach(function(t,i){ var n=(i+1<10?'0'+(i+1):''+(i+1)); html+='<button data-i="'+i+'" data-hover><span class="num">'+n+'</span>'+t.title+'</button>'; });
+    html+='<button class="add" id="plAdd" data-hover>+ Add your own…</button>';
+    elMenu.innerHTML=html;
+    [].forEach.call(elMenu.querySelectorAll('button[data-i]'),function(b){ b.onclick=function(){ selectTrack(parseInt(b.getAttribute('data-i'),10)); }; });
+    document.getElementById('plAdd').onclick=function(){ elFile.click(); };
+    markSel(cur);
+  })();
+  elFile.onchange=function(e){
+    var f=e.target.files&&e.target.files[0]; if(!f) return;
+    makeEl(); buildGraph();                                   // blob is same-origin → analyser works regardless of corsOK
+    el.src=URL.createObjectURL(f); el.dataset.id='upload';
+    elTitle.textContent=f.name.replace(/\.[^.]+$/,''); baseSub='Your upload'; elSub.textContent=baseSub;
+    markSel(-1); closeMenu(); play();
+  };
+
+  // ---- wire the player UI ----
+  bPlay.onclick=toggle;
+  if(elHero) elHero.onclick=function(e){ e.preventDefault(); toggle(); };
+  bToggle.onclick=function(e){ e.stopPropagation(); toggleMenu(); };
+  document.addEventListener('click',function(e){ if(elTrack && !elTrack.contains(e.target)) closeMenu(); });
+  elVol.oninput=function(e){ makeEl(); el.volume=e.target.value; try{localStorage.setItem('dr_vol',e.target.value);}catch(x){} };
+  elSeek.onclick=function(e){ if(el&&el.duration){ var r=elSeek.getBoundingClientRect(); el.currentTime=((e.clientX-r.left)/r.width)*el.duration; } };
+  loadMeta(0);
+})();
+</script>
 </body>
 </html>

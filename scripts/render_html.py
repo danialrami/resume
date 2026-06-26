@@ -42,44 +42,35 @@ def escape_html(text: str) -> str:
 
 
 def render_experience_html(experience: list) -> str:
-    """Render experience section."""
+    """Render experience section (dossier .tl-item markup)."""
     html = []
     for exp in experience:
         company = escape_html(str(exp.get("company", "")))
         role = escape_html(str(exp.get("role", "")))
         location = escape_html(str(exp.get("location", "")))
         dates = escape_html(str(exp.get("dates", "")))
-
         bullets = exp.get("description", [])
 
-        html.append('<div class="timeline-item">')
-        html.append('    <div class="timeline-dot"></div>')
-        html.append('    <div class="timeline-content">')
+        meta = " · ".join([p for p in [dates, location] if p])
 
-        date_line = []
-        if location:
-            date_line.append(location)
-        if dates:
-            date_line.append(dates)
-
-        html.append(f"    <h3>{role} | {company}</h3>")
-        if date_line:
-            html.append(f'    <p class="timeline-date">{" | ".join(date_line)}</p>')
-
+        html.append('<div class="tl-item">')
+        if meta:
+            html.append(f'  <div class="when">{meta}</div>')
+        html.append(f"  <h3>{role}</h3>")
+        if company:
+            html.append(f'  <div class="org">{company}</div>')
         if bullets:
-            html.append("    <ul>")
+            html.append('  <ul class="bul">')
             for bullet in bullets:
-                html.append(f"        <li>{escape_html(str(bullet))}</li>")
-            html.append("    </ul>")
-
-        html.append("    </div>")
+                html.append(f"    <li>{escape_html(str(bullet))}</li>")
+            html.append("  </ul>")
         html.append("</div>")
 
     return "\n".join(html)
 
 
 def render_education_html(education: list) -> str:
-    """Render education section."""
+    """Render education section (dossier .tl-item markup)."""
     html = []
 
     for edu in education:
@@ -88,154 +79,61 @@ def render_education_html(education: list) -> str:
         location = escape_html(str(edu.get("location", "")))
         dates = escape_html(str(edu.get("dates", "")))
 
-        html.append('<div class="education-item">')
-        html.append(f"    <h3>{school}</h3>")
-        html.append(f'    <p class="education-degree">{degree}</p>')
+        meta = " · ".join([p for p in [dates, location] if p])
 
-        details = []
-        if location:
-            details.append(location)
-        if dates:
-            details.append(dates)
-
-        html.append(f'    <p class="education-location">{" | ".join(details)}</p>')
+        html.append('<div class="tl-item">')
+        if meta:
+            html.append(f'  <div class="when">{meta}</div>')
+        html.append(f"  <h3>{degree}</h3>")
+        if school:
+            html.append(f'  <div class="org">{school}</div>')
         html.append("</div>")
 
     return "\n".join(html)
 
 
 def render_certifications_html(certifications: list) -> str:
-    """Render certifications section."""
+    """Render certifications as dossier chips."""
     html = []
-
     for cert in certifications:
         name = escape_html(str(cert.get("name", "")))
-
-        html.append('<div class="certification-item">')
-        html.append(f"    <h3>{name}</h3>")
-
-        # Extract items from link if it looks like a list
-        link = cert.get("link", "")
-        # Simple parsing for certifications
-        html.append("    <ul>")
-        html.append(
-            f'        <li><a href="{escape_html(str(link))}" target="_blank">View Certification</a></li>'
-        )
-        html.append("    </ul>")
-        html.append("</div>")
-
+        if name:
+            html.append(f'<span class="tag">{name}</span>')
     return "\n".join(html)
 
 
 def render_projects_html(projects: list) -> str:
-    """Render projects section."""
+    """Render projects as dossier cards."""
     html = []
-
     for proj in projects:
         name = escape_html(str(proj.get("name", "")))
-
-        # Determine icon based on category
-        icons = {
-            "app": "fa-mobile-alt",
-            "audio": "fa-microphone",
-            "automation": "fa-cogs",
-            "pipeline": "fa-stream",
-        }
-
-        icon = "fa-code"
-        for keyword, i in icons.items():
-            if keyword.lower() in name.lower():
-                icon = i.replace(" ", "")
-                break
-
-        html.append('<div class="project-item">')
-        html.append(f'    <div class="project-icon"><i class="fas {icon}"></i></div>')
-        html.append(f"    <h3>{name}</h3>")
-
         bullets = proj.get("description", [])
-        if bullets:
-            html.append("    <ul>")
-            for bullet in bullets:
-                html.append(f"        <li>{escape_html(str(bullet))}</li>")
-            html.append("    </ul>")
+        desc = escape_html(" ".join(str(b) for b in bullets))
 
+        html.append('<div class="card reveal">')
+        html.append('  <span class="k">Project</span>')
+        html.append(f"  <h3>{name}</h3>")
+        if desc:
+            html.append(f"  <p>{desc}</p>")
         html.append("</div>")
 
     return "\n".join(html)
 
 
 def render_skills_html(skills: list) -> str:
-    """Render skills sections."""
+    """Render skills as dossier cards (data-driven over every category,
+    so new categories in resume.yaml — incl. Specialties — appear automatically)."""
     html = []
-
-    # Audio Software
     for skill in skills:
-        if "Audio Software" in str(skill.get("category", "")):
-            items = ", ".join(str(x) for x in skill.get("list", []))
-            html.append('<div class="skills-category">')
-            html.append("    <h3>Audio Software & Hardware</h3>")
-            html.append('    <div class="skills-grid">')
-            html.append(
-                f'        <div class="skill-item"><i class="fas fa-sliders-h"></i><span>{escape_html(items)}</span></div>'
-            )
-            html.append("    </div>")
-            html.append("</div>")
-
-    # DAWs
-    for skill in skills:
-        if "DAW" in str(skill.get("category", "")):
-            items = ", ".join(str(x) for x in skill.get("list", []))
-            html.append('<div class="skills-category">')
-            html.append("    <h3>DAWs</h3>")
-            html.append('    <div class="skills-grid">')
-            html.append(
-                f'        <div class="skill-item"><i class="fas fa-music"></i><span>{escape_html(items)}</span></div>'
-            )
-            html.append("    </div>")
-            html.append("</div>")
-
-    # Game Engines
-    for skill in skills:
-        if "Game" in str(skill.get("category", "")):
-            items = ", ".join(str(x) for x in skill.get("list", []))
-            html.append('<div class="skills-category">')
-            html.append("    <h3>Game Engines</h3>")
-            html.append('    <div class="skills-grid">')
-            html.append(
-                f'        <div class="skill-item"><i class="fas fa-gamepad"></i><span>{escape_html(items)}</span></div>'
-            )
-            html.append("    </div>")
-            html.append("</div>")
-
-    # Scripting
-    for skill in skills:
-        if "Script" in str(skill.get("category", "")):
-            items = ", ".join(str(x) for x in skill.get("list", []))
-            html.append('<div class="skills-category">')
-            html.append("    <h3>Scripting</h3>")
-            html.append('    <div class="skills-grid">')
-            html.append(
-                f'        <div class="skill-item"><i class="fas fa-code"></i><span>{escape_html(items)}</span></div>'
-            )
-            html.append("    </div>")
-            html.append("</div>")
-
-    # Node-based
-    for skill in skills:
-        if (
-            "Node" in str(skill.get("category", ""))
-            or "based" in str(skill.get("category", "")).lower()
-        ):
-            items = ", ".join(str(x) for x in skill.get("list", []))
-            html.append('<div class="skills-category">')
-            html.append("    <h3>Node-based</h3>")
-            html.append('    <div class="skills-grid">')
-            html.append(
-                f'        <div class="skill-item"><i class="fas fa-project-diagram"></i><span>{escape_html(items)}</span></div>'
-            )
-            html.append("    </div>")
-            html.append("</div>")
-
+        category = escape_html(str(skill.get("category", "")))
+        items = skill.get("list", [])
+        html.append('<div class="card reveal">')
+        html.append(f'  <span class="k">{category}</span>')
+        html.append('  <div class="tags">')
+        for it in items:
+            html.append(f'    <span class="tag">{escape_html(str(it))}</span>')
+        html.append("  </div>")
+        html.append("</div>")
     return "\n".join(html)
 
 
