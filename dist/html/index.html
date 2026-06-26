@@ -582,7 +582,7 @@ window.AUDIO = window.AUDIO || { L:{bass:0,mid:0,treble:0,energy:0,centroid:0.5,
       function wav(n){var a=[],s=Math.ceil(Math.sqrt(n));for(var i=0;i<n;i++){var gx=(i%s)/s-.5,gz=Math.floor(i/s)/s-.5;a.push([gx*3.2,Math.sin(gx*7)*Math.cos(gz*7)*.5,gz*3.2]);}return a;}
       function hel(n){var a=[];for(var i=0;i<n;i++){var t=i/n*Math.PI*10,b=i%2?0:Math.PI;a.push([Math.cos(t+b),(i/n-.5)*3,Math.sin(t+b)]);}return a;}
       var P=[sph(MAX2D),tor(MAX2D),wav(MAX2D),hel(MAX2D)];
-      function mk(F){var n=(F&&F.length||0)/2,out=new Array(MAX2D),i,idx;for(i=0;i<MAX2D;i++){idx=n>=MAX2D?((i*n/MAX2D)|0):(i%(n||1));out[i]=[F[2*idx]/100,F[2*idx+1]/100,(Math.random()-0.5)*0.5];}return out;}  /* z-depth so the mark spins as a 3D cloud (never collapses to a vertical sliver at 90deg) -- replaces the face-on snap */
+      function mk(F){var n=(F&&F.length||0)/2,out=new Array(MAX2D),i,idx;for(i=0;i<MAX2D;i++){idx=n>=MAX2D?((i*n/MAX2D)|0):(i%(n||1));out[i]=[F[2*idx]/100,F[2*idx+1]/100,0];}return out;}  /* marks are FLAT (crisp); the loop gives them a bounded yaw instead of full spin so they never reach the edge-on sliver (Option A) */
       var shapes=[],flat=[];
       function add(sh,f){if(sh&&sh.length){shapes.push(sh);flat.push(f);}}
       add(P[0],false);add(mk(BRAND_PTS.cloud),true);add(P[1],false);add(mk(BRAND_PTS.dr),true);add(P[2],false);add(mk(BRAND_PTS.danirami),true);add(P[3],false);add(mk(BRAND_PTS.danialrami),true);
@@ -598,15 +598,19 @@ window.AUDIO = window.AUDIO || { L:{bass:0,mid:0,treble:0,energy:0,centroid:0.5,
         pt+=dt;
         if(phase===0){ if(pt>=PV('morphHold')){phase=1;pt=0;} }
         else { var k=Math.min(pt/PV('morphDur'),1); morph=ease(k); if(k>=1){idxA=idxB;idxB=(idxB+1)%shapes.length;phase=0;pt=0;morph=0;}  /* clear morph on commit so this frame draws the finished shape, not a 1-frame flash of the next */ }
-        rotY+=dt*(reduce?PV('rotateSpeed')*0.4:PV('rotateSpeed'))*(1+au*0.8);   // ONE identical constant spin for every shape (parametric + marks) -- no snap, marks have z-depth so they never collapse
+        rotY+=dt*(reduce?PV('rotateSpeed')*0.4:PV('rotateSpeed'))*(1+au*0.8);   // continuous spin accumulator -- parametrics ride this directly
+        // Option A -- decoupled orientation. Parametrics spin fully on rotY; flat marks use a bounded yaw centred on face-on (amplitude YAW rad, rate YW) so they NEVER rotate toward the 90deg sliver. Each shape is rotated by its OWN angle and the rotated clouds are blended across the morph -- so a mark is only ever at its small yaw (crisp, no sliver) while a parametric always spins; no shared angle => no teleport on transitions.
+        var YAW=0.4,YW=7;
+        var aA=flat[idxA]?YAW*Math.sin(rotY*YW):rotY, aB=flat[idxB]?YAW*Math.sin(rotY*YW):rotY;
         ctx.clearRect(0,0,cv.width,cv.height);
         var cx=cv.width/2,cy=cv.height/2,fov=2.6,scale=Math.min(cv.width,cv.height)*0.34;
-        var A=shapes[idxA],B=shapes[idxB],cyR=Math.cos(rotY),syR=Math.sin(rotY);
+        var A=shapes[idxA],B=shapes[idxB],cyA=Math.cos(aA),syA=Math.sin(aA),cyB=Math.cos(aB),syB=Math.sin(aB);
         var total=A.length;
         for(var j=0;j<count;j++){
           var idx=(j*total/count)|0;   // stride across the WHOLE shape so 100% renders at any count (density = count)
-          var ax=A[idx][0]+(B[idx][0]-A[idx][0])*morph, ay=A[idx][1]+(B[idx][1]-A[idx][1])*morph, az=A[idx][2]+(B[idx][2]-A[idx][2])*morph;
-          var x=ax*cyR+az*syR, z=-ax*syR+az*cyR, p=fov/(fov+z);
+          var xA=A[idx][0]*cyA+A[idx][2]*syA, zA=-A[idx][0]*syA+A[idx][2]*cyA;
+          var xB=B[idx][0]*cyB+B[idx][2]*syB, zB=-B[idx][0]*syB+B[idx][2]*cyB;
+          var x=xA+(xB-xA)*morph, ay=A[idx][1]+(B[idx][1]-A[idx][1])*morph, z=zA+(zB-zA)*morph, p=fov/(fov+z);
           var sx=cx+x*scale*p, sy=cy+ay*scale*p, s=Math.max(0.6,(baseS*0.5+au*1.4)*p*DPR);
           ctx.globalAlpha=Math.min(0.85,(0.42+au*0.4)*p); ctx.fillStyle=cols[idx]; ctx.fillRect(sx,sy,s,s);
         }
