@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800&family=Public+Sans:wght@300;400;500;600&family=Space+Mono&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%231e1c19'/%3E%3Cellipse cx='32' cy='32' rx='24' ry='19' fill='none' stroke='%23d9a23d' stroke-width='2.5'/%3E%3Ctext x='32' y='40' font-family='Georgia,serif' font-size='21' font-weight='700' fill='%23e8e4d4' text-anchor='middle'%3EDR%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23201e1b'/%3E%3Cpath d='M100,30 C130,30 150,50 150,80 C180,80 200,100 200,130 C200,160 180,180 150,180 L50,180 C20,180 0,160 0,130 C0,100 20,80 50,80 C50,50 70,30 100,30 Z' fill='%23e8e4d4'/%3E%3Ccircle cx='70' cy='100' r='15' fill='%23201e1b'/%3E%3Ccircle cx='130' cy='100' r='15' fill='%23201e1b'/%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#201e1b; --bg-alt:#262420; --panel:rgba(30,28,24,.78);
@@ -181,7 +181,7 @@ footer .mono{font-size:.6rem;text-transform:uppercase;letter-spacing:.14em;color
 
 <div class="cur-dot"></div><div class="cur-ring"></div>
 <div class="dial-toggle" id="dialToggle" data-hover>⚙ Tune</div>
-<div class="proto-note">v2 · layout + system preview · copy syncs from resume.yaml</div>
+
 
 <!-- dial tuning panel -->
 <div id="panel">
@@ -303,7 +303,7 @@ footer .mono{font-size:.6rem;text-transform:uppercase;letter-spacing:.14em;color
 <script>
 /* Live Dial Tuning Panel — PARAMS = single source of truth (default = current value, ranges to extremes) */
 var PARAMS = {
-  pointCount:  { v:40000, min:2000, max:40000, step:500,  g:'Cloud', label:'Particles' },
+  pointCount:  { v:2600,  min:800,  max:8000,  step:100,  g:'Cloud', label:'Particles' },
   pointSize:   { v:1.15,  min:0.5,  max:6,     step:0.05, g:'Cloud', label:'Point size' },
   rotateSpeed: { v:0.06,  min:0,    max:0.4, step:0.005, g:'Cloud', label:'Rotate speed' },
   morphHold:   { v:5.5,   min:0.5,  max:10,  step:0.1,   g:'Cloud', label:'Morph hold (s)' },
@@ -482,7 +482,7 @@ window.AUDIO = window.AUDIO || { L:{bass:0,mid:0,treble:0,energy:0,centroid:0.5,
       var DPR=Math.min(devicePixelRatio,2);
       function size(){ cv.width=(cv.clientWidth||300)*DPR; cv.height=(cv.clientHeight||300)*DPR; }
       size(); addEventListener('resize',size); addEventListener('orientationchange',size); if(window.ResizeObserver) new ResizeObserver(size).observe(cv);
-      var MAX2D=2200, PAL=['#d9a23d','#8c8a6b','#9fc1d0','#c8654a'];
+      var MAX2D=8000, PAL=['#d9a23d','#8c8a6b','#9fc1d0','#c8654a'];
       function sph(n){var a=[];for(var i=0;i<n;i++){var y=1-(i/(n-1))*2,r=Math.sqrt(1-y*y),t=i*2.399963;a.push([Math.cos(t)*r*1.5,y*1.5,Math.sin(t)*r*1.5]);}return a;}
       function tor(n){var a=[];for(var i=0;i<n;i++){var u=Math.random()*6.2832,v=Math.random()*6.2832,R=1.25,r=.5;a.push([(R+r*Math.cos(v))*Math.cos(u),r*Math.sin(v),(R+r*Math.cos(v))*Math.sin(u)]);}return a;}
       function wav(n){var a=[],s=Math.ceil(Math.sqrt(n));for(var i=0;i<n;i++){var gx=(i%s)/s-.5,gz=Math.floor(i/s)/s-.5;a.push([gx*3.2,Math.sin(gx*7)*Math.cos(gz*7)*.5,gz*3.2]);}return a;}
