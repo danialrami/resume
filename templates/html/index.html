@@ -502,11 +502,13 @@ window.AUDIO = window.AUDIO || { L:{bass:0,mid:0,treble:0,energy:0,centroid:0.5,
         ctx.clearRect(0,0,cv.width,cv.height);
         var cx=cv.width/2,cy=cv.height/2,fov=2.6,scale=Math.min(cv.width,cv.height)*0.34;
         var A=shapes[idxA],B=shapes[idxB],cyR=Math.cos(rotY),syR=Math.sin(rotY);
+        var total=A.length;
         for(var j=0;j<count;j++){
-          var ax=A[j][0]+(B[j][0]-A[j][0])*morph, ay=A[j][1]+(B[j][1]-A[j][1])*morph, az=A[j][2]+(B[j][2]-A[j][2])*morph;
+          var idx=count>=total?j:((j*total/count)|0);   // stride across the WHOLE shape so 100% renders at any count (density = count)
+          var ax=A[idx][0]+(B[idx][0]-A[idx][0])*morph, ay=A[idx][1]+(B[idx][1]-A[idx][1])*morph, az=A[idx][2]+(B[idx][2]-A[idx][2])*morph;
           var x=ax*cyR+az*syR, z=-ax*syR+az*cyR, p=fov/(fov+z);
           var sx=cx+x*scale*p, sy=cy+ay*scale*p, s=Math.max(0.6,(baseS*0.5+au*1.4)*p*DPR);
-          ctx.globalAlpha=Math.min(0.85,(0.42+au*0.4)*p); ctx.fillStyle=cols[j]; ctx.fillRect(sx,sy,s,s);
+          ctx.globalAlpha=Math.min(0.85,(0.42+au*0.4)*p); ctx.fillStyle=cols[idx]; ctx.fillRect(sx,sy,s,s);
         }
         ctx.globalAlpha=1; requestAnimationFrame(loop);
       }
