@@ -495,7 +495,7 @@ window.AUDIO = window.AUDIO || { L:{bass:0,mid:0,treble:0,energy:0,centroid:0.5,
       add(P[0],false);add(mk(BRAND_PTS.cloud),true);add(P[1],false);add(mk(BRAND_PTS.dr),true);add(P[2],false);add(mk(BRAND_PTS.danirami),true);add(P[3],false);add(mk(BRAND_PTS.danialrami),true);
       if(shapes.length<2){shapes=P;flat=[false,false,false,false];}
       var cols=[]; for(var i=0;i<MAX2D;i++)cols.push(PAL[(Math.random()*4)|0]);
-      var idxA=0,idxB=1,phase=0,pt=0,last=performance.now(),rotY=0;
+      var idxA=0,idxB=1,phase=0,pt=0,last=performance.now(),rotY=0,snapped=false;
       function ease(k){return k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;}
       function loop(now){
         var dt=Math.min((now-last)/1000,.05); last=now;
@@ -504,9 +504,9 @@ window.AUDIO = window.AUDIO || { L:{bass:0,mid:0,treble:0,energy:0,centroid:0.5,
         var count=Math.min(Math.floor(PV('pointCount')),MAX2D), baseS=PV('pointSize');
         pt+=dt;
         if(phase===0){ if(pt>=PV('morphHold')){phase=1;pt=0;} }
-        else { var k=Math.min(pt/PV('morphDur'),1); morph=ease(k); if(k>=1){idxA=idxB;idxB=(idxB+1)%shapes.length;phase=0;pt=0;} }
-        rotY+=dt*(reduce?PV('rotateSpeed')*0.4:PV('rotateSpeed'))*(1+au*0.8);   // always spinning
-        if(phase===1 && flat[idxB]){ var ft=Math.round(rotY/6.2831853)*6.2831853; rotY+=(ft-rotY)*Math.min(1,dt*5*morph); }  // ease a brand mark to land face-on as it forms, then it spins through its hold
+        else { var k=Math.min(pt/PV('morphDur'),1); morph=ease(k); if(k>=1){idxA=idxB;idxB=(idxB+1)%shapes.length;phase=0;pt=0;snapped=false;} }
+        rotY+=dt*(reduce?PV('rotateSpeed')*0.4:PV('rotateSpeed'))*(1+au*0.8);   // ONE identical constant spin for every shape (parametric + marks)
+        if(phase===1 && flat[idxB] && morph>=0.5 && !snapped){ rotY=Math.round(rotY/6.2831853)*6.2831853; snapped=true; }  // one-shot: align a brand mark face-on at the morph midpoint (hidden by the scatter); no per-frame ease, so spin speed stays identical
         ctx.clearRect(0,0,cv.width,cv.height);
         var cx=cv.width/2,cy=cv.height/2,fov=2.6,scale=Math.min(cv.width,cv.height)*0.34;
         var A=shapes[idxA],B=shapes[idxB],cyR=Math.cos(rotY),syR=Math.sin(rotY);
