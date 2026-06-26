@@ -381,7 +381,7 @@ window.AUDIO = window.AUDIO || { L:{bass:0,mid:0,treble:0,energy:0,centroid:0.5,
 </script>
 
 <!-- SCRIPT 2 — three@0.128.0 global build via jsDelivr (per reactive-webgl-background skill; NOT cdnjs) -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<!-- WebGL/three.js intentionally disabled: the Canvas2D point-cloud (below) is the sole renderer — no CDN, verifiable, and identical on preview + live. -->
 
 <!-- ============================================================
      SCRIPT 3 — Calm Studio point cloud (own identity vs vscope's
@@ -429,7 +429,7 @@ window.AUDIO = window.AUDIO || { L:{bass:0,mid:0,treble:0,energy:0,centroid:0.5,
         '  p += normalize(p+0.0001)*n*(0.025 + uAudio*0.13);',
         '  vColor=aColor;',
         '  vec4 mv=modelViewMatrix*vec4(p,1.0);',
-        '  gl_PointSize=uSize*aScale*(1.0+uAudio*1.5)*(300.0/-mv.z);',
+        '  gl_PointSize=uSize*aScale*(1.0+uAudio*1.5)*(12.0/-mv.z);',
         '  gl_Position=projectionMatrix*mv; vGlow=uAudio;',
         '}'].join('\n'),
       fragmentShader:[
@@ -514,8 +514,8 @@ window.AUDIO = window.AUDIO || { L:{bass:0,mid:0,treble:0,energy:0,centroid:0.5,
     }catch(e){ if(window.console) console.warn('[viz2d]',e); }
   }
 
-  if(window.THREE){ initWebGL(); }
-  else { if(window.console) console.warn('[viz] THREE blocked (CDN) — using Canvas2D fallback'); initFallback2D(); }
+  // Always render via Canvas2D (WebGL path retired to avoid preview/live divergence).
+  initFallback2D();
 })();
 </script>
 
