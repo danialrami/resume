@@ -504,7 +504,7 @@ window.AUDIO = window.AUDIO || { L:{bass:0,mid:0,treble:0,energy:0,centroid:0.5,
         var count=Math.min(Math.floor(PV('pointCount')),MAX2D), baseS=PV('pointSize');
         pt+=dt;
         if(phase===0){ if(pt>=PV('morphHold')){phase=1;pt=0;} }
-        else { var k=Math.min(pt/PV('morphDur'),1); morph=ease(k); if(k>=1){idxA=idxB;idxB=(idxB+1)%shapes.length;phase=0;pt=0;snapped=false;} }
+        else { var k=Math.min(pt/PV('morphDur'),1); morph=ease(k); if(k>=1){idxA=idxB;idxB=(idxB+1)%shapes.length;phase=0;pt=0;snapped=false;morph=0;}  /* clear morph on commit so this frame draws the finished shape, not a 1-frame flash of the next */ }
         rotY+=dt*(reduce?PV('rotateSpeed')*0.4:PV('rotateSpeed'))*(1+au*0.8);   // ONE identical constant spin for every shape (parametric + marks)
         if(phase===1 && flat[idxB] && morph>=0.5 && !snapped){ rotY=Math.round(rotY/6.2831853)*6.2831853; snapped=true; }  // one-shot: align a brand mark face-on at the morph midpoint (hidden by the scatter); no per-frame ease, so spin speed stays identical
         ctx.clearRect(0,0,cv.width,cv.height);
