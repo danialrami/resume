@@ -1,0 +1,66 @@
+# resume.root.yaml — "/" lens: synthesis / cold-landing (third lens intentionally unnamed).
+
+name: Daniel Ramirez
+contact:
+  email: daniel@danialrami.com
+  phone: (714) 616-1558
+  linkedin: danialrami
+  github: danialrami
+title: Sound & Systems
+
+profile: |
+  I work where audio meets infrastructure — designing sound and building the systems
+  that deliver it reliably at scale. My background spans interactive audio and UX sound
+  design for products used by millions, and self-hosted, agent-first pipelines that
+  automate production without giving up correctness or control. Whether the question is
+  how something should sound or how the signal, tooling, and delivery hold together,
+  I've usually worked both ends of it.
+
+experience:
+  - company: LUFS Audio
+    role: Founder — Sound & Systems
+    location: Remote
+    dates: "2024 – Present"
+    description:
+      - Sound design and audio implementation for tech clients including Hinge Health, xAI, Meta, and Roblox
+      - Built LUFS Workchain — a YAML-driven, agent-first audio-processing engine — and the verification pipeline behind it
+      - Self-host the production infrastructure: homelab, Cloudflare-tunneled services, CI/CD, and streaming (catalog.lufs.audio on Cloudflare R2)
+  - company: Hinge Health
+    role: Sound Designer (Contract)
+    location: San Francisco, CA
+    dates: "2022 – 2024"
+    description:
+      - Designed the interaction-sound system for mobile health apps serving 70k+ daily users
+      - Built the Wwise/Unity implementation pipelines and an A/B testing framework (+18% session duration)
+      - Wrote guidelines that let engineering teams implement audio independently
+
+skills:
+  - category: Audio
+    list: [Interactive/UX sound design, "Wwise, FMOD", Adaptive sound systems, Sonic identity]
+  - category: Infrastructure
+    list: ["Cloudflare (Workers, R2, Pages)", Docker/Compose, Tailscale, Linux self-hosting]
+  - category: Engineering
+    list: [Python, Bash, JavaScript/Node, YAML pipelines, GitHub Actions CI/CD]
+  - category: Systems & Agents
+    list: [Agent orchestration, MCP/FastMCP, n8n, Verifiable correctness]
+
+education:
+  - school: NYU Steinhardt
+    location: New York, NY
+    degree: B.M. Music Theory and Composition for Film and Multimedia
+    dates: "2015–2019"
+  - school: IRCAM
+    location: Paris, France
+    degree: Sound Spatialization and Synthesis
+    dates: 2017
+
+projects:
+  - name: LUFS Workchain
+    description:
+      - Agent-first audio-processing engine — the intersection of sound craft and production infrastructure
+  - name: catalog.lufs.audio
+    description:
+      - Self-hosted music catalog: Astro + Svelte, streaming from Cloudflare R2 via a signing Worker
+  - name: Multi-agent production mesh
+    description:
+      - Cloud + local agents automating audio and web workflows against a shared knowledge base
