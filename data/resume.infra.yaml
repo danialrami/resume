@@ -3,11 +3,12 @@
 
 name: Daniel Ramirez
 contact:
-  email: daniel@danialrami.com
+  email: daniel@lufs.audio
   phone: (714) 616-1558
   linkedin: danialrami
   github: danialrami
 title: Infrastructure Engineer
+reel: false
 headline: "Infrastructure\nfor agent-first\naudio systems"
 lead: "Infrastructure engineer building self-hosted, verifiable pipelines — a multi-site homelab, Cloudflare-tunneled services, and agent-orchestrated tooling. I automate the toil and keep humans the authority."
 contact_line: "Open to infrastructure and platform-engineering roles — email is the fastest way to reach me."

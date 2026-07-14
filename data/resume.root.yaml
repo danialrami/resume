@@ -2,11 +2,12 @@
 
 name: Daniel Ramirez
 contact:
-  email: daniel@danialrami.com
+  email: daniel@lufs.audio
   phone: (714) 616-1558
   linkedin: danialrami
   github: danialrami
 title: Sound & Systems
+reel: true
 headline: "Audio,\nand the systems\nthat run it"
 lead: "I work where audio meets infrastructure — designing sound and building the systems that deliver it reliably at scale."
 contact_line: "Open to roles across audio, infrastructure, and where they meet — email is the fastest way to reach me."

@@ -191,6 +191,15 @@ def render_lens_inner(data: dict, deck: dict) -> str:
             f'{escape_html(deck.get("label", "Download deck (PDF)"))}</a>'
         )
 
+    # Reel button is opt-in per lens (default on). Infra turns it off.
+    if data.get("reel", True):
+        hero_cta = (
+            '<a class="btn" href="https://reel.danialrami.com" target="_blank" rel="noopener noreferrer" data-hover>▶ Play the reel</a>\n'
+            '        <a class="btn ghost" href="#contact" data-hover>Contact</a>'
+        )
+    else:
+        hero_cta = '<a class="btn" href="#contact" data-hover>Contact</a>'
+
     cert_row = ""
     edu_heading = "Education"
     if certs:
@@ -207,8 +216,7 @@ def render_lens_inner(data: dict, deck: dict) -> str:
       <h1 class="big">{render_headline(data.get("headline", title))}<span class="dot">.</span></h1>
       <p class="lead">{escape_html(data.get("lead", ""))}</p>
       <div class="hero-cta">
-        <a class="btn" href="https://reel.danialrami.com" target="_blank" rel="noopener noreferrer" data-hover>▶ Play the reel</a>
-        <a class="btn ghost" href="#contact" data-hover>Contact</a>
+        {hero_cta}
       </div>
     </header>
 
@@ -274,6 +282,11 @@ EXTRA_CSS = (
     ".lens-switch a.active{color:#1e1c19;background:var(--gold);border-color:var(--gold)}"
     "/* dev affordances hidden on the shipped site (dial panel still toggles with 'd') */"
     ".proto-note,.dial-toggle{display:none!important}"
+    "/* lens transition: fade + slide-up on content swap (Amacher can retune the feel) */"
+    ".content.lens-exit{opacity:0;transform:translateY(-8px);transition:opacity .17s ease,transform .17s ease}"
+    ".content.lens-enter{opacity:0;transform:translateY(14px)}"
+    ".content.lens-enter-active{opacity:1;transform:none;transition:opacity .34s ease,transform .34s ease}"
+    "@media (prefers-reduced-motion:reduce){.content.lens-exit,.content.lens-enter,.content.lens-enter-active{transition:none!important;transform:none!important;opacity:1!important}}"
 )
 
 SWITCH_LINKS = (
@@ -311,19 +324,40 @@ ROUTER_JS = r"""
     return FR.hasOwnProperty(s) ? s : '';
   }
 
-  function showLens(slug, push, keepScroll){
-    if(!FR.hasOwnProperty(slug)) slug='';
+  function paint(slug){
     content.innerHTML = FR[slug];
     var m = META[slug] || {};
     if(railRole && m.role) railRole.textContent = m.role;
     if(m.title) document.title = m.title;
     [].forEach.call(sw.querySelectorAll('a'), function(a){
       a.classList.toggle('active', a.getAttribute('data-lens')===slug); });
-    requestAnimationFrame(function(){
-      [].forEach.call(content.querySelectorAll('.reveal'), function(e){ e.classList.add('in'); }); });
+    [].forEach.call(content.querySelectorAll('.reveal'), function(e){ e.classList.add('in'); });
     bindSpy();
-    if(!keepScroll) try{ scrollTo(0,0); }catch(e){}
-    if(push){ try{ history.pushState({lens:slug}, '', slug ? '/'+slug+'/' : '/'); }catch(e){} }
+  }
+  var REDUCE = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function showLens(slug, push, keepScroll){
+    if(!FR.hasOwnProperty(slug)) slug='';
+    function commit(){ if(push){ try{ history.pushState({lens:slug}, '', slug ? '/'+slug+'/' : '/'); }catch(e){} } }
+    /* initial paint (server DOM already correct) or reduced-motion: swap instantly */
+    if(keepScroll || REDUCE){
+      paint(slug);
+      if(!keepScroll){ try{ scrollTo(0,0); }catch(e){} }
+      commit();
+      return;
+    }
+    /* fade + slide-up transition on lens change */
+    content.classList.add('lens-exit');
+    setTimeout(function(){
+      paint(slug);
+      try{ scrollTo(0,0); }catch(e){}
+      content.classList.remove('lens-exit');
+      content.classList.add('lens-enter');
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){
+        content.classList.add('lens-enter-active');
+        content.classList.remove('lens-enter'); }); });
+      setTimeout(function(){ content.classList.remove('lens-enter-active'); }, 380);
+      commit();
+    }, 170);
   }
 
   sw.addEventListener('click', function(e){

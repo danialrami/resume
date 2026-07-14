@@ -20,7 +20,7 @@ lenses:
 deck:
   # Direct-download form of Daniel's shared Drive file — same file id,
   # same "anyone with the link" perms, but downloads instead of opening a preview.
-  download_url: "https://drive.google.com/uc?export=download&id=14NlocpvsWC1MLLTOTxtkdq0EZviiuj6P"
+  download_url: "https://drive.usercontent.google.com/download?id=14NlocpvsWC1MLLTOTxtkdq0EZviiuj6P&export=download"
   label: "Download deck (PDF)"
   # Deck site link stays empty until deck.daniel-ramirez.io is refreshed (Amacher).
   site_url: ""
