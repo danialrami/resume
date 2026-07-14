@@ -7,6 +7,9 @@ contact:
   linkedin: danialrami
   github: danialrami
 title: Sound & Systems
+headline: "Audio,\nand the systems\nthat run it"
+lead: "I work where audio meets infrastructure — designing sound and building the systems that deliver it reliably at scale."
+contact_line: "Open to roles across audio, infrastructure, and where they meet — email is the fastest way to reach me."
 
 profile: |
   I work where audio meets infrastructure — designing sound and building the systems
@@ -24,7 +27,7 @@ experience:
     description:
       - Sound design and audio implementation for tech clients including Hinge Health, xAI, Meta, and Roblox
       - Built LUFS Workchain — a YAML-driven, agent-first audio-processing engine — and the verification pipeline behind it
-      - Self-host the production infrastructure: homelab, Cloudflare-tunneled services, CI/CD, and streaming (catalog.lufs.audio on Cloudflare R2)
+      - "Self-host the production infrastructure: homelab, Cloudflare-tunneled services, CI/CD, and streaming (catalog.lufs.audio on Cloudflare R2)"
   - company: Hinge Health
     role: Sound Designer (Contract)
     location: San Francisco, CA
@@ -60,7 +63,7 @@ projects:
       - Agent-first audio-processing engine — the intersection of sound craft and production infrastructure
   - name: catalog.lufs.audio
     description:
-      - Self-hosted music catalog: Astro + Svelte, streaming from Cloudflare R2 via a signing Worker
+      - "Self-hosted music catalog: Astro + Svelte, streaming from Cloudflare R2 via a signing Worker"
   - name: Multi-agent production mesh
     description:
       - Cloud + local agents automating audio and web workflows against a shared knowledge base

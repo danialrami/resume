@@ -1,470 +1,463 @@
 #!/usr/bin/env python3
 """
-Render HTML resume from YAML data.
+Render the multi-lens HTML resume from YAML data.
+
+The site is a single persistent-audio shell (rail = cloud mark + particle cloud +
+catalog streaming player + reactivity engine) with the main content swapped between
+three lenses driven by data/site.yaml:
+
+    /              -> data/resume.root.yaml   (synthesis / cold-landing)
+    /sound-design  -> data/resume.yaml        (current sound-design copy)
+    /infra         -> data/resume.infra.yaml  (infrastructure engineering)
+
+The rail mounts once; a small History-API router swaps only the #content fragment,
+so audio keeps playing across lens changes. Each route is also emitted as a real
+static page (dist/html/index.html, /sound-design/index.html, /infra/index.html) so
+cold loads, no-JS, and crawlers get real content and deep links work under static
+hosting. Slugs are a locked contract shared with resume-builder-workspace.
+
+The template (templates/html/index.html) is Amacher's redesign, left pristine and
+patched at build time via anchor asserts: if the template structure changes, the
+build fails loudly rather than emitting something broken.
 """
 
-import subprocess
-import re
+import json
 import os
-import yaml
-import shutil
+import re
+import sys
 from pathlib import Path
 
+import yaml
 
-AUDIO_BASE_URL = os.environ.get("AUDIO_BASE_URL", "")
+BASE_DIR = Path(__file__).parent.parent
+TEMPLATE = BASE_DIR / "templates" / "html" / "index.html"
+DATA_DIR = BASE_DIR / "data"
+OUT_DIR = BASE_DIR / "dist" / "html"
 
 
-def load_yaml_data(yaml_path: str) -> dict:
-    """Load YAML data using PyYAML."""
-    with open(yaml_path, "r") as f:
+# --------------------------------------------------------------------------- #
+# helpers
+# --------------------------------------------------------------------------- #
+def load_yaml(path: Path) -> dict:
+    with open(path, "r") as f:
         return yaml.safe_load(f)
 
 
-def escape_html(text: str) -> str:
-    """Escape HTML special characters."""
-    if not text:
+def escape_html(text) -> str:
+    if text is None:
         return ""
-
-    # Convert to string if number
     if isinstance(text, (int, float)):
         text = str(text)
-
-    replacements = [
-        ("&", "&amp;"),
-        ("<", "&lt;"),
-        (">", "&gt;"),
-        ('"', "&quot;"),
-        ("'", "&#039;"),
-    ]
-    for old, new in replacements:
+    for old, new in (
+        ("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"),
+        ('"', "&quot;"), ("'", "&#039;"),
+    ):
         text = text.replace(old, new)
     return text
 
 
-def render_experience_html(experience: list) -> str:
-    """Render experience section (dossier .tl-item markup)."""
-    html = []
-    for exp in experience:
-        company = escape_html(str(exp.get("company", "")))
-        role = escape_html(str(exp.get("role", "")))
-        location = escape_html(str(exp.get("location", "")))
-        dates = escape_html(str(exp.get("dates", "")))
-        bullets = exp.get("description", [])
-
-        meta = " · ".join([p for p in [dates, location] if p])
-
-        html.append('<div class="tl-item">')
-        if meta:
-            html.append(f'  <div class="when">{meta}</div>')
-        html.append(f"  <h3>{role}</h3>")
-        if company:
-            html.append(f'  <div class="org">{company}</div>')
-        if bullets:
-            html.append('  <ul class="bul">')
-            for bullet in bullets:
-                html.append(f"    <li>{escape_html(str(bullet))}</li>")
-            html.append("  </ul>")
-        html.append("</div>")
-
-    return "\n".join(html)
+def replace_once(s: str, old: str, new: str, what: str) -> str:
+    n = s.count(old)
+    if n != 1:
+        raise SystemExit(
+            f"[render] template contract broken: expected exactly 1 occurrence "
+            f"of anchor for '{what}', found {n}. Template changed?"
+        )
+    return s.replace(old, new)
 
 
-def render_education_html(education: list) -> str:
-    """Render education section (dossier .tl-item markup)."""
-    html = []
-
-    for edu in education:
-        school = escape_html(str(edu.get("school", "")))
-        degree = escape_html(str(edu.get("degree", "")))
-        location = escape_html(str(edu.get("location", "")))
-        dates = escape_html(str(edu.get("dates", "")))
-
-        meta = " · ".join([p for p in [dates, location] if p])
-
-        html.append('<div class="tl-item">')
-        if meta:
-            html.append(f'  <div class="when">{meta}</div>')
-        html.append(f"  <h3>{degree}</h3>")
-        if school:
-            html.append(f'  <div class="org">{school}</div>')
-        html.append("</div>")
-
-    return "\n".join(html)
+def sub_once(s: str, pattern: str, repl: str, what: str) -> str:
+    out, n = re.subn(pattern, repl, s, count=1)
+    if n != 1:
+        raise SystemExit(
+            f"[render] template contract broken: regex for '{what}' matched {n} "
+            f"times (expected 1). Template changed?"
+        )
+    return out
 
 
-def render_certifications_html(certifications: list) -> str:
-    """Render certifications as dossier chips."""
-    html = []
-    for cert in certifications:
-        name = escape_html(str(cert.get("name", "")))
-        if name:
-            html.append(f'<span class="tag">{name}</span>')
-    return "\n".join(html)
+# --------------------------------------------------------------------------- #
+# fragment builders (dossier markup — must match the template's CSS classes)
+# --------------------------------------------------------------------------- #
+def render_headline(headline: str) -> str:
+    lines = [escape_html(l) for l in str(headline).split("\n")]
+    return "<br>".join(lines)
 
 
-def render_projects_html(projects: list) -> str:
-    """Render projects as dossier cards."""
-    html = []
-    for proj in projects:
-        name = escape_html(str(proj.get("name", "")))
-        bullets = proj.get("description", [])
-        desc = escape_html(" ".join(str(b) for b in bullets))
-
-        html.append('<div class="card reveal">')
-        html.append('  <span class="k">Project</span>')
-        html.append(f"  <h3>{name}</h3>")
-        if desc:
-            html.append(f"  <p>{desc}</p>")
-        html.append("</div>")
-
-    return "\n".join(html)
+def bullet_text(b) -> str:
+    """Coerce a bullet to text. Guards against a YAML colon mis-parse where
+    '- some phrase: detail' becomes a {phrase: detail} dict instead of a string."""
+    if isinstance(b, dict):
+        return "; ".join(f"{k}: {v}" for k, v in b.items())
+    return b if isinstance(b, str) else str(b)
 
 
-def render_skills_html(skills: list) -> str:
-    """Render skills as dossier cards (data-driven over every category,
-    so new categories in resume.yaml — incl. Specialties — appear automatically)."""
-    html = []
-    for skill in skills:
-        category = escape_html(str(skill.get("category", "")))
-        items = skill.get("list", [])
-        html.append('<div class="card reveal">')
-        html.append(f'  <span class="k">{category}</span>')
-        html.append('  <div class="tags">')
-        for it in items:
-            html.append(f'    <span class="tag">{escape_html(str(it))}</span>')
-        html.append("  </div>")
-        html.append("</div>")
-    return "\n".join(html)
-
-
-def render_profile_html(profile: str) -> str:
-    """Render profile text for HTML."""
-    lines = [line.strip() for line in str(profile).split("\n") if line.strip()]
+def render_profile(profile: str) -> str:
+    lines = [l.strip() for l in str(profile).split("\n") if l.strip()]
     return escape_html(" ".join(lines))
 
 
-def render_social_links(contact: dict) -> str:
-    """Render social links."""
-    html = []
-
-    github = contact.get("github", "")
-    linkedin = contact.get("linkedin", "")
-
-    if github:
-        html.append(
-            f'<a href="https://github.com/{github}" class="social-link" title="GitHub"><i class="fab fa-github"></i></a>'
-        )
-    if linkedin:
-        html.append(
-            f'<a href="https://www.linkedin.com/in/{linkedin}" class="social-link" title="LinkedIn"><i class="fab fa-linkedin"></i></a>'
-        )
-
-    return "\n".join(html)
-
-
-def get_audio_duration(file_path: str) -> float:
-    """Get audio file duration in seconds using ffprobe."""
-    try:
-        cmd = [
-            "ffprobe",
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=noprint_wrappers=1:nokey=1",
-            file_path,
-        ]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-        if result.returncode == 0 and result.stdout.strip():
-            return float(result.stdout.strip())
-    except Exception as e:
-        print(f"Warning: Could not get duration for {file_path}: {e}")
-    return 0.0
+def render_experience(experience: list) -> str:
+    out = []
+    for exp in experience or []:
+        company = escape_html(exp.get("company", ""))
+        role = escape_html(exp.get("role", ""))
+        location = escape_html(exp.get("location", ""))
+        dates = escape_html(exp.get("dates", ""))
+        meta = " · ".join([p for p in [dates, location] if p])
+        out.append('<div class="tl-item">')
+        if meta:
+            out.append(f'  <div class="when">{meta}</div>')
+        out.append(f"  <h3>{role}</h3>")
+        if company:
+            out.append(f'  <div class="org">{company}</div>')
+        bullets = exp.get("description", [])
+        if bullets:
+            out.append('  <ul class="bul">')
+            for b in bullets:
+                out.append(f"    <li>{escape_html(bullet_text(b))}</li>")
+            out.append("  </ul>")
+        out.append("</div>")
+    return "\n".join(out)
 
 
-def convert_to_opus(input_path: Path, output_path: Path) -> bool:
-    """Convert audio file to OPUS format using ffmpeg with high quality settings."""
-    try:
-        cmd = [
-            "ffmpeg",
-            "-y",
-            "-i",
-            str(input_path),
-            "-c:a",
-            "libopus",
-            "-b:a",
-            "192k",
-            "-vn",
-            str(output_path),
-        ]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-        if result.returncode == 0 and output_path.exists():
-            return True
-        else:
-            print(
-                f"  FFmpeg error: {result.stderr[:200] if result.stderr else 'unknown error'}"
-            )
-    except Exception as e:
-        print(f"  Conversion error: {e}")
-    return False
+def render_education(education: list) -> str:
+    out = []
+    for edu in education or []:
+        school = escape_html(edu.get("school", ""))
+        degree = escape_html(edu.get("degree", ""))
+        location = escape_html(edu.get("location", ""))
+        dates = escape_html(edu.get("dates", ""))
+        meta = " · ".join([p for p in [dates, location] if p])
+        out.append('<div class="tl-item">')
+        if meta:
+            out.append(f'  <div class="when">{meta}</div>')
+        out.append(f"  <h3>{degree}</h3>")
+        if school:
+            out.append(f'  <div class="org">{school}</div>')
+        out.append("</div>")
+    return "\n".join(out)
 
 
-def get_audio_size_mb(file_path: str) -> float:
-    """Get audio file size in MB."""
-    return os.path.getsize(file_path) / (1024 * 1024)
+def render_certifications(certs: list) -> str:
+    return "\n".join(
+        f'<span class="tag">{escape_html(c.get("name", ""))}</span>'
+        for c in (certs or []) if c.get("name")
+    )
 
 
-def format_duration(seconds: float) -> str:
-    """Format duration in seconds to MM:SS format."""
-    if seconds <= 0:
-        return "0:00"
-    minutes = int(seconds // 60)
-    secs = int(seconds % 60)
-    return f"{minutes}:{secs:02d}"
+def render_projects(projects: list) -> str:
+    out = []
+    for proj in projects or []:
+        name = escape_html(proj.get("name", ""))
+        desc = escape_html(" ".join(bullet_text(b) for b in proj.get("description", [])))
+        out.append('<div class="card reveal">')
+        out.append('  <span class="k">Project</span>')
+        out.append(f"  <h3>{name}</h3>")
+        if desc:
+            out.append(f"  <p>{desc}</p>")
+        out.append("</div>")
+    return "\n".join(out)
 
 
-def filename_to_title(filename: str) -> str:
-    """Convert filename to a readable title."""
-    # Get filename without extension
-    name = os.path.splitext(filename)[0]
-
-    # Replace common separators with spaces
-    title = re.sub(r"[-_]+", " ", name)
-
-    # Capitalize each word
-    title = " ".join(word.capitalize() for word in title.split())
-
-    # If title is empty or only numbers, use the original name
-    if not title.strip() or re.match(r"^[\d\s]+$", title):
-        return name
-
-    return title
+def render_skills(skills: list) -> str:
+    out = []
+    for sk in skills or []:
+        out.append('<div class="card reveal">')
+        out.append(f'  <span class="k">{escape_html(sk.get("category", ""))}</span>')
+        out.append('  <div class="tags">')
+        for it in sk.get("list", []):
+            out.append(f'    <span class="tag">{escape_html(it)}</span>')
+        out.append("  </div>")
+        out.append("</div>")
+    return "\n".join(out)
 
 
-def scan_audio_samples(audio_dir: Path) -> list:
-    """Scan audio directory and return list of sample info.
-
-    Prioritizes OPUS files over other formats. If both .wav and .opus exist
-    for the same base name, only the .opus is included.
-    """
-    samples = []
-    audio_extensions = {".wav", ".mp3", ".opus", ".ogg", ".m4a", ".flac", ".aac"}
-
-    if not audio_dir.exists():
-        print(f"Warning: Audio directory not found: {audio_dir}")
-        return samples
-
-    source_files = {}
-    for file_path in sorted(audio_dir.iterdir()):
-        if file_path.is_file() and file_path.suffix.lower() in audio_extensions:
-            base_name = file_path.stem
-
-            if file_path.suffix.lower() == ".opus":
-                source_files[base_name] = {
-                    "file": file_path,
-                    "format": "opus",
-                    "preferred": True,
-                }
-            elif base_name not in source_files:
-                source_files[base_name] = {
-                    "file": file_path,
-                    "format": file_path.suffix.lower()[1:],
-                    "preferred": False,
-                }
-
-    for base_name, info in sorted(source_files.items()):
-        file_path = info["file"]
-        duration = get_audio_duration(str(file_path))
-        title = filename_to_title(base_name)
-
-        opus_filename = f"{base_name}.opus"
-
-        samples.append(
-            {
-                "title": title,
-                "source_file": file_path.name,
-                "filename": opus_filename,
-                "format": info["format"],
-                "duration": duration,
-                "formatted_duration": format_duration(duration),
-            }
-        )
-
-    return samples
-
-
-def render_audio_samples_dropdown(audio_samples: list) -> str:
-    """Render audio samples dropdown options HTML.
-
-    Uses AUDIO_BASE_URL if set, otherwise falls back to local assets/audio/ path.
-    """
-    options = []
-    for sample in audio_samples:
-        label = f"{sample['title']} ({sample['formatted_duration']})"
-
-        if AUDIO_BASE_URL:
-            value = f"{AUDIO_BASE_URL.rstrip('/')}/{sample['filename']}"
-        else:
-            value = f"assets/audio/{sample['filename']}"
-
-        options.append(f'<option value="{value}">{label}</option>')
-    return "\n".join(options)
-
-
-def copy_html_assets(base_dir: Path, audio_samples: list = None) -> None:
-    """Copy CSS, JS, and other assets to dist/html.
-
-    Converts audio files to OGG format for the dist folder.
-    """
-    html_dir = base_dir / "templates" / "html"
-    dist_html = base_dir / "dist" / "html"
-
-    # List of assets to copy
-    assets = ["styles.css", "script.js", "three_effects.js"]
-
-    for asset in assets:
-        src = html_dir / asset
-        if src.exists():
-            dst = dist_html / asset
-            with open(src, "r") as f:
-                content = f.read()
-            with open(dst, "w") as f:
-                f.write(content)
-
-    # Copy SVG assets
-    for svg_file in html_dir.glob("*.svg"):
-        dst = dist_html / svg_file.name
-        with open(svg_file, "r") as f:
-            content = f.read()
-        with open(dst, "w") as f:
-            f.write(content)
-
-    # Copy and convert audio assets to OPUS
-    if audio_samples:
-        audio_src_dir = base_dir / "assets" / "audio"
-        audio_dst_dir = dist_html / "assets" / "audio"
-        audio_dst_dir.mkdir(parents=True, exist_ok=True)
-
-        # Clean up old audio files first (dist should be a mirror of assets/audio)
-        print("  Cleaning old audio files...")
-        for old_file in audio_dst_dir.glob("*.opus"):
-            old_file.unlink()
-
-        total_original = 0
-        total_new = 0
-
-        for sample in audio_samples:
-            src = audio_src_dir / sample["source_file"]
-            dst = audio_dst_dir / sample["filename"]
-
-            if src.exists():
-                if src.suffix.lower() == ".opus":
-                    shutil.copy2(src, dst)
-                    size = get_audio_size_mb(dst)
-                    total_original += size
-                    total_new += size
-                    print(f"  Copied: {sample['filename']} ({size:.1f} MB)")
-                else:
-                    print(f"  Converting: {src.name} -> {sample['filename']}...")
-                    if convert_to_opus(src, dst):
-                        original_size = get_audio_size_mb(src)
-                        new_size = get_audio_size_mb(dst)
-                        total_original += original_size
-                        total_new += new_size
-                        ratio = original_size / new_size if new_size > 0 else 0
-                        print(
-                            f"  Converted: {sample['filename']} ({original_size:.1f} MB -> {new_size:.1f} MB, {ratio:.1f}x smaller)"
-                        )
-                    else:
-                        print(f"  Warning: Could not convert {src.name}")
-
-        if total_original > 0:
-            print(f"  Total audio: {total_original:.1f} MB -> {total_new:.1f} MB")
-
-
-def generate_html(data: dict) -> str:
-    """Generate HTML file from data."""
-    base_dir = Path(__file__).parent.parent
-    template_path = base_dir / "templates" / "html" / "index.html"
-
-    with open(template_path, "r") as f:
-        template = f.read()
-
-    # Build substitution map
-    name = escape_html(str(data.get("name", "")))
-    title = escape_html(str(data.get("title", "Sound Designer")))
-
+def render_lens_inner(data: dict, deck: dict) -> str:
+    """The inner HTML of <main id="content"> for one lens (hero -> footer)."""
     contact = data.get("contact", {})
+    email = escape_html(contact.get("email", ""))
+    github = escape_html(contact.get("github", ""))
+    linkedin = escape_html(contact.get("linkedin", ""))
+    phone = escape_html(contact.get("phone", ""))
+    title = escape_html(data.get("title", ""))
+    certs = data.get("certifications", [])
 
-    # Scan audio samples
-    audio_dir = base_dir / "assets" / "audio"
-    audio_samples = scan_audio_samples(audio_dir)
-    print(f"Found {len(audio_samples)} audio samples:")
-    for sample in audio_samples:
-        print(f"  - {sample['title']} ({sample['formatted_duration']})")
-
-    if AUDIO_BASE_URL:
-        print(f"Audio base URL: {AUDIO_BASE_URL}")
-    else:
-        print(
-            "Audio: Using local files (set AUDIO_BASE_URL env var for URL-based audio)"
+    deck_btn = ""
+    if deck.get("download_url"):
+        deck_btn = (
+            f'\n        <a class="btn ghost" href="{escape_html(deck["download_url"])}" '
+            f'target="_blank" rel="noopener noreferrer" data-hover>⤓ '
+            f'{escape_html(deck.get("label", "Download deck (PDF)"))}</a>'
         )
 
-    substitutions = {
-        "RESUME_NAME": name,
-        "RESUME_TITLE": title,
-        "RESUME_EMAIL": escape_html(str(contact.get("email", ""))),
-        "RESUME_PHONE": escape_html(str(contact.get("phone", "")))
-        if contact.get("phone")
-        else "",
-        "RESUME_LINKEDIN": escape_html(str(contact.get("linkedin", "")))
-        if contact.get("linkedin")
-        else "",
-        "RESUME_GITHUB": escape_html(str(contact.get("github", "")))
-        if contact.get("github")
-        else "",
-        "RESUME_PROFILE": render_profile_html(data.get("profile", "")),
-        "RESUME_EXPERIENCE_TIMELINE": render_experience_html(
-            data.get("experience", [])
-        ),
-        "RESUME_EDUCATION_ITEMS": render_education_html(data.get("education", [])),
-        "RESUME_CERTIFICATIONS": render_certifications_html(
-            data.get("certifications", [])
-        ),
-        "RESUME_PROJECTS_GRID": render_projects_html(data.get("projects", [])),
-        "RESUME_SKILLS_GRID": render_skills_html(data.get("skills", [])),
-        "RESUME_SOCIAL_LINKS": render_social_links(contact),
-        "AUDIO_SAMPLES_OPTIONS": render_audio_samples_dropdown(audio_samples),
-    }
+    cert_row = ""
+    edu_heading = "Education"
+    if certs:
+        edu_heading = "Education &amp; Certs"
+        cert_row = (
+            '\n      <div class="cert-row reveal">\n'
+            '        <span class="cert-label">Certifications</span>\n'
+            f'        <div class="tags">{render_certifications(certs)}</div>\n'
+            "      </div>"
+        )
 
-    # Replace placeholders
-    for placeholder, value in substitutions.items():
-        template = template.replace(f"RESUME_{placeholder}", value)
-        # Also handle non-RESUME prefixed placeholders
-        template = template.replace(f"{placeholder}", value)
+    return f"""<header class="hero" id="top">
+      <span class="sec-label eyebrow">{title}</span>
+      <h1 class="big">{render_headline(data.get("headline", title))}<span class="dot">.</span></h1>
+      <p class="lead">{escape_html(data.get("lead", ""))}</p>
+      <div class="hero-cta">
+        <a class="btn" href="https://reel.danialrami.com" target="_blank" rel="noopener noreferrer" data-hover>▶ Play the reel</a>
+        <a class="btn ghost" href="#contact" data-hover>Contact</a>
+      </div>
+    </header>
 
-    # Save output
-    output_path = base_dir / "dist" / "html"
-    output_path.mkdir(parents=True, exist_ok=True)
+    <section class="blk" id="about">
+      <div class="blk-head reveal"><span class="num">01</span><h2>About</h2></div>
+      <p class="prose reveal">{render_profile(data.get("profile", ""))}</p>
+    </section>
 
-    with open(output_path / "index.html", "w") as f:
-        f.write(template)
+    <section class="blk" id="skills">
+      <div class="blk-head reveal"><span class="num">02</span><h2>Skills</h2></div>
+      <div class="grid g-3">
+        {render_skills(data.get("skills", []))}
+      </div>
+    </section>
 
-    copy_html_assets(base_dir, audio_samples)
-    return str(output_path)
+    <section class="blk" id="work">
+      <div class="blk-head reveal"><span class="num">03</span><h2>Experience</h2></div>
+      <div class="tl reveal">
+        {render_experience(data.get("experience", []))}
+      </div>
+    </section>
+
+    <section class="blk" id="edu">
+      <div class="blk-head reveal"><span class="num">04</span><h2>{edu_heading}</h2></div>
+      <div class="tl reveal">
+        {render_education(data.get("education", []))}
+      </div>{cert_row}
+    </section>
+
+    <section class="blk" id="projects">
+      <div class="blk-head reveal"><span class="num">05</span><h2>Selected projects</h2></div>
+      <div class="grid g-3">
+        {render_projects(data.get("projects", []))}
+      </div>
+    </section>
+
+    <section class="blk" id="contact">
+      <div class="blk-head reveal"><span class="num">06</span><h2>Get in touch</h2></div>
+      <p class="prose reveal">{escape_html(data.get("contact_line", ""))}</p>
+      <p class="reveal mono" style="font-size:.78rem;letter-spacing:.04em;color:var(--muted);margin-top:6px">{email}&nbsp;&nbsp;·&nbsp;&nbsp;{phone}</p>
+      <div class="contact-links reveal">
+        <a class="btn" href="mailto:{email}" data-hover>Email</a>
+        <a class="btn ghost" href="https://github.com/{github}" target="_blank" rel="noopener noreferrer" data-hover>GitHub</a>
+        <a class="btn ghost" href="https://www.linkedin.com/in/{linkedin}" target="_blank" rel="noopener noreferrer" data-hover>LinkedIn</a>{deck_btn}
+      </div>
+    </section>
+
+    <footer>
+      <span class="mono">© Daniel Ramirez — Sound &amp; Systems</span>
+      <span class="mono">Audio streamed from <a href="https://catalog.lufs.audio" target="_blank" rel="noopener noreferrer" data-hover style="color:var(--gold)">catalog.lufs.audio</a></span>
+    </footer>"""
+
+
+# --------------------------------------------------------------------------- #
+# template patching (pristine template -> placeholder template, once)
+# --------------------------------------------------------------------------- #
+EXTRA_CSS = (
+    ".lens-switch{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 18px}"
+    ".lens-switch a{font-family:'Space Mono',monospace;font-size:.56rem;text-transform:uppercase;"
+    "letter-spacing:.13em;color:var(--muted);padding:5px 9px;border:1px solid var(--hair);"
+    "border-radius:99px;transition:color .2s,border-color .2s,background .2s;cursor:none}"
+    ".lens-switch a:hover{color:var(--gold);border-color:var(--gold)}"
+    ".lens-switch a.active{color:#1e1c19;background:var(--gold);border-color:var(--gold)}"
+    "/* dev affordances hidden on the shipped site (dial panel still toggles with 'd') */"
+    ".proto-note,.dial-toggle{display:none!important}"
+)
+
+SWITCH_LINKS = (
+    '<a data-lens="" href="/" data-hover>Overview</a>'
+    '<a data-lens="sound-design" href="/sound-design/" data-hover>Sound Design</a>'
+    '<a data-lens="infra" href="/infra/" data-hover>Infrastructure</a>'
+)
+
+ROUTER_JS = r"""
+<script>
+/* Persistent-audio lens router. The rail (cloud + player + reactivity) is mounted
+   once and never touched; only #content is swapped, so audio keeps playing across
+   lens changes. Real routes (/, /sound-design/, /infra/) via pushState, with each
+   route also emitted as a static page for cold loads / no-JS / crawlers. */
+(function(){
+  var FR = window.LENS_FRAGMENTS || {}, META = window.LENS_META || {}, DEF = window.LENS_DEFAULT || "";
+  var content = document.getElementById('content');
+  var railRole = document.getElementById('railRole');
+  var sw = document.getElementById('lensSwitch');
+  if(!content || !sw) return;
+  var spyHandler = null;
+
+  function bindSpy(){
+    var links = [].slice.call(document.querySelectorAll('#railNav a'));
+    var secs = links.map(function(a){ try{ return content.querySelector(a.getAttribute('href')); }catch(e){ return null; } });
+    if(spyHandler) removeEventListener('scroll', spyHandler);
+    spyHandler = function(){ var y=scrollY+innerHeight*0.32, best=0;
+      for(var i=0;i<secs.length;i++){ if(secs[i]&&secs[i].offsetTop<=y) best=i; }
+      links.forEach(function(l,i){ l.classList.toggle('active', i===best); }); };
+    addEventListener('scroll', spyHandler, {passive:true}); spyHandler();
+  }
+
+  function normalize(path){
+    var s=(path||'/').replace(/^\/+|\/+$/g,'');
+    return FR.hasOwnProperty(s) ? s : '';
+  }
+
+  function showLens(slug, push, keepScroll){
+    if(!FR.hasOwnProperty(slug)) slug='';
+    content.innerHTML = FR[slug];
+    var m = META[slug] || {};
+    if(railRole && m.role) railRole.textContent = m.role;
+    if(m.title) document.title = m.title;
+    [].forEach.call(sw.querySelectorAll('a'), function(a){
+      a.classList.toggle('active', a.getAttribute('data-lens')===slug); });
+    requestAnimationFrame(function(){
+      [].forEach.call(content.querySelectorAll('.reveal'), function(e){ e.classList.add('in'); }); });
+    bindSpy();
+    if(!keepScroll) try{ scrollTo(0,0); }catch(e){}
+    if(push){ try{ history.pushState({lens:slug}, '', slug ? '/'+slug+'/' : '/'); }catch(e){} }
+  }
+
+  sw.addEventListener('click', function(e){
+    var a = e.target.closest('a[data-lens]'); if(!a) return;
+    e.preventDefault();
+    var slug = a.getAttribute('data-lens');
+    if(slug !== normalize(location.pathname)) showLens(slug, true);
+  });
+  addEventListener('popstate', function(e){
+    showLens((e.state && e.state.lens!=null) ? e.state.lens : normalize(location.pathname), false); });
+
+  /* Initial paint: server already rendered DEF as live DOM. Re-run through showLens
+     to wire switcher/spy/reveal without changing which lens is shown. */
+  showLens(DEF, false, true);
+})();
+</script>
+"""
+
+
+def patch_template(raw: str) -> str:
+    t = raw
+    # head: title + meta description -> placeholders
+    t = replace_once(
+        t, "<title>Resume | Daniel Ramirez</title>",
+        "<title>%%PAGETITLE%%</title>", "page title",
+    )
+    t = sub_once(
+        t, r'<meta name="description" content="[^"]*"',
+        '<meta name="description" content="%%METADESC%%"', "meta description",
+    )
+    # extra css before </head>
+    t = replace_once(t, "</head>", f"<style>{EXTRA_CSS}</style>\n</head>", "extra css")
+    # rail role -> id'd placeholder + lens switcher
+    t = replace_once(
+        t,
+        '<div class="rail-role">RESUME_TITLE · Interactive Audio</div>',
+        '<div class="rail-role" id="railRole">%%RAILROLE%%</div>\n'
+        '    <nav class="lens-switch" id="lensSwitch" aria-label="Resume lens">%%SWITCHER%%</nav>',
+        "rail role + switcher",
+    )
+    # replace whole <main class="content"> ... </main> with a single mount point
+    a = t.find('<main class="content">')
+    if a == -1:
+        raise SystemExit("[render] anchor '<main class=\"content\">' not found")
+    b = t.find("</main>", a)
+    if b == -1:
+        raise SystemExit("[render] closing </main> not found")
+    b += len("</main>")
+    t = t[:a] + '<main class="content" id="content">%%MAIN%%</main>' + t[b:]
+    # remove the template's original rail scroll-spy IIFE (router owns spy now)
+    sa = t.find("/* rail scroll-spy */")
+    if sa != -1:
+        se = t.find("})();", sa)
+        if se != -1:
+            t = t[:sa] + "/* rail scroll-spy handled by lens router */" + t[se + len("})();"):]
+    # SPA data + router before </body>
+    t = replace_once(t, "</body>", "%%SPA%%\n</body>", "spa injection")
+    return t
+
+
+# --------------------------------------------------------------------------- #
+# build
+# --------------------------------------------------------------------------- #
+def build_site() -> list:
+    site = load_yaml(DATA_DIR / "site.yaml")
+    deck = site.get("deck", {}) or {}
+    lenses = site.get("lenses", [])
+    if not lenses:
+        raise SystemExit("[render] site.yaml has no lenses")
+
+    raw = TEMPLATE.read_text()
+    tmpl = patch_template(raw)
+
+    fragments, meta, page_title, meta_desc = {}, {}, {}, {}
+    switch_active = {}
+    for lens in lenses:
+        slug = lens.get("slug", "")
+        data = load_yaml(DATA_DIR / lens["data"])
+        fragments[slug] = render_lens_inner(data, deck)
+        role = data.get("title", "")
+        label = lens.get("nav_label", role)
+        title_tag = f"Daniel Ramirez — {label}"
+        meta[slug] = {"role": role, "title": title_tag}
+        page_title[slug] = escape_html(title_tag)
+        meta_desc[slug] = escape_html(data.get("lead", "") or role)
+
+    # JSON blobs for the client (guard against </script> breakout)
+    def js(obj):
+        return json.dumps(obj, ensure_ascii=False).replace("</", "<\\/")
+
+    switcher_for = {}
+    for lens in lenses:
+        slug = lens.get("slug", "")
+        links = SWITCH_LINKS
+        # mark the active link server-side (progressive: router re-affirms it)
+        needle = f'data-lens="{slug}"'
+        links = links.replace(needle, needle + ' class="active"', 1)
+        switcher_for[slug] = links
+
+    outputs = []
+    for lens in lenses:
+        slug = lens.get("slug", "")
+        spa = (
+            "<script>\n"
+            f"window.LENS_FRAGMENTS = {js(fragments)};\n"
+            f"window.LENS_META = {js(meta)};\n"
+            f"window.LENS_DEFAULT = {js(slug)};\n"
+            "</script>" + ROUTER_JS
+        )
+        page = (
+            tmpl.replace("%%PAGETITLE%%", page_title[slug])
+            .replace("%%METADESC%%", meta_desc[slug])
+            .replace("%%RAILROLE%%", escape_html(meta[slug]["role"]))
+            .replace("%%SWITCHER%%", switcher_for[slug])
+            .replace("%%MAIN%%", fragments[slug])
+            .replace("%%SPA%%", spa)
+        )
+        # verify: no leftover placeholders
+        leftover = sorted(set(re.findall(r"%%[A-Z_]+%%", page)) | set(re.findall(r"RESUME_[A-Z_]+", page)))
+        if leftover:
+            raise SystemExit(f"[render] unfilled placeholders in '{slug or '/'}' page: {leftover}")
+
+        out_path = OUT_DIR if slug == "" else OUT_DIR / slug
+        out_path.mkdir(parents=True, exist_ok=True)
+        (out_path / "index.html").write_text(page)
+        outputs.append(str(out_path / "index.html"))
+        print(f"  built {'/' if slug=='' else '/'+slug+'/'} -> {out_path/'index.html'}")
+
+    return outputs
 
 
 if __name__ == "__main__":
-    base_dir = Path(__file__).parent.parent
-    data_path = base_dir / "data" / "resume.yaml"
-
-    if not data_path.exists():
-        print(f"Error: YAML file not found at {data_path}")
-        import sys
-
+    if not TEMPLATE.exists():
+        print(f"Error: template not found at {TEMPLATE}")
         sys.exit(1)
-
-    data = load_yaml_data(str(data_path))
-    output_path = generate_html(data)
-    print(f"HTML generated: {output_path}")
+    outs = build_site()
+    print(f"Built {len(outs)} lens pages.")
