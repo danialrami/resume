@@ -3,7 +3,7 @@
 
 set -e
 
-RESUME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+RESUME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$RESUME_DIR"
 
 echo "Setting up resume repository..."
