@@ -1,6 +1,6 @@
 #!/bin/bash
 # deploy.sh - Build and deploy resume to hostinger branch
-# 
+#
 # IMPORTANT: The main branch contains ONLY source code (templates, scripts, data).
 #            The dist/ folder is built locally and deployed to hostinger branch only.
 #            Never commit dist/ to main - it's in .gitignore.
@@ -17,8 +17,8 @@ echo "============================================"
 echo "Building resume for production deployment..."
 echo "============================================"
 echo ""
-echo "NOTE: Audio files are automatically converted to OPUS format (~11x smaller)"
-echo "      Set AUDIO_BASE_URL env var to use URL-based audio instead"
+echo "NOTE: Building three lens pages -> /, /sound-design/, /infra/"
+echo "      Audio streams from catalog.lufs.audio at runtime (no local audio build)."
 echo ""
 
 "$VENV_PYTHON" scripts/build_all.py
