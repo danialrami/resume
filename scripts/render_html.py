@@ -195,7 +195,7 @@ def render_lens_inner(data: dict, deck: dict) -> str:
     # Reel button is opt-in per lens (default on). Infra turns it off.
     if data.get("reel", True):
         hero_cta = (
-            '<a class="btn" href="https://reel.danialrami.com" target="_blank" rel="noopener noreferrer" data-hover>▶ Play the reel</a>\n'
+            '<a class="btn" href="https://reel.daniel-ramirez.io" target="_blank" rel="noopener noreferrer" data-hover>▶ Play the reel</a>\n'
             '        <a class="btn ghost" href="#contact" data-hover>Contact</a>'
         )
     else:
