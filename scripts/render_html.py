@@ -24,6 +24,7 @@ build fails loudly rather than emitting something broken.
 import json
 import os
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -431,6 +432,11 @@ def build_site() -> list:
     raw = TEMPLATE.read_text()
     tmpl = patch_template(raw)
 
+    # Clean the output dir so stale files from earlier builds never ride along
+    # into a deploy (deploy.sh force-pushes whatever is in dist/html).
+    if OUT_DIR.exists():
+        shutil.rmtree(OUT_DIR)
+
     fragments, meta, page_title, meta_desc = {}, {}, {}, {}
     switch_active = {}
     for lens in lenses:
@@ -482,7 +488,7 @@ def build_site() -> list:
 
         out_path = OUT_DIR if slug == "" else OUT_DIR / slug
         out_path.mkdir(parents=True, exist_ok=True)
-        (out_path / "index.html").write_text(page)
+        (out_path / "index.html").write_text(page + "\n")
         outputs.append(str(out_path / "index.html"))
         print(f"  built {'/' if slug=='' else '/'+slug+'/'} -> {out_path/'index.html'}")
 
