@@ -1,0 +1,82 @@
+# resume.infra.yaml — /infra lens (infrastructure-engineering).
+# Certs stay trivially editable: a Dante cert is a one-line add when earned.
+
+name: Daniel Ramirez
+contact:
+  email: daniel@lufs.audio
+  phone: (714) 616-1558
+  linkedin: danialrami
+  github: danialrami
+title: Infrastructure Engineer
+reel: false
+headline: "Infrastructure\nfor agent-first\naudio systems"
+lead: "Infrastructure engineer building self-hosted, verifiable pipelines — a multi-site homelab, Cloudflare-tunneled services, and agent-orchestrated tooling. I automate the toil and keep humans the authority."
+contact_line: "Open to infrastructure and platform-engineering roles — email is the fastest way to reach me."
+
+profile: |
+  Infrastructure engineer building agent-first systems for audio production and beyond.
+  I design self-hosted, verifiable pipelines — from a multi-site Tailscale homelab and
+  Cloudflare-tunneled services to LUFS Workchain, a YAML-driven, agent-orchestrated
+  audio-processing engine. I automate the toil and keep humans the authority, with a
+  bias toward correctness that's proven, not assumed.
+
+experience:
+  - company: LUFS Audio
+    role: Founder & Infrastructure Engineer
+    location: Remote
+    dates: "2024 – Present"
+    description:
+      - Architected LUFS Workchain — a YAML-driven, agent-first audio-processing engine with three interfaces (Bash engine, Node CLI, Python FastMCP server) sharing one parser so they never diverge
+      - Built its verification/certification pipeline (content-hash catalog + ed25519 signatures); components promote unverified → verified → certified
+      - Operate a multi-machine, two-site Tailscale homelab self-hosting LiteLLM, Supabase/PostgREST, n8n, Vaultwarden, and Gotenberg behind Cloudflare tunnels
+      - Ship static sites on Cloudflare (Workers, R2, Pages) with GitHub Actions CI/CD
+      - Designed a multi-agent ecosystem (cloud + local daemons) sharing a versioned knowledge base over the GitHub API
+  - company: Hinge Health
+    role: Sound Designer (Contract) — Audio Systems & Tooling
+    location: San Francisco, CA
+    dates: "2022 – 2024"
+    description:
+      - Built custom audio implementation pipelines (Wwise + Unity) and modular, data-driven sound systems for apps serving 70k+ daily users
+      - Stood up an A/B testing framework that drove an 18% increase in session duration
+      - Authored scalable guidelines letting engineering teams self-serve without an audio-team bottleneck
+
+skills:
+  - category: Infrastructure
+    list: [Docker/Compose, Tailscale, "Cloudflare (Tunnels, Workers, R2, Pages)", Linux self-hosting]
+  - category: Languages
+    list: [Python, Bash, JavaScript/Node, Lua]
+  - category: Automation & Agents
+    list: [n8n, MCP/FastMCP, LiteLLM, agent orchestration]
+  - category: Data & Services
+    list: [Supabase/PostgREST, YAML pipelines, GitHub Actions CI/CD]
+  - category: Security & Correctness
+    list: [ed25519 signing, content-hash verification, Vaultwarden secrets]
+
+education:
+  - school: NYU Steinhardt
+    location: New York, NY
+    degree: B.M. Music Theory and Composition for Film and Multimedia
+    dates: "2015–2019"
+  - school: IRCAM
+    location: Paris, France
+    degree: Sound Spatialization and Synthesis
+    dates: 2017
+
+certifications:
+  - name: CompTIA A+ (in progress)
+    link: ""
+  - name: CompTIA Network+ (in progress)
+    link: ""
+  - name: CompTIA Security+ (in progress)
+    link: ""
+
+projects:
+  - name: LUFS Workchain
+    description:
+      - YAML-driven, agent-first audio-processing engine; open-core with hosted execution + certification as the value layer
+  - name: Self-hosted agent mesh
+    description:
+      - Cloud + local agents sharing a versioned knowledge base; HTTPS-only egress model across a two-site Tailscale homelab
+  - name: catalog.lufs.audio
+    description:
+      - Astro static site streaming from a private Cloudflare R2 bucket via a signing Worker

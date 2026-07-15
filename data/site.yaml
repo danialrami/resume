@@ -1,0 +1,26 @@
+# site.yaml — cross-cutting config shared across all lenses.
+# One edit here propagates through the build; keeps the per-lens data files clean.
+
+# The three real, deep-linkable routes. Slugs are a LOCKED contract:
+# resume-builder-workspace stamps these into tuned-PDF headers. Do NOT rename.
+lenses:
+  - slug: ""              # "/" — synthesis / cold-landing (third lens intentionally unnamed)
+    data: resume.root.yaml
+    nav_label: Overview
+  - slug: sound-design    # /sound-design — current live copy
+    data: resume.yaml
+    nav_label: Sound Design
+  - slug: infra           # /infra — infrastructure-engineering lens
+    data: resume.infra.yaml
+    nav_label: Infrastructure
+
+# Deck download. Ships via Google Drive now (zero infra); swap to the branded
+# R2 URL (e.g. https://dl.daniel-ramirez.io/Ramirez-Daniel_deck.pdf) later by
+# changing ONLY the download_url value below.
+deck:
+  # Direct-download form of Daniel's shared Drive file — same file id,
+  # same "anyone with the link" perms, but downloads instead of opening a preview.
+  download_url: "https://drive.usercontent.google.com/download?id=14NlocpvsWC1MLLTOTxtkdq0EZviiuj6P&export=download"
+  label: "Download deck (PDF)"
+  # Deck site link stays empty until deck.daniel-ramirez.io is refreshed (Amacher).
+  site_url: ""

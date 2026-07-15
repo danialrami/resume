@@ -1,11 +1,16 @@
-# resume.yaml
+# resume.yaml — /sound-design lens (current live copy).
 
 name: Daniel Ramirez
 contact:
-  email: daniel@danialrami.com
+  email: daniel@lufs.audio
   phone: (714) 616-1558
   linkedin: danialrami
-  github: danialramirez
+  github: danialrami
+title: Sound Designer
+reel: true
+headline: "Interactive audio,\nUX sound design,\nsonic identity"
+lead: "Sound Designer specializing in interactive audio implementation and UX sound design for mobile applications — crafting cohesive sonic identities that enhance engagement and give users clear interaction feedback."
+contact_line: "Available for interactive audio and UX sound-design work — email is the fastest way to reach me."
 
 profile: |
   Sound Designer specializing in interactive audio implementation and UX sound design for mobile applications. Experienced in creating cohesive sonic identities that enhance user engagement while providing clear feedback for interactions. Combines technical implementation skills with creative sound design to craft meaningful audio experiences.
@@ -77,5 +82,3 @@ projects:
   - name: Audio Pipeline Automation
     description:
       - Developed Python‑based tools for audio asset management and pipeline automation.
-
-
