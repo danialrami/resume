@@ -1,13 +1,16 @@
 # site.yaml — cross-cutting config shared across all lenses.
 # One edit here propagates through the build; keeps the per-lens data files clean.
 
-# The three real, deep-linkable routes. Slugs are a LOCKED contract:
-# resume-builder-workspace stamps these into tuned-PDF headers. Do NOT rename.
+# The three real, deep-linkable routes. Slugs are deep-linked and shared, so a
+# rename is a coordinated change: update SWITCH_LINKS in scripts/render_html.py in
+# the SAME commit, and confirm no external referrer hardcodes the old slug.
+# (Verified 2026-07-15: resume-builder-workspace stamps the bare
+# resume.danialrami.com root into PDFs, not per-lens slugs — no PDF/cron coupling.)
 lenses:
   - slug: ""              # "/" — synthesis / cold-landing (third lens intentionally unnamed)
     data: resume.root.yaml
     nav_label: Overview
-  - slug: sound-design    # /sound-design — current live copy
+  - slug: audio           # /audio — audio & interactive-sound lens (formerly /sound-design)
     data: resume.yaml
     nav_label: Audio
   - slug: infra           # /infra — infrastructure-engineering lens
