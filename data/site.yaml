@@ -9,7 +9,7 @@ lenses:
     nav_label: Overview
   - slug: sound-design    # /sound-design — current live copy
     data: resume.yaml
-    nav_label: Sound Design
+    nav_label: Audio
   - slug: infra           # /infra — infrastructure-engineering lens
     data: resume.infra.yaml
     nav_label: Infrastructure

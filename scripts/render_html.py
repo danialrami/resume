@@ -267,33 +267,23 @@ def render_lens_inner(data: dict, deck: dict) -> str:
 
     <footer>
       <span class="mono">© Daniel Ramirez — Sound &amp; Systems</span>
-      <span class="mono">Audio streamed from <a href="https://catalog.lufs.audio" target="_blank" rel="noopener noreferrer" data-hover style="color:var(--gold)">catalog.lufs.audio</a></span>
+      <span class="mono">Audio streamed from <a href="https://catalog.lufs.audio" target="_blank" rel="noopener noreferrer" data-hover style="color:var(--accent-txt)">catalog.lufs.audio</a></span>
     </footer>"""
 
 
 # --------------------------------------------------------------------------- #
 # template patching (pristine template -> placeholder template, once)
 # --------------------------------------------------------------------------- #
-EXTRA_CSS = (
-    ".lens-switch{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 18px}"
-    ".lens-switch a{font-family:'Space Mono',monospace;font-size:.56rem;text-transform:uppercase;"
-    "letter-spacing:.13em;color:var(--muted);padding:5px 9px;border:1px solid var(--hair);"
-    "border-radius:99px;transition:color .2s,border-color .2s,background .2s;cursor:none}"
-    ".lens-switch a:hover{color:var(--gold);border-color:var(--gold)}"
-    ".lens-switch a.active{color:#1e1c19;background:var(--gold);border-color:var(--gold)}"
-    "/* dev affordances hidden on the shipped site (dial panel still toggles with 'd') */"
-    ".proto-note,.dial-toggle{display:none!important}"
-    "/* lens transition: fade + slide-up on content swap (Amacher can retune the feel) */"
-    ".content.lens-exit{opacity:0;transform:translateY(-8px);transition:opacity .17s ease,transform .17s ease}"
-    ".content.lens-enter{opacity:0;transform:translateY(14px)}"
-    ".content.lens-enter-active{opacity:1;transform:none;transition:opacity .34s ease,transform .34s ease}"
-    "@media (prefers-reduced-motion:reduce){.content.lens-exit,.content.lens-enter,.content.lens-enter-active{transition:none!important;transform:none!important;opacity:1!important}}"
-)
+# NOTE: the lens-switch styling, the dev-affordance hide, and the lens-transition
+# rules used to be injected from here as EXTRA_CSS. They now live in
+# templates/html/styles.css (single source of truth), so there is no injected
+# <style> block anymore.
 
 SWITCH_LINKS = (
+    '<span class="thumb" aria-hidden="true"></span>'
     '<a data-lens="" href="/" data-hover>Overview</a>'
-    '<a data-lens="sound-design" href="/sound-design/" data-hover>Sound Design</a>'
-    '<a data-lens="infra" href="/infra/" data-hover>Infrastructure</a>'
+    '<a data-lens="sound-design" href="/sound-design/" data-hover>Audio</a>'
+    '<a data-lens="infra" href="/infra/" data-hover>Infra</a>'
 )
 
 ROUTER_JS = r"""
@@ -309,6 +299,15 @@ ROUTER_JS = r"""
   var sw = document.getElementById('lensSwitch');
   if(!content || !sw) return;
   var spyHandler = null;
+  var thumb = sw.querySelector('.thumb');
+
+  function moveThumb(){
+    if(!thumb) return;
+    var a = sw.querySelector('a.active'); if(!a) return;
+    thumb.style.width = a.offsetWidth + 'px';
+    thumb.style.transform = 'translateX(' + (a.offsetLeft - 4) + 'px)';
+  }
+  addEventListener('resize', moveThumb);
 
   function bindSpy(){
     var links = [].slice.call(document.querySelectorAll('#railNav a'));
@@ -316,7 +315,10 @@ ROUTER_JS = r"""
     if(spyHandler) removeEventListener('scroll', spyHandler);
     spyHandler = function(){ var y=scrollY+innerHeight*0.32, best=0;
       for(var i=0;i<secs.length;i++){ if(secs[i]&&secs[i].offsetTop<=y) best=i; }
-      links.forEach(function(l,i){ l.classList.toggle('active', i===best); }); };
+      links.forEach(function(l,i){ l.classList.toggle('active', i===best); });
+      var prog=document.getElementById('prog');
+      if(prog){ var mx=document.documentElement.scrollHeight-innerHeight;
+        prog.style.height=(mx>0?Math.min(100,Math.max(0,scrollY/mx*100)):0)+'%'; } };
     addEventListener('scroll', spyHandler, {passive:true}); spyHandler();
   }
 
@@ -332,6 +334,7 @@ ROUTER_JS = r"""
     if(m.title) document.title = m.title;
     [].forEach.call(sw.querySelectorAll('a'), function(a){
       a.classList.toggle('active', a.getAttribute('data-lens')===slug); });
+    moveThumb();
     [].forEach.call(content.querySelectorAll('.reveal'), function(e){ e.classList.add('in'); });
     bindSpy();
   }
@@ -389,8 +392,9 @@ def patch_template(raw: str) -> str:
         t, r'<meta name="description" content="[^"]*"',
         '<meta name="description" content="%%METADESC%%"', "meta description",
     )
-    # extra css before </head>
-    t = replace_once(t, "</head>", f"<style>{EXTRA_CSS}</style>\n</head>", "extra css")
+    # Styling now lives in templates/html/styles.css (linked from the template);
+    # the lens-switch + transition rules moved there too, so nothing is injected
+    # into <head> here anymore.
     # rail role -> id'd placeholder + lens switcher
     t = replace_once(
         t,
@@ -491,6 +495,11 @@ def build_site() -> list:
         (out_path / "index.html").write_text(page + "\n")
         outputs.append(str(out_path / "index.html"))
         print(f"  built {'/' if slug=='' else '/'+slug+'/'} -> {out_path/'index.html'}")
+
+    # copy the single stylesheet to the site root so an absolute /styles.css
+    # resolves for every lens (root + /sound-design/ + /infra/).
+    shutil.copy(TEMPLATE.parent / "styles.css", OUT_DIR / "styles.css")
+    print(f"  copied styles.css -> {OUT_DIR/'styles.css'}")
 
     return outputs
 

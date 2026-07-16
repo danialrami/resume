@@ -29,7 +29,7 @@ experience:
       - Architected LUFS Workchain — a YAML-driven, agent-first audio-processing engine with three interfaces (Bash engine, Node CLI, Python FastMCP server) sharing one parser so they never diverge
       - Built its verification/certification pipeline (content-hash catalog + ed25519 signatures); components promote unverified → verified → certified
       - Operate a multi-machine, two-site Tailscale homelab self-hosting LiteLLM, Supabase/PostgREST, n8n, Vaultwarden, and Gotenberg behind Cloudflare tunnels
-      - Ship static sites on Cloudflare (Workers, R2, Pages) with GitHub Actions CI/CD
+      - Ship static sites on Cloudflare (Workers, R2) with GitHub Actions CI/CD
       - Designed a multi-agent ecosystem (cloud + local daemons) sharing a versioned knowledge base over the GitHub API
   - company: Hinge Health
     role: Sound Designer (Contract) — Audio Systems & Tooling
@@ -42,7 +42,7 @@ experience:
 
 skills:
   - category: Infrastructure
-    list: [Docker/Compose, Tailscale, "Cloudflare (Tunnels, Workers, R2, Pages)", Linux self-hosting]
+    list: [Docker/Compose, Tailscale, "Cloudflare (Tunnels, Workers, R2)", Linux self-hosting]
   - category: Languages
     list: [Python, Bash, JavaScript/Node, Lua]
   - category: Automation & Agents
