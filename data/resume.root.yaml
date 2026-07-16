@@ -42,7 +42,7 @@ skills:
   - category: Audio
     list: [Interactive/UX sound design, "Wwise, FMOD", Adaptive sound systems, Sonic identity]
   - category: Infrastructure
-    list: ["Cloudflare (Workers, R2, Pages)", Docker/Compose, Tailscale, Linux self-hosting]
+    list: ["Cloudflare (Workers, R2)", Docker/Compose, Tailscale, Linux self-hosting]
   - category: Engineering
     list: [Python, Bash, JavaScript/Node, YAML pipelines, GitHub Actions CI/CD]
   - category: Systems & Agents
