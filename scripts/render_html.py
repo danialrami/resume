@@ -7,14 +7,14 @@ catalog streaming player + reactivity engine) with the main content swapped betw
 three lenses driven by data/site.yaml:
 
     /              -> data/resume.root.yaml   (synthesis / cold-landing)
-    /sound-design  -> data/resume.yaml        (current sound-design copy)
+    /audio         -> data/resume.yaml        (audio & interactive sound)
     /infra         -> data/resume.infra.yaml  (infrastructure engineering)
 
 The rail mounts once; a small History-API router swaps only the #content fragment,
 so audio keeps playing across lens changes. Each route is also emitted as a real
-static page (dist/html/index.html, /sound-design/index.html, /infra/index.html) so
+static page (dist/html/index.html, /audio/index.html, /infra/index.html) so
 cold loads, no-JS, and crawlers get real content and deep links work under static
-hosting. Slugs are a locked contract shared with resume-builder-workspace.
+hosting. Slugs are set in data/site.yaml; SWITCH_LINKS below must be kept in sync.
 
 The template (templates/html/index.html) is Amacher's redesign, left pristine and
 patched at build time via anchor asserts: if the template structure changes, the
@@ -282,7 +282,7 @@ def render_lens_inner(data: dict, deck: dict) -> str:
 SWITCH_LINKS = (
     '<span class="thumb" aria-hidden="true"></span>'
     '<a data-lens="" href="/" data-hover>Overview</a>'
-    '<a data-lens="sound-design" href="/sound-design/" data-hover>Audio</a>'
+    '<a data-lens="audio" href="/audio/" data-hover>Audio</a>'
     '<a data-lens="infra" href="/infra/" data-hover>Infra</a>'
 )
 
@@ -290,7 +290,7 @@ ROUTER_JS = r"""
 <script>
 /* Persistent-audio lens router. The rail (cloud + player + reactivity) is mounted
    once and never touched; only #content is swapped, so audio keeps playing across
-   lens changes. Real routes (/, /sound-design/, /infra/) via pushState, with each
+   lens changes. Real routes (/, /audio/, /infra/) via pushState, with each
    route also emitted as a static page for cold loads / no-JS / crawlers. */
 (function(){
   var FR = window.LENS_FRAGMENTS || {}, META = window.LENS_META || {}, DEF = window.LENS_DEFAULT || "";

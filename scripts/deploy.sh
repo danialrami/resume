@@ -17,7 +17,7 @@ echo "============================================"
 echo "Building resume for production deployment..."
 echo "============================================"
 echo ""
-echo "NOTE: Building three lens pages -> /, /sound-design/, /infra/"
+echo "NOTE: Building three lens pages -> /, /audio/, /infra/"
 echo "      Audio streams from catalog.lufs.audio at runtime (no local audio build)."
 echo ""
 
