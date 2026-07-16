@@ -4,8 +4,6 @@
 # The three real, deep-linkable routes. Slugs are deep-linked and shared, so a
 # rename is a coordinated change: update SWITCH_LINKS in scripts/render_html.py in
 # the SAME commit, and confirm no external referrer hardcodes the old slug.
-# (Verified 2026-07-15: resume-builder-workspace stamps the bare
-# resume.danialrami.com root into PDFs, not per-lens slugs — no PDF/cron coupling.)
 lenses:
   - slug: ""              # "/" — synthesis / cold-landing (third lens intentionally unnamed)
     data: resume.root.yaml
