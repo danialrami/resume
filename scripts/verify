@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""
+Portable artifact verifier (website-portability contract). Proves the built
+dist/html/ is correct rather than trusting the build's exit code — the same
+"proven, not exited-0" gate Workchain enforces on audio components. Emits
+verification.json and fails closed.
+
+Checks:
+  - index_exists        : dist/html/index.html present and non-empty
+  - required_routes     : every route in site/routes.txt resolves in dist/html/
+  - local_links_resolve : every root-relative href/src in the built HTML resolves
+                          to a real file in the artifact. THIS is the check that
+                          catches the class of bug this retrofit found: the build
+                          emitting a page that references /styles.css (or any asset)
+                          without actually copying it into the artifact.
+  - asset_size_budget   : no file exceeds runtime.max_asset_bytes in site.yaml
+  - secret_scan         : no obvious private-key material in the artifact
+"""
+import json
+import re
+import sys
+import pathlib
+
+REPO = pathlib.Path(__file__).resolve().parent.parent
+DIST = REPO / "dist" / "html"
+ROUTES_FILE = REPO / "site" / "routes.txt"
+MAX_ASSET_BYTES = 26214400  # mirror site.yaml runtime.max_asset_bytes
+
+checks = []
+
+
+def add(cid, ok, **extra):
+    checks.append({"id": cid, "status": "passed" if ok else "failed", **extra})
+    return ok
+
+
+def route_to_file(route: str) -> pathlib.Path:
+    route = route.strip()
+    if route.endswith("/"):
+        return DIST / route.strip("/") / "index.html"
+    return DIST / route.lstrip("/")
+
+
+ok_all = True
+
+# index_exists
+idx = DIST / "index.html"
+ok_all &= add("index_exists", idx.is_file() and idx.stat().st_size > 0)
+
+# required_routes
+missing_routes = []
+if ROUTES_FILE.is_file():
+    for line in ROUTES_FILE.read_text().splitlines():
+        r = line.strip()
+        if not r or r.startswith("#"):
+            continue
+        if not route_to_file(r).is_file():
+            missing_routes.append(r)
+ok_all &= add("required_routes", not missing_routes, missing=missing_routes)
+
+# local_links_resolve: root-relative asset/link targets must exist in the artifact.
+attr_re = re.compile(r'(?:href|src)\s*=\s*"([^"]+)"', re.IGNORECASE)
+dangling = []
+checked = 0
+for html in DIST.rglob("*.html"):
+    text = html.read_text(encoding="utf-8", errors="ignore")
+    for ref in attr_re.findall(text):
+        # Only root-relative internal references. Skip external, data:, anchors,
+        # mailto/tel, and protocol-relative URLs.
+        if not ref.startswith("/") or ref.startswith("//"):
+            continue
+        path = ref.split("#", 1)[0].split("?", 1)[0]
+        if not path or path == "/":
+            continue
+        checked += 1
+        if path.endswith("/"):
+            target = DIST / path.strip("/") / "index.html"
+        else:
+            target = DIST / path.lstrip("/")
+        if not target.exists():
+            dangling.append(ref)
+ok_all &= add("local_links_resolve", not dangling, count=checked, offenders=sorted(set(dangling)))
+
+# asset_size_budget
+too_big = []
+for p in DIST.rglob("*"):
+    if p.is_file() and p.stat().st_size > MAX_ASSET_BYTES:
+        too_big.append(str(p.relative_to(DIST)))
+ok_all &= add("asset_size_budget", not too_big, max_bytes=MAX_ASSET_BYTES, offenders=too_big)
+
+# secret_scan (cheap): private-key headers anywhere in the artifact
+secret_re = re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |PGP )?PRIVATE KEY-----")
+leaks = []
+for p in DIST.rglob("*"):
+    if p.is_file() and p.suffix.lower() in {".html", ".js", ".json", ".txt", ".xml", ".css", ".svg"}:
+        try:
+            if secret_re.search(p.read_text(encoding="utf-8", errors="ignore")):
+                leaks.append(str(p.relative_to(DIST)))
+        except Exception:
+            pass
+ok_all &= add("secret_scan", not leaks, offenders=leaks)
+
+report = {"status": "passed" if ok_all else "failed", "checks": checks}
+(REPO / "verification.json").write_text(json.dumps(report, indent=2) + "\n")
+print(json.dumps(report, indent=2))
+sys.exit(0 if ok_all else 1)

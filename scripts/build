@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Portable build step (website-portability contract). Builds ONCE into dist/html/.
+#
+# The site is HTML-only and self-contained: render_html inlines the JS + cloud SVG
+# into each lens page and links a single /styles.css; audio streams from
+# catalog.lufs.audio at runtime. So this build needs ONLY python3 + pyyaml —
+# no ffmpeg, no LaTeX. The old PDF/audio-conversion paths are archived/ and are
+# deliberately NOT part of the web artifact.
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+python3 -m pip install --quiet --disable-pip-version-check -r requirements.txt
+python3 scripts/build_all.py
+
+test -s dist/html/index.html || { echo "build: dist/html/index.html missing or empty"; exit 1; }
+echo "build: ok"

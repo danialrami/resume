@@ -1,0 +1,53 @@
+# ============================================================================
+# PLACE THIS AT: .github/workflows/site-release.yml
+# (It lives under ci/ in the repo because the GitHub App that authored this PR
+#  can't commit under .github/workflows/ via the API — `git mv` it into place.)
+# ============================================================================
+#
+# Platform-AGNOSTIC release pipeline. On push to main it builds ONCE, PROVES the
+# artifact (scripts/verify — fail closed), and publishes it to the `site` branch.
+# ZERO hosting-provider specifics. The host subscribes to `site`:
+#   - Cloudflare Pages: Git integration, production branch = site, build command
+#     empty / output dir = "/" (serve the prebuilt files as-is)
+#   - Hostinger: Git auto-deploy webhook, production branch = site
+#
+# Runs on ubuntu-latest (GitHub-hosted): this is a PUBLIC repo, so it must NOT use
+# the self-hosted `lufs` fleet (fork-PR RCE risk). The build is a tiny pure-Python
+# render — negligible CI minutes. ubuntu-latest ships python3; scripts/build
+# pip-installs pyyaml itself.
+name: site-release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: site-release
+  cancel-in-progress: true
+
+permissions:
+  contents: write   # to push the built artifact to the `site` branch
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4          # pin to a commit SHA before production
+        with:
+          fetch-depth: 0
+
+      - name: Build once
+        run: bash scripts/build
+
+      - name: Verify the artifact (fail closed)
+        run: python3 scripts/verify
+
+      - name: Publish to the agnostic `site` branch
+        env:
+          REMOTE: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+          GIT_SHA: ${{ github.sha }}
+          GIT_AUTHOR_NAME: github-actions
+          GIT_AUTHOR_EMAIL: github-actions@users.noreply.github.com
+        run: bash scripts/publish-site

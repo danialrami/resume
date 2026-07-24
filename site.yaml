@@ -1,0 +1,55 @@
+schema_version: 1
+site_id: resume-danialrami
+# TODO(daniel): confirm the production hostname before DNS cutover. The site family
+# uses *.daniel-ramirez.io (blog., reel., dl., deck.); this is the best-guess apex.
+# canonical_url is metadata only — build/verify/publish are host-neutral and never read it.
+canonical_url: https://daniel-ramirez.io
+source:
+  repository: danialrami/resume
+  production_ref: main
+build:
+  # HTML-only, pure-Python build. LaTeX/PDF is archived; audio streams from
+  # catalog.lufs.audio at runtime — so NO ffmpeg and NO texlive are needed.
+  command: bash scripts/build
+  output_dir: dist/html
+  toolchain:
+    python: "3"
+    package_manager: pip
+  lockfiles:
+    - requirements.txt
+runtime:
+  kind: static
+  index: index.html
+  # No custom 404 page is emitted; unknown paths fall through to the host default.
+  error_document: index.html
+  spa_fallback: false
+  max_asset_bytes: 26214400
+routes:
+  required:
+    - /
+    - /audio/
+    - /infra/
+# The site renders fully without these; they are runtime enhancements only.
+external_origins:
+  - id: catalog-audio
+    url: https://catalog.lufs.audio
+    required: false
+  - id: google-fonts
+    url: https://fonts.googleapis.com
+    required: false
+  - id: deck-download
+    url: https://drive.usercontent.google.com
+    required: false
+domains:
+  - daniel-ramirez.io
+release:
+  # CI publishes the verified artifact to the agnostic `site` branch; any host
+  # (Cloudflare Pages git-integration, or a Hostinger webhook) consumes it as a
+  # swappable adapter. Cloudflare Pages: production branch = site, build command
+  # empty, output dir = "/" (serve the prebuilt files as-is).
+  artifact_name: site.tar.gz
+  publish_branch: site
+  retain: 20
+verification:
+  content_probe: /index.html
+  smoke_timeout_seconds: 10

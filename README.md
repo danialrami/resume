@@ -36,19 +36,38 @@ pip install -r requirements.txt
 ./scripts/build_pdf.sh
 ```
 
-## Deployment
+## Deployment (website-portability contract)
 
-To build and deploy to the `hostinger` branch:
+This repo builds ONCE and PROVES the artifact, then publishes it to the agnostic
+`site` branch. No hosting-provider specifics live in the pipeline.
+
+Local:
 ```bash
-./scripts/deploy.sh
+bash scripts/build      # pure-Python render -> dist/html/  (needs only python3 + pyyaml)
+python3 scripts/verify  # fail-closed gate -> verification.json  (proven, not exited-0)
 ```
 
-This will:
-1. Build both PDF and HTML outputs
-2. Convert audio files to OPUS format (~11x smaller)
-3. Commit changes to main branch
-4. Push to origin
-5. Deploy HTML to `hostinger` branch for hosting
+CI (`.github/workflows/site-release.yml`, placed by Daniel — the GitHub App can't
+commit workflow files, so it ships as `ci/site-release.yml`; `git mv` it into place):
+on push to `main` it runs `scripts/build` → `scripts/verify` → `scripts/publish-site`,
+force-pushing the verified `dist/html/` to the `site` branch.
+
+The host subscribes to `site`:
+- **Cloudflare Pages** — Git integration, production branch = `site`, build command
+  empty, output dir = `/` (serve the prebuilt files as-is).
+- **Hostinger** — Git auto-deploy webhook, production branch = `site`.
+
+Switching or running both in parallel needs no pipeline change. The legacy
+`deploy.sh` force-push to a `hostinger` branch is retired.
+
+## Portability interface
+
+- `site.yaml` — the site manifest (routes, build, runtime, release target).
+- `scripts/build` · `scripts/verify` · `scripts/publish-site` — the uniform,
+  host-neutral interface. Invoke via `bash`/`python3` (exec bit optional).
+- `site/routes.txt` — provider-neutral list of required routes; `scripts/verify`
+  asserts each resolves in the artifact.
+- `verification.json` — the last fail-closed verify report.
 
 ## Audio Files
 
