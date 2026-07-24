@@ -10,12 +10,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800&family=Public+Sans:wght@300;400;500;600&family=Space+Mono&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23201e1b'/%3E%3Cpath d='M100,30 C130,30 150,50 150,80 C180,80 200,100 200,130 C200,160 180,180 150,180 L50,180 C20,180 0,160 0,130 C0,100 20,80 50,80 C50,50 70,30 100,30 Z' fill='%23e8e4d4'/%3E%3Ccircle cx='70' cy='100' r='15' fill='%23201e1b'/%3E%3Ccircle cx='130' cy='100' r='15' fill='%23201e1b'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/styles.css">
-<script>(function(){try{var v=localStorage.getItem('dr-theme');if(v)document.documentElement.setAttribute('data-theme',v);}catch(e){}})();</script>
+<script>(function(){try{var v=localStorage.getItem('dr-theme');document.documentElement.setAttribute('data-theme',(v==='light'||v==='dark')?v:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
 <body>
 
 <div class="cur-dot"></div><div class="cur-ring"></div>
-<button class="theme-btn" id="themeBtn" title="Theme — click to change" aria-label="Toggle colour theme"><span class="ic">◐</span><span class="lbl">Auto</span></button>
+<button class="theme-btn" id="themeBtn" title="Toggle colour theme" aria-label="Toggle colour theme"><span class="ic ic-moon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14.4 3.6 A5 5 0 1 0 14.4 13.2 A3.7 3.7 0 1 1 14.4 3.6 Z" fill="#d9a23d"/><path d="M3.4 20.6 C3.4 18 5.5 17 7.1 17.5 C7.7 15 10.3 14.8 11.5 16.3 C12.9 15.5 14.9 16.3 15 17.9 C16.9 17.7 18.3 19.1 17.9 20.6 Z" fill="#efece0"/></svg></span><span class="ic ic-sun" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.4" r="3" fill="#b07d1e"/><g stroke="#b07d1e" stroke-width="1.6"><line x1="12" y1="1.9" x2="12" y2="3.5"/><line x1="5.8" y1="8.4" x2="7.3" y2="8.4"/><line x1="18.2" y1="8.4" x2="16.7" y2="8.4"/><line x1="7.1" y1="3.5" x2="8.1" y2="4.5"/><line x1="16.9" y1="3.5" x2="15.9" y2="4.5"/></g><path d="M3.4 20.6 C3.4 18 5.5 17 7.1 17.5 C7.7 15 10.3 14.8 11.5 16.3 C12.9 15.5 14.9 16.3 15 17.9 C16.9 17.7 18.3 19.1 17.9 20.6 Z" fill="#23211d"/></svg></span></button>
 <div class="dial-toggle" id="dialToggle" data-hover>⚙ Tune</div>
 
 
@@ -500,13 +500,11 @@ window.AUDIO = window.AUDIO || { L:{bass:0,mid:0,treble:0,energy:0,centroid:0.5,
 (function(){
   var root=document.documentElement, b=document.getElementById('themeBtn');
   if(!b) return;
-  var IC={auto:"◐",light:"☀",dark:"☾"}, LB={auto:"Auto",light:"Light",dark:"Dark"}, ORD=["auto","light","dark"];
-  function apply(v){ if(ORD.indexOf(v)<0) v="auto";
-    root.setAttribute('data-theme',v); try{localStorage.setItem('dr-theme',v);}catch(e){}
-    b.querySelector('.ic').textContent=IC[v]; b.querySelector('.lbl').textContent=LB[v];
-    b.title = v==='auto' ? "Theme: Auto (following your system) — click to change" : "Theme: "+LB[v]+" — click to change"; }
-  apply(root.getAttribute('data-theme')||'auto');
-  b.addEventListener('click',function(){ apply(ORD[(ORD.indexOf(root.getAttribute('data-theme')||'auto')+1)%3]); });
+  function label(){ var d=root.getAttribute('data-theme')==='dark'; b.title=d?'Dark — switch to light':'Light — switch to dark'; b.setAttribute('aria-label',b.title); }
+  // two-stage: resolve any 'auto'/unset to a concrete theme (stored choice wins, else system)
+  (function(){ var v; try{v=localStorage.getItem('dr-theme');}catch(e){} if(v!=='light'&&v!=='dark'){ v=(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'; } root.setAttribute('data-theme',v); })();
+  label();
+  b.addEventListener('click',function(){ var next=root.getAttribute('data-theme')==='dark'?'light':'dark'; root.setAttribute('data-theme',next); try{localStorage.setItem('dr-theme',next);}catch(e){} label(); });
 })();
 </script>
 </body>
