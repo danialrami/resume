@@ -1,11 +1,10 @@
 schema_version: 1
 site_id: resume-danialrami
-# TODO(daniel): confirm the production hostname before DNS cutover. The site family
-# uses *.daniel-ramirez.io (blog., reel., dl., deck.); this is the best-guess apex.
-# canonical_url is metadata only — build/verify/publish are host-neutral and never read it.
-canonical_url: https://daniel-ramirez.io
+# Production hostname (confirmed 2026-07-24). canonical_url is metadata only —
+# build/verify/publish are host-neutral and never read it.
+canonical_url: https://resume.daniel-ramirez.io
 source:
-  repository: danialrami/resume
+  repository: lufs-audio/resume
   production_ref: main
 build:
   # HTML-only, pure-Python build. LaTeX/PDF is archived; audio streams from
@@ -41,7 +40,7 @@ external_origins:
     url: https://drive.usercontent.google.com
     required: false
 domains:
-  - daniel-ramirez.io
+  - resume.daniel-ramirez.io
 release:
   # CI publishes the verified artifact to the agnostic `site` branch; any host
   # (Cloudflare Pages git-integration, or a Hostinger webhook) consumes it as a
