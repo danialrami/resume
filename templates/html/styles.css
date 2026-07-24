@@ -56,9 +56,16 @@ h1,h2,h3{font-family:'Host Grotesk',sans-serif;font-weight:800;letter-spacing:-.
 @media (pointer:coarse){.cur-dot,.cur-ring{display:none}}
 
 /* ---- theme button (fixed, upper-right; cycles Auto -> Light -> Dark) ---- */
-.theme-btn{position:fixed;top:16px;right:16px;z-index:340;font-family:'Space Mono',monospace;font-size:.66rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text);background:var(--panel);border:1px solid var(--hair-2);border-radius:99px;padding:0 14px;height:38px;min-width:98px;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:none;backdrop-filter:blur(8px);transition:border-color .2s,color .2s}
-.theme-btn:hover{color:var(--accent-txt);border-color:var(--accent-txt)}
-.theme-btn .ic{font-size:.85rem;line-height:1}
+.theme-btn{position:fixed;top:16px;right:16px;z-index:340;width:42px;height:42px;border-radius:50%;color:var(--text);background:var(--panel);border:1px solid var(--hair-2);display:inline-flex;align-items:center;justify-content:center;cursor:none;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:border-color .2s,transform .2s,background .3s ease}
+.theme-btn:hover{border-color:var(--accent-txt);transform:translateY(-1px)}
+.theme-btn:active{transform:scale(.94)}
+.theme-btn .ic{display:none;width:23px;height:23px}
+.theme-btn .ic svg{width:100%;height:100%;display:block;overflow:visible}
+:root[data-theme="dark"] .theme-btn .ic-moon{display:inline-flex}
+:root[data-theme="light"] .theme-btn .ic-sun{display:inline-flex}
+:root[data-theme="auto"] .theme-btn .ic-sun{display:inline-flex}
+@media (prefers-color-scheme:dark){:root[data-theme="auto"] .theme-btn .ic-sun{display:none}:root[data-theme="auto"] .theme-btn .ic-moon{display:inline-flex}}
+@media (pointer:coarse){.theme-btn{cursor:auto}}
 
 /* ---- shell: two-pane dossier ---- */
 .shell{display:grid;grid-template-columns:var(--rail) 1fr;min-height:100vh}
