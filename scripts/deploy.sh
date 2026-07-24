@@ -1,77 +1,25 @@
 #!/bin/bash
-# deploy.sh - Build and deploy resume to hostinger branch
+# deploy.sh — DEPRECATED.
 #
-# IMPORTANT: The main branch contains ONLY source code (templates, scripts, data).
-#            The dist/ folder is built locally and deployed to hostinger branch only.
-#            Never commit dist/ to main - it's in .gitignore.
+# The old flow force-pushed dist/html to a `hostinger` branch from a local machine.
+# Deployment is now the website-portability pipeline: CI builds + verifies on push
+# to main and publishes the proven artifact to the agnostic `site` branch, which
+# the host (Cloudflare Pages / Hostinger) subscribes to. See README "Deployment".
+#
+# This script now only does the local half — build + prove — so you can eyeball the
+# artifact before pushing. It intentionally does NOT push anything.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RESUME_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$RESUME_DIR"
 
-DEPLOY_BRANCH="hostinger"
-VENV_PYTHON="$RESUME_DIR/.venv/bin/python3"
-
-echo "============================================"
-echo "Building resume for production deployment..."
-echo "============================================"
-echo ""
-echo "NOTE: Building three lens pages -> /, /audio/, /infra/"
-echo "      Audio streams from catalog.lufs.audio at runtime (no local audio build)."
+echo "deploy.sh is deprecated — running the local build + verify only."
+echo "To ship: commit + push to main; CI publishes the verified artifact to 'site'."
 echo ""
 
-"$VENV_PYTHON" scripts/build_all.py
+bash scripts/build
+python3 scripts/verify
 
 echo ""
-echo "============================================"
-echo "Checking for source code changes..."
-echo "============================================"
-
-git add -A
-git reset dist/ 2>/dev/null || true
-
-STAGED=$(git diff --cached --name-only 2>/dev/null | wc -l | tr -d ' ')
-UNSTAGED=$(git diff --name-only 2>/dev/null | wc -l | tr -d ' ')
-
-if [ "$STAGED" -eq 0 ] && [ "$UNSTAGED" -eq 0 ]; then
-    echo "No source code changes to commit."
-else
-    echo "Committing source code changes..."
-    git commit -m "Production build $(date +'%Y-%m-%d %H:%M:%S')"
-    echo "Pushing source changes to origin main..."
-    git push origin main
-fi
-
-echo ""
-echo "============================================"
-echo "Deploying to hostinger branch..."
-echo "============================================"
-
-echo "Creating clean deploy from dist/html..."
-TEMP_DIR=$(mktemp -d)
-cp -r dist/html/* "$TEMP_DIR/"
-
-cd "$TEMP_DIR"
-git init
-git add -A
-git commit -m "Deploy $(date +'%Y-%m-%d %H:%M:%S')"
-
-# Add remote
-GIT_REPO=$(git -C "$RESUME_DIR" remote get-url origin)
-git remote add origin "$GIT_REPO"
-
-echo "Pushing to origin $DEPLOY_BRANCH..."
-git push origin HEAD:$DEPLOY_BRANCH --force
-
-cd "$RESUME_DIR"
-rm -rf "$TEMP_DIR"
-
-echo ""
-echo "============================================"
-echo "Deployment complete!"
-echo "============================================"
-echo "Hostinger branch updated with latest build."
-echo ""
-echo "NOTE: The hostinger branch contains ONLY the built website."
-echo "      Source code remains on the main branch."
+echo "Artifact proven in dist/html/. Push to main to release."

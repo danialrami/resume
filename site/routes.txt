@@ -1,0 +1,6 @@
+# Provider-neutral list of required routes. scripts/verify asserts each resolves
+# in the built artifact (dist/html/). Deep-linkable lens routes — keep in sync with
+# data/site.yaml `lenses` and SWITCH_LINKS in scripts/render_html.py.
+/
+/audio/
+/infra/
