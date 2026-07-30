@@ -105,13 +105,14 @@ def render_experience(experience: list) -> str:
         role = escape_html(exp.get("role", ""))
         location = escape_html(exp.get("location", ""))
         dates = escape_html(exp.get("dates", ""))
-        meta = " · ".join([p for p in [dates, location] if p])
         out.append('<div class="tl-item">')
-        if meta:
-            out.append(f'  <div class="when">{meta}</div>')
-        out.append(f"  <h3>{role}</h3>")
+        if dates or location:
+            loc = f'<span class="loc"> · {location}</span>' if location else ""
+            out.append(f'  <div class="when">{dates}{loc}</div>')
+        # Masthead order: date, then the company at headline scale, then the role.
         if company:
             out.append(f'  <div class="org">{company}</div>')
+        out.append(f"  <h3>{role}</h3>")
         bullets = exp.get("description", [])
         if bullets:
             out.append('  <ul class="bul">')
@@ -129,35 +130,112 @@ def render_education(education: list) -> str:
         degree = escape_html(edu.get("degree", ""))
         location = escape_html(edu.get("location", ""))
         dates = escape_html(edu.get("dates", ""))
-        meta = " · ".join([p for p in [dates, location] if p])
         out.append('<div class="tl-item">')
-        if meta:
-            out.append(f'  <div class="when">{meta}</div>')
-        out.append(f"  <h3>{degree}</h3>")
+        if dates or location:
+            loc = f'<span class="loc"> · {location}</span>' if location else ""
+            out.append(f'  <div class="when">{dates}{loc}</div>')
+        # Masthead order: date, then the school at headline scale, then the degree.
         if school:
             out.append(f'  <div class="org">{school}</div>')
+        out.append(f"  <h3>{degree}</h3>")
         out.append("</div>")
     return "\n".join(out)
 
 
+def _cert_parts(certs: list):
+    """Split certs into (earned, in_progress), preserving authored order."""
+    earned, prog = [], []
+    for c in certs or []:
+        if not c.get("name"):
+            continue
+        (earned if str(c.get("status", "")).lower() == "earned" else prog).append(c)
+    return earned, prog
+
+
 def render_certifications(certs: list) -> str:
-    return "\n".join(
-        f'<span class="tag">{escape_html(c.get("name", ""))}</span>'
-        for c in (certs or []) if c.get("name")
-    )
+    """Certifications as their own grid — earned first, each with its issuer."""
+    earned, prog = _cert_parts(certs)
+    out = []
+    for c, done in [(c, True) for c in earned] + [(c, False) for c in prog]:
+        cls = "certitem done" if done else "certitem"
+        label = "Certified" if done else "In progress"
+        out.append(f'<div class="{cls} reveal">')
+        out.append(f'  <span class="st">{label}</span>')
+        out.append(f'  <span class="nm">{escape_html(c.get("name", ""))}</span>')
+        if c.get("issuer"):
+            out.append(f'  <span class="by">{escape_html(c["issuer"])}</span>')
+        out.append("</div>")
+    return "\n".join(out)
+
+
+def render_front_matter(education: list, certs: list) -> str:
+    """Credentials as standfirst: up to two schools plus a certifications summary,
+    sitting directly under the hero so they land in the first screen."""
+    cells = []
+    for edu in (education or [])[:2]:
+        kind = escape_html(edu.get("kind", "Education"))
+        meta = " · ".join(
+            [p for p in [escape_html(edu.get("dates", "")), escape_html(edu.get("location", ""))] if p]
+        )
+        cells.append(
+            f'<div class="fm">\n'
+            f'          <span class="k">{kind}</span>\n'
+            f'          <span class="v">{escape_html(edu.get("school", ""))}</span>\n'
+            f'          <span class="d">{escape_html(edu.get("degree", ""))}</span>\n'
+            f'          <span class="m">{meta}</span>\n'
+            f'        </div>'
+        )
+    earned, prog = _cert_parts(certs)
+    if earned or prog:
+        head = " · ".join(
+            escape_html(c.get("short") or c["name"]) for c in earned
+        ) or "In progress"
+        detail = ", ".join(escape_html(c["name"]) for c in prog)
+        detail = f"{detail} in progress" if detail else "&nbsp;"
+        tally = " · ".join(
+            p for p in [
+                f"{len(earned)} earned" if earned else "",
+                f"{len(prog)} in progress" if prog else "",
+            ] if p
+        )
+        cells.append(
+            f'<div class="fm">\n'
+            f'          <span class="k">Certifications</span>\n'
+            f'          <span class="v">{head}</span>\n'
+            f'          <span class="d">{detail}</span>\n'
+            f'          <span class="m">{tally}</span>\n'
+            f'        </div>'
+        )
+    if not cells:
+        return ""
+    return '<div class="frontmatter">\n        ' + "\n        ".join(cells) + "\n      </div>"
 
 
 def render_projects(projects: list) -> str:
+    """Project cards. When a project carries a `link`, the whole card becomes the
+    button — so every entry a reader clicks lands on a real, public repo."""
     out = []
     for proj in projects or []:
         name = escape_html(proj.get("name", ""))
         desc = escape_html(" ".join(bullet_text(b) for b in proj.get("description", [])))
-        out.append('<div class="card reveal">')
-        out.append('  <span class="k">Project</span>')
+        link = proj.get("link", "")
+        kicker = escape_html(proj.get("meta", "Project"))
+        if link:
+            out.append(
+                f'<a class="card reveal" href="{escape_html(link)}" target="_blank" '
+                f'rel="noopener noreferrer" data-hover>'
+            )
+        else:
+            out.append('<div class="card reveal">')
+        out.append(f'  <span class="k">{kicker}</span>')
         out.append(f"  <h3>{name}</h3>")
         if desc:
             out.append(f"  <p>{desc}</p>")
-        out.append("</div>")
+        if link:
+            out.append('  <span class="go">View on GitHub <i>&rarr;</i></span>')
+            out.append("</a>")
+        else:
+            out.append("</div>")
     return "\n".join(out)
 
 
@@ -174,42 +252,96 @@ def render_skills(skills: list) -> str:
     return "\n".join(out)
 
 
-def render_lens_inner(data: dict, deck: dict) -> str:
+# Section order is declared once and drives BOTH the numbered headings and the
+# rail nav, so the two can never drift apart.
+SECTIONS = [
+    ("about",    "About"),
+    ("work",     "Experience"),
+    ("edu",      "Education"),
+    ("certs",    "Certifications"),
+    ("projects", "Selected projects"),
+    ("skills",   "Skills"),
+    ("contact",  "Get in touch"),
+]
+NAV_LABELS = {"work": "Experience", "projects": "Projects", "contact": "Contact"}
+_NUM = {sid: f"{i + 1:02d}" for i, (sid, _) in enumerate(SECTIONS)}
+
+
+def render_rail_nav() -> str:
+    """The rail nav, generated from SECTIONS. The rail mounts once and is shared
+    by every lens, so the section set must be identical across lenses."""
+    rows = [
+        f'      <a href="#{sid}" data-hover><span class="n">{_NUM[sid]}</span> '
+        f'{escape_html(NAV_LABELS.get(sid, heading))}</a>'
+        for sid, heading in SECTIONS
+    ]
+    return (
+        '<nav class="rail-nav" id="railNav">\n'
+        '      <span class="spine"><span class="prog" id="prog"></span></span>\n'
+        + "\n".join(rows)
+        + "\n    </nav>"
+    )
+
+
+def render_lens_inner(data: dict, site: dict) -> str:
     """The inner HTML of <main id="content"> for one lens (hero -> footer)."""
+    deck = site.get("deck", {}) or {}
+    links = site.get("links", {}) or {}
+    pdf = site.get("resume_pdf", {}) or {}
+
     contact = data.get("contact", {})
     email = escape_html(contact.get("email", ""))
     github = escape_html(contact.get("github", ""))
     linkedin = escape_html(contact.get("linkedin", ""))
     phone = escape_html(contact.get("phone", ""))
     title = escape_html(data.get("title", ""))
-    certs = data.get("certifications", [])
 
-    deck_btn = ""
+    # Certifications are shared in site.yaml; a lens may still override its own.
+    certs = data.get("certifications") or site.get("certifications", [])
+    education = data.get("education", [])
+
+    # ---- hero CTAs: primary action, then the cross-links to the sibling sites
+    cta = []
+    if data.get("reel", True):
+        cta.append(
+            '<a class="btn" href="https://reel.daniel-ramirez.io" target="_blank" '
+            'rel="noopener noreferrer" data-hover>&#9654; Play the reel</a>'
+        )
+        cta.append('<a class="btn ghost" href="#contact" data-hover>Contact</a>')
+    else:
+        cta.append('<a class="btn" href="#contact" data-hover>Contact</a>')
+    if deck.get("site_url"):
+        cta.append(
+            f'<a class="btn ghost" href="{escape_html(deck["site_url"])}" target="_blank" '
+            f'rel="noopener noreferrer" data-hover>Deck</a>'
+        )
+    # Stays hidden until a real PDF ships — see the note in data/site.yaml.
+    if pdf.get("url"):
+        cta.append(
+            f'<a class="btn ghost" href="{escape_html(pdf["url"])}" '
+            f'data-hover>{escape_html(pdf.get("label", "Download PDF"))}</a>'
+        )
+    hero_cta = "\n        ".join(cta)
+
+    # ---- contact row: email / code / network / writing, then the deck download
+    extra = ""
+    blog = links.get("blog", {}) or {}
+    if blog.get("url"):
+        extra += (
+            f'\n        <a class="btn ghost" href="{escape_html(blog["url"])}" target="_blank" '
+            f'rel="noopener noreferrer" data-hover>{escape_html(blog.get("label", "Blog"))}</a>'
+        )
     if deck.get("download_url"):
-        deck_btn = (
+        extra += (
             f'\n        <a class="btn ghost" href="{escape_html(deck["download_url"])}" '
-            f'target="_blank" rel="noopener noreferrer" data-hover>⤓ '
+            f'target="_blank" rel="noopener noreferrer" data-hover>&#10515; '
             f'{escape_html(deck.get("label", "Download deck (PDF)"))}</a>'
         )
 
-    # Reel button is opt-in per lens (default on). Infra turns it off.
-    if data.get("reel", True):
-        hero_cta = (
-            '<a class="btn" href="https://reel.daniel-ramirez.io" target="_blank" rel="noopener noreferrer" data-hover>▶ Play the reel</a>\n'
-            '        <a class="btn ghost" href="#contact" data-hover>Contact</a>'
-        )
-    else:
-        hero_cta = '<a class="btn" href="#contact" data-hover>Contact</a>'
-
-    cert_row = ""
-    edu_heading = "Education"
-    if certs:
-        edu_heading = "Education &amp; Certs"
-        cert_row = (
-            '\n      <div class="cert-row reveal">\n'
-            '        <span class="cert-label">Certifications</span>\n'
-            f'        <div class="tags">{render_certifications(certs)}</div>\n'
-            "      </div>"
+    def head(sid):
+        return (
+            f'<div class="blk-head reveal"><span class="num">{_NUM[sid]}</span>'
+            f"<h2>{dict(SECTIONS)[sid]}</h2></div>"
         )
 
     return f"""<header class="hero" id="top">
@@ -221,47 +353,56 @@ def render_lens_inner(data: dict, deck: dict) -> str:
       </div>
     </header>
 
+    {render_front_matter(education, certs)}
+
     <section class="blk" id="about">
-      <div class="blk-head reveal"><span class="num">01</span><h2>About</h2></div>
+      {head("about")}
       <p class="prose reveal">{render_profile(data.get("profile", ""))}</p>
     </section>
 
-    <section class="blk" id="skills">
-      <div class="blk-head reveal"><span class="num">02</span><h2>Skills</h2></div>
-      <div class="grid g-3">
-        {render_skills(data.get("skills", []))}
-      </div>
-    </section>
-
     <section class="blk" id="work">
-      <div class="blk-head reveal"><span class="num">03</span><h2>Experience</h2></div>
+      {head("work")}
       <div class="tl reveal">
         {render_experience(data.get("experience", []))}
       </div>
     </section>
 
     <section class="blk" id="edu">
-      <div class="blk-head reveal"><span class="num">04</span><h2>{edu_heading}</h2></div>
+      {head("edu")}
       <div class="tl reveal">
-        {render_education(data.get("education", []))}
-      </div>{cert_row}
+        {render_education(education)}
+      </div>
+    </section>
+
+    <section class="blk" id="certs">
+      {head("certs")}
+      <div class="certgrid">
+        {render_certifications(certs)}
+      </div>
     </section>
 
     <section class="blk" id="projects">
-      <div class="blk-head reveal"><span class="num">05</span><h2>Selected projects</h2></div>
+      {head("projects")}
       <div class="grid g-3">
         {render_projects(data.get("projects", []))}
       </div>
     </section>
 
+    <section class="blk" id="skills">
+      {head("skills")}
+      <div class="grid g-3">
+        {render_skills(data.get("skills", []))}
+      </div>
+    </section>
+
     <section class="blk" id="contact">
-      <div class="blk-head reveal"><span class="num">06</span><h2>Get in touch</h2></div>
+      {head("contact")}
       <p class="prose reveal">{escape_html(data.get("contact_line", ""))}</p>
       <p class="reveal mono" style="font-size:.78rem;letter-spacing:.04em;color:var(--muted);margin-top:6px">{email}&nbsp;&nbsp;·&nbsp;&nbsp;{phone}</p>
       <div class="contact-links reveal">
         <a class="btn" href="mailto:{email}" data-hover>Email</a>
         <a class="btn ghost" href="https://github.com/{github}" target="_blank" rel="noopener noreferrer" data-hover>GitHub</a>
-        <a class="btn ghost" href="https://www.linkedin.com/in/{linkedin}" target="_blank" rel="noopener noreferrer" data-hover>LinkedIn</a>{deck_btn}
+        <a class="btn ghost" href="https://www.linkedin.com/in/{linkedin}" target="_blank" rel="noopener noreferrer" data-hover>LinkedIn</a>{extra}
       </div>
     </section>
 
@@ -403,6 +544,11 @@ def patch_template(raw: str) -> str:
         '    <nav class="lens-switch" id="lensSwitch" aria-label="Resume lens">%%SWITCHER%%</nav>',
         "rail role + switcher",
     )
+    # rail nav is generated from SECTIONS so it can't drift from the content
+    t = sub_once(
+        t, r'(?s)<nav class="rail-nav" id="railNav">.*?</nav>',
+        lambda _m: render_rail_nav(), "rail nav",
+    )
     # replace whole <main class="content"> ... </main> with a single mount point
     a = t.find('<main class="content">')
     if a == -1:
@@ -428,7 +574,6 @@ def patch_template(raw: str) -> str:
 # --------------------------------------------------------------------------- #
 def build_site() -> list:
     site = load_yaml(DATA_DIR / "site.yaml")
-    deck = site.get("deck", {}) or {}
     lenses = site.get("lenses", [])
     if not lenses:
         raise SystemExit("[render] site.yaml has no lenses")
@@ -446,7 +591,14 @@ def build_site() -> list:
     for lens in lenses:
         slug = lens.get("slug", "")
         data = load_yaml(DATA_DIR / lens["data"])
-        fragments[slug] = render_lens_inner(data, deck)
+        # The rail nav is shared across lenses, so every lens must render the
+        # same section set — fail loudly rather than emit a nav with dead links.
+        if not (data.get("certifications") or site.get("certifications")):
+            raise SystemExit(
+                f"[render] lens '{slug or '/'}' has no certifications and none are "
+                f"shared in site.yaml; the shared rail nav would link a dead #certs."
+            )
+        fragments[slug] = render_lens_inner(data, site)
         role = data.get("title", "")
         label = lens.get("nav_label", role)
         title_tag = f"Daniel Ramirez — {label}"
