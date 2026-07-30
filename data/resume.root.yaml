@@ -61,11 +61,11 @@ education:
     dates: 2017
 
 projects:
-  - name: portfolio-reel
-    link: https://github.com/danialrami/portfolio-reel
-    meta: "Public repo · Python"
+  - name: lufs-recorder-pwa
+    link: https://github.com/lufs-audio/lufs-recorder-pwa
+    meta: "Public repo · Web Audio"
     description:
-      - "Reel pipeline: capture clips from day-to-day work through OBS, describe each one in YAML, and compile the cut — overlays, transitions, music — with MoviePy."
+      - "Zero-install browser capture for audio and MIDI, live at rec.lufs.audio — AudioWorklet into hand-written 24-bit PCM, Web MIDI, waveform and piano-roll playback, and a take.json sharing the native recorder's schema. Gating checks prove a take; what the browser cannot know (xruns, channel identity) is reported as inferred rather than faked."
   - name: albumdujour
     link: https://github.com/danialrami/albumdujour
     meta: "Public repo · Python"
