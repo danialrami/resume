@@ -157,7 +157,7 @@ def render_certifications(certs: list) -> str:
     earned, prog = _cert_parts(certs)
     out = []
     for c, done in [(c, True) for c in earned] + [(c, False) for c in prog]:
-        cls = "certitem done" if done else "certitem"
+        cls = "specitem done" if done else "specitem"
         label = "Certified" if done else "In progress"
         out.append(f'<div class="{cls} reveal">')
         out.append(f'  <span class="st">{label}</span>')
@@ -240,14 +240,15 @@ def render_projects(projects: list) -> str:
 
 
 def render_skills(skills: list) -> str:
+    """Skills as hairline cells, matching Certifications. Deliberately NOT
+    `.card`: a filled, lifting panel reads as a button, and only the project
+    cards are actually clickable."""
     out = []
     for sk in skills or []:
-        out.append('<div class="card reveal">')
+        items = " · ".join(escape_html(it) for it in sk.get("list", []))
+        out.append('<div class="specitem reveal">')
         out.append(f'  <span class="k">{escape_html(sk.get("category", ""))}</span>')
-        out.append('  <div class="tags">')
-        for it in sk.get("list", []):
-            out.append(f'    <span class="tag">{escape_html(it)}</span>')
-        out.append("  </div>")
+        out.append(f'  <p class="slist">{items}</p>')
         out.append("</div>")
     return "\n".join(out)
 
@@ -307,9 +308,9 @@ def render_lens_inner(data: dict, site: dict) -> str:
             '<a class="btn" href="https://reel.daniel-ramirez.io" target="_blank" '
             'rel="noopener noreferrer" data-hover>&#9654; Play the reel</a>'
         )
-        cta.append('<a class="btn ghost" href="#contact" data-hover>Contact</a>')
+        cta.append(f'<a class="btn ghost" href="mailto:{email}" data-hover>Contact</a>')
     else:
-        cta.append('<a class="btn" href="#contact" data-hover>Contact</a>')
+        cta.append(f'<a class="btn" href="mailto:{email}" data-hover>Contact</a>')
     if deck.get("site_url"):
         cta.append(
             f'<a class="btn ghost" href="{escape_html(deck["site_url"])}" target="_blank" '
@@ -336,6 +337,17 @@ def render_lens_inner(data: dict, site: dict) -> str:
             f'\n        <a class="btn ghost" href="{escape_html(deck["download_url"])}" '
             f'target="_blank" rel="noopener noreferrer" data-hover>&#10515; '
             f'{escape_html(deck.get("label", "Download deck (PDF)"))}</a>'
+        )
+
+    # lufs-vh verification mark: a tool-generated hash of this site's URL.
+    vh = site.get("visual_hash", {}) or {}
+    vh_mark = ""
+    if vh.get("file"):
+        vh_mark = (
+            '\n      <span class="vh">'
+            f'<img class="vh-mark" src="{escape_html(vh["file"])}" alt="" width="44" height="44" />'
+            f'<span class="vh-cap">{escape_html(vh.get("caption", ""))}</span>'
+            "</span>"
         )
 
     def head(sid):
@@ -376,7 +388,7 @@ def render_lens_inner(data: dict, site: dict) -> str:
 
     <section class="blk" id="certs">
       {head("certs")}
-      <div class="certgrid">
+      <div class="speclist">
         {render_certifications(certs)}
       </div>
     </section>
@@ -390,7 +402,7 @@ def render_lens_inner(data: dict, site: dict) -> str:
 
     <section class="blk" id="skills">
       {head("skills")}
-      <div class="grid g-3">
+      <div class="speclist">
         {render_skills(data.get("skills", []))}
       </div>
     </section>
@@ -407,8 +419,8 @@ def render_lens_inner(data: dict, site: dict) -> str:
     </section>
 
     <footer>
-      <span class="mono">© Daniel Ramirez — Sound &amp; Systems</span>
-      <span class="mono">Audio streamed from <a href="https://catalog.lufs.audio" target="_blank" rel="noopener noreferrer" data-hover style="color:var(--accent-txt)">catalog.lufs.audio</a></span>
+      <span class="mono">© LUFS Audio, LLC — Sound &amp; Systems</span>
+      <span class="mono">Original audio streamed from <a href="https://catalog.lufs.audio" target="_blank" rel="noopener noreferrer" data-hover style="color:var(--accent-txt)">catalog.lufs.audio</a></span>{vh_mark}
     </footer>"""
 
 
@@ -440,6 +452,7 @@ ROUTER_JS = r"""
   var sw = document.getElementById('lensSwitch');
   if(!content || !sw) return;
   var spyHandler = null;
+  var curSlug = null;
   var thumb = sw.querySelector('.thumb');
 
   function moveThumb(){
@@ -469,6 +482,7 @@ ROUTER_JS = r"""
   }
 
   function paint(slug){
+    curSlug = slug;
     content.innerHTML = FR[slug];
     var m = META[slug] || {};
     if(railRole && m.role) railRole.textContent = m.role;
@@ -512,7 +526,13 @@ ROUTER_JS = r"""
     if(slug !== normalize(location.pathname)) showLens(slug, true);
   });
   addEventListener('popstate', function(e){
-    showLens((e.state && e.state.lens!=null) ? e.state.lens : normalize(location.pathname), false); });
+    var next = (e.state && e.state.lens!=null) ? e.state.lens : normalize(location.pathname);
+    /* Fragment-only navigation (#about, #contact, ...) fires popstate with the
+       SAME lens. Repainting there scrolls to top and cancels the anchor jump —
+       which is exactly what silently broke every in-page link, the whole rail
+       nav included. Only act when the lens actually changes. */
+    if(next === curSlug) return;
+    showLens(next, false); });
 
   /* Initial paint: server already rendered DEF as live DOM. Re-run through showLens
      to wire switcher/spy/reveal without changing which lens is shown. */
@@ -522,8 +542,24 @@ ROUTER_JS = r"""
 """
 
 
-def patch_template(raw: str) -> str:
+def patch_template(raw: str, site: dict) -> str:
     t = raw
+    # rail viz caption (plain text, deliberately not a link)
+    viz = site.get("viz_tag")
+    if viz:
+        t = sub_once(
+            t, r'<span class="viz-tag">[^<]*</span>',
+            lambda _m: f'<span class="viz-tag">{escape_html(viz)}</span>',
+            "viz tag",
+        )
+    # favicon -> the lufs-vh mark, replacing the inline data-URI cloud
+    vh = site.get("visual_hash", {}) or {}
+    if vh.get("file"):
+        t = sub_once(
+            t, r'<link rel="icon"[^>]*>',
+            lambda _m: f'<link rel="icon" type="image/svg+xml" href="{escape_html(vh["file"])}">',
+            "favicon",
+        )
     # head: title + meta description -> placeholders
     t = replace_once(
         t, "<title>Resume | Daniel Ramirez</title>",
@@ -579,7 +615,7 @@ def build_site() -> list:
         raise SystemExit("[render] site.yaml has no lenses")
 
     raw = TEMPLATE.read_text()
-    tmpl = patch_template(raw)
+    tmpl = patch_template(raw, site)
 
     # Clean the output dir so stale files from earlier builds never ride along
     # into a deploy (deploy.sh force-pushes whatever is in dist/html).
@@ -652,6 +688,19 @@ def build_site() -> list:
     # resolves for every lens (root + /sound-design/ + /infra/).
     shutil.copy(TEMPLATE.parent / "styles.css", OUT_DIR / "styles.css")
     print(f"  copied styles.css -> {OUT_DIR/'styles.css'}")
+
+    # the lufs-vh mark ships as a real file: it is both the favicon and the
+    # footer mark, and scripts/verify asserts every local reference resolves.
+    vh = site.get("visual_hash", {}) or {}
+    if vh.get("file"):
+        src = TEMPLATE.parent / Path(vh["file"]).name
+        if not src.is_file():
+            raise SystemExit(
+                f"[render] site.yaml declares visual_hash.file {vh['file']!r} but "
+                f"{src} is missing. Generate it with the lufs-vh CLI or clear the key."
+            )
+        shutil.copy(src, OUT_DIR / Path(vh["file"]).name)
+        print(f"  copied {src.name} -> {OUT_DIR/Path(vh['file']).name}")
 
     return outputs
 

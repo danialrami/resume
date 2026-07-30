@@ -134,7 +134,9 @@ h1,h2,h3{font-family:'Host Grotesk',sans-serif;font-weight:800;letter-spacing:-.
 .pl-vol::-moz-range-thumb{width:12px;height:12px;border:0;border-radius:50%;background:var(--accent)}
 
 /* ---- content ---- */
-.content{padding:0 clamp(24px,5vw,72px)}
+.content{padding:0 clamp(24px,5vw,72px);max-width:1240px;width:100%;margin-inline:auto}
+/* keep the measure sane on ultrawide: sections stop stretching and the
+   column centres in whatever space is left beside the rail. */
 .hero{min-height:62vh;display:flex;flex-direction:column;justify-content:center;padding:64px 0 40px}
 .hero .eyebrow{margin-bottom:20px}
 h1.big{font-size:clamp(2.6rem,7vw,5.6rem);line-height:.96}
@@ -205,16 +207,40 @@ a.card:hover .go i{transform:translateX(4px)}
   .fm:first-child{border-top:0;padding-top:22px}
 }
 
-/* ── Certifications ───────────────────────────────────────────────────────
-   Its own section now, not a tag row hanging off Education. */
-.certgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-@media(max-width:1100px){.certgrid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:540px){.certgrid{grid-template-columns:1fr}}
-.certitem{background:var(--bg-alt);border:1px solid var(--hair);border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:7px}
-.certitem .st{align-self:flex-start;font-family:'Space Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.14em;padding:4px 9px;border-radius:99px;border:1px solid var(--accent);color:var(--accent-txt)}
-.certitem.done .st{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.certitem .nm{font-family:'Host Grotesk',sans-serif;font-weight:800;letter-spacing:-.01em;font-size:1.05rem;line-height:1.15;color:var(--text)}
-.certitem .by{font-family:'Space Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+/* ── Spec grids: skills + certifications ──────────────────────────────────
+   These two share ONE language — hairline cells, no panel fill, no radius, no
+   hover. They are a reference list, not a set of controls. Only the project
+   cards are clickable, and they alone keep the filled panel and the lift, so
+   "looks like a button" reliably means "is a button". */
+.speclist{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--hair-2)}
+.specitem{padding:22px 26px;border-left:1px solid var(--hair);border-bottom:1px solid var(--hair);min-width:0}
+.speclist > .specitem:nth-child(3n+1){border-left:0;padding-left:0}
+@media(max-width:1100px){
+  .speclist{grid-template-columns:repeat(2,1fr)}
+  .speclist > .specitem:nth-child(3n+1){border-left:1px solid var(--hair);padding-left:26px}
+  .speclist > .specitem:nth-child(2n+1){border-left:0;padding-left:0}
+}
+@media(max-width:600px){
+  .speclist{grid-template-columns:1fr}
+  .speclist > .specitem,
+  .speclist > .specitem:nth-child(3n+1),
+  .speclist > .specitem:nth-child(2n+1){border-left:0;padding-left:0}
+}
+/* skills cell */
+.specitem .k{font-family:'Space Mono',monospace;font-size:.66rem;text-transform:uppercase;letter-spacing:.16em;color:var(--accent-txt);display:block;margin-bottom:10px}
+.specitem .slist{font-size:.95rem;color:var(--read);line-height:1.6;margin:0}
+/* certification cell — a marker, not a pill: filled square earned, hollow in progress */
+.specitem .st{display:inline-flex;align-items:center;gap:8px;font-family:'Space Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);margin-bottom:11px}
+.specitem .st::before{content:'';width:7px;height:7px;flex:none;border-radius:1px;border:1px solid var(--accent);background:transparent}
+.specitem.done .st{color:var(--accent-txt)}
+.specitem.done .st::before{background:var(--accent)}
+.specitem .nm{font-family:'Host Grotesk',sans-serif;font-weight:800;letter-spacing:-.01em;font-size:1.05rem;line-height:1.15;color:var(--text);display:block}
+.specitem .by{font-family:'Space Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);display:block;margin-top:6px}
+
+/* ── footer verification mark (lufs-vh) ───────────────────────────────────── */
+.vh-mark{width:44px;height:44px;flex:none;display:block;opacity:.85}
+footer .vh{display:flex;align-items:center;gap:12px}
+footer .vh-cap{font-family:'Space Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.14em;color:var(--dim);line-height:1.5}
 .cert-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:26px;padding-top:18px;border-top:1px solid var(--hair)}
 .cert-label{font-family:'Space Mono',monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.2em;color:var(--accent-txt)}
 .contact-links{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}

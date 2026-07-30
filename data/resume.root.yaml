@@ -15,7 +15,7 @@ contact_line: "Open to roles across audio, infrastructure, and where they meet �
 profile: |
   I work where audio meets infrastructure — designing sound and building the systems
   that deliver it reliably at scale. My background spans interactive audio and UX sound
-  design for products used by millions, and self-hosted, agent-first pipelines that
+  design for products people rely on every day, and self-hosted, agent-first pipelines that
   automate production without giving up correctness or control. Whether the question is
   how something should sound or how the signal, tooling, and delivery hold together,
   I've usually worked both ends of it.
@@ -55,7 +55,7 @@ education:
     degree: B.M. Music Theory and Composition for Film and Multimedia
     dates: "2015–2019"
   - school: IRCAM
-    kind: Residency
+    kind: Specialization
     location: Paris, France
     degree: Sound Spatialization and Synthesis
     dates: 2017
