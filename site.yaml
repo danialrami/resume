@@ -28,6 +28,22 @@ routes:
     - /
     - /audio/
     - /infra/
+# Cache policy. NOTHING here is content-hashed, so every asset is a MUTABLE path
+# that must stay in lockstep with the HTML referencing it. The host default was
+# caching /styles.css for 4 hours while the HTML revalidated on every request —
+# so for up to 4h after a deploy a returning visitor got NEW markup against OLD
+# CSS. That is an observed layout break, not a theoretical one. Revalidate
+# everything; ETags make that a cheap 304 rather than a re-download. If these
+# ever get content-hashed filenames, THEN they can be cached immutably.
+# scripts/render_html.py generates dist/html/_headers from this block; this
+# stays the authoritative, host-neutral declaration.
+headers:
+  - path: /*.html
+    cache_control: "public, max-age=0, must-revalidate"
+  - path: /styles.css
+    cache_control: "public, max-age=0, must-revalidate"
+  - path: /*.svg
+    cache_control: "public, max-age=0, must-revalidate"
 # The site renders fully without these; they are runtime enhancements only.
 external_origins:
   - id: catalog-audio

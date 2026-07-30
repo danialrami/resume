@@ -73,28 +73,24 @@ certifications:
 # audio, it is not a link.
 viz_tag: "catalog.lufs.audio"
 
-# lufs-vh verification marks — two files, ONE payload.
+# lufs-vh verification mark — ONE file, one payload, two jobs.
 #
-# Both are rendered by the lufs-audio/visual-hashes CLI from the same source
-# string, so they carry the same SHA-256 prefix in two different carriers:
+# The same mark is the footer stamp and the favicon, so the tab icon and the
+# seal at the bottom of the page are literally the same image at two sizes.
 #
 #   node cli.ts render "https://resume.daniel-ramirez.io/" \
-#        -S ring-68  -F scope -P dr-muted -o vh-resume-ring.svg
-#   node cli.ts render "https://resume.daniel-ramirez.io/" \
-#        -S grid-8x8 -F grid  -P dr-muted -o vh-resume-grid.svg
+#        -S ring-68 -F scope -P dr-muted -o vh-resume-ring.svg
 #
 # sha256  671a449392c27ce0e997a944729afd8c039c704a92822f0af9f68680db02d007
-# ring-68 carries 14 bytes of that digest, grid-8x8 carries 9 — same prefix,
-# different capacity. Both verify:
+# ring-68 carries the first 14 bytes of that digest. It verifies:
 #   node cli.ts attest <file.png> "https://resume.daniel-ramirez.io/" -> exit 0
+# and attesting it against any OTHER url exits 5, so the mark is bound to this
+# site rather than being decoration that happens to look technical.
 #
-# Transparent (the tool's default) so the stamp composites onto BOTH themes.
-# Do not hand-edit or redraw these: `attest` re-derives the mark from the URL
-# and compares bytes, and that check is the only thing that makes them mean
-# anything. If the canonical URL changes, re-render — do not patch.
+# Transparent (the tool's default) so one file composites onto BOTH themes.
+# Do not hand-edit or redraw: `attest` re-derives the mark from the URL and
+# compares bytes, and that check is the only thing that makes it mean anything.
+# If the canonical URL changes, re-render — never patch.
 visual_hash:
-  # Footer stamp, right-hand side, 64px — deliberate, not decorative.
   mark: "/vh-resume-ring.svg"
-  # Favicon: the 8x8 mosaic still reads at 16px where a Lissajous ring cannot.
-  favicon: "/vh-resume-grid.svg"
   alt: "lufs-vh verification mark for resume.daniel-ramirez.io"
