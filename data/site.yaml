@@ -68,3 +68,23 @@ certifications:
   - name: Dante Certification
     issuer: Audinate
     status: in-progress
+
+# The rail's viz caption. Plain text on purpose — it names the source of the
+# audio, it is not a link.
+viz_tag: "catalog.lufs.audio"
+
+# lufs-vh verification mark. Same empty-url contract as resume_pdf above: the
+# wiring is live, the asset is not here yet, so nothing renders and nothing
+# breaks. Set `file` to the committed SVG and it appears in the footer AND
+# becomes the favicon in one edit.
+#
+# The mark MUST come from the lufs-audio/visual-hashes CLI:
+#   node cli.ts render "https://resume.daniel-ramirez.io/" \
+#        --palette dr-muted -o vh-resume.svg
+# Transparency is that tool's default (no --opaque, no --background). Do not
+# hand-draw a lookalike — the point of the mark is that `node cli.ts attest`
+# re-derives it from the URL and compares bytes. A mark that merely looks the
+# part fails attestation, which is the one thing it exists to pass.
+visual_hash:
+  file: ""
+  caption: "lufs-vh"
