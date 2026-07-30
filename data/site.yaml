@@ -73,18 +73,28 @@ certifications:
 # audio, it is not a link.
 viz_tag: "catalog.lufs.audio"
 
-# lufs-vh verification mark. Same empty-url contract as resume_pdf above: the
-# wiring is live, the asset is not here yet, so nothing renders and nothing
-# breaks. Set `file` to the committed SVG and it appears in the footer AND
-# becomes the favicon in one edit.
+# lufs-vh verification marks — two files, ONE payload.
 #
-# The mark MUST come from the lufs-audio/visual-hashes CLI:
+# Both are rendered by the lufs-audio/visual-hashes CLI from the same source
+# string, so they carry the same SHA-256 prefix in two different carriers:
+#
 #   node cli.ts render "https://resume.daniel-ramirez.io/" \
-#        --palette dr-muted -o vh-resume.svg
-# Transparency is that tool's default (no --opaque, no --background). Do not
-# hand-draw a lookalike — the point of the mark is that `node cli.ts attest`
-# re-derives it from the URL and compares bytes. A mark that merely looks the
-# part fails attestation, which is the one thing it exists to pass.
+#        -S ring-68  -F scope -P dr-muted -o vh-resume-ring.svg
+#   node cli.ts render "https://resume.daniel-ramirez.io/" \
+#        -S grid-8x8 -F grid  -P dr-muted -o vh-resume-grid.svg
+#
+# sha256  671a449392c27ce0e997a944729afd8c039c704a92822f0af9f68680db02d007
+# ring-68 carries 14 bytes of that digest, grid-8x8 carries 9 — same prefix,
+# different capacity. Both verify:
+#   node cli.ts attest <file.png> "https://resume.daniel-ramirez.io/" -> exit 0
+#
+# Transparent (the tool's default) so the stamp composites onto BOTH themes.
+# Do not hand-edit or redraw these: `attest` re-derives the mark from the URL
+# and compares bytes, and that check is the only thing that makes them mean
+# anything. If the canonical URL changes, re-render — do not patch.
 visual_hash:
-  file: ""
-  caption: "lufs-vh"
+  # Footer stamp, right-hand side, 64px — deliberate, not decorative.
+  mark: "/vh-resume-ring.svg"
+  # Favicon: the 8x8 mosaic still reads at 16px where a Lissajous ring cannot.
+  favicon: "/vh-resume-grid.svg"
+  alt: "lufs-vh verification mark for resume.daniel-ramirez.io"

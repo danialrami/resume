@@ -75,8 +75,8 @@ projects:
     meta: "Public repo · Python"
     description:
       - "Turns static album art into a Spotify Canvas — BPM-synced glitch animation and transitions, exported to spec at 720×1280."
-  - name: reaper-scripts
-    link: https://github.com/danialrami/reaper-scripts
-    meta: "Public repo · Lua"
+  - name: audioqr-pwa
+    link: https://github.com/lufs-audio/audioqr-pwa
+    meta: "Public repo · Web Audio"
     description:
-      - "Custom REAPER actions for the parts of a session that should not be manual."
+      - "Audio QR, live at audioqr.lufs.audio — encodes a short pointer into sound that survives speaker to air to microphone, and decodes it back. A ggwave FSK modem with Reed–Solomon underneath; the verifier proves byte-exact round trips and reports the SNR floor where decoding still holds."

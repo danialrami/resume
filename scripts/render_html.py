@@ -339,15 +339,15 @@ def render_lens_inner(data: dict, site: dict) -> str:
             f'{escape_html(deck.get("label", "Download deck (PDF)"))}</a>'
         )
 
-    # lufs-vh verification mark: a tool-generated hash of this site's URL.
+    # lufs-vh verification stamp: a tool-derived hash of this site's own URL,
+    # sitting on the right of the footer.
     vh = site.get("visual_hash", {}) or {}
     vh_mark = ""
-    if vh.get("file"):
+    if vh.get("mark"):
+        alt = escape_html(vh.get("alt", ""))
         vh_mark = (
-            '\n      <span class="vh">'
-            f'<img class="vh-mark" src="{escape_html(vh["file"])}" alt="" width="44" height="44" />'
-            f'<span class="vh-cap">{escape_html(vh.get("caption", ""))}</span>'
-            "</span>"
+            f'\n      <img class="vh-mark" src="{escape_html(vh["mark"])}" '
+            f'alt="{alt}" title="{alt}" width="64" height="64" loading="lazy" />'
         )
 
     def head(sid):
@@ -419,8 +419,10 @@ def render_lens_inner(data: dict, site: dict) -> str:
     </section>
 
     <footer>
-      <span class="mono">© LUFS Audio, LLC — Sound &amp; Systems</span>
-      <span class="mono">Original audio streamed from <a href="https://catalog.lufs.audio" target="_blank" rel="noopener noreferrer" data-hover style="color:var(--accent-txt)">catalog.lufs.audio</a></span>{vh_mark}
+      <div class="foot-txt">
+        <span class="mono">© LUFS Audio, LLC — Sound &amp; Systems</span>
+        <span class="mono">Original audio streamed from <a href="https://catalog.lufs.audio" target="_blank" rel="noopener noreferrer" data-hover style="color:var(--accent-txt)">catalog.lufs.audio</a></span>
+      </div>{vh_mark}
     </footer>"""
 
 
@@ -554,10 +556,10 @@ def patch_template(raw: str, site: dict) -> str:
         )
     # favicon -> the lufs-vh mark, replacing the inline data-URI cloud
     vh = site.get("visual_hash", {}) or {}
-    if vh.get("file"):
+    if vh.get("favicon"):
         t = sub_once(
             t, r'<link rel="icon"[^>]*>',
-            lambda _m: f'<link rel="icon" type="image/svg+xml" href="{escape_html(vh["file"])}">',
+            lambda _m: f'<link rel="icon" type="image/svg+xml" href="{escape_html(vh["favicon"])}">',
             "favicon",
         )
     # head: title + meta description -> placeholders
@@ -692,15 +694,19 @@ def build_site() -> list:
     # the lufs-vh mark ships as a real file: it is both the favicon and the
     # footer mark, and scripts/verify asserts every local reference resolves.
     vh = site.get("visual_hash", {}) or {}
-    if vh.get("file"):
-        src = TEMPLATE.parent / Path(vh["file"]).name
+    for key in ("mark", "favicon"):
+        ref = vh.get(key)
+        if not ref:
+            continue
+        src = TEMPLATE.parent / Path(ref).name
         if not src.is_file():
             raise SystemExit(
-                f"[render] site.yaml declares visual_hash.file {vh['file']!r} but "
-                f"{src} is missing. Generate it with the lufs-vh CLI or clear the key."
+                f"[render] site.yaml declares visual_hash.{key} {ref!r} but {src} "
+                f"is missing. Render it with the lufs-vh CLI (see site.yaml) or "
+                f"clear the key — never hand-draw a substitute."
             )
-        shutil.copy(src, OUT_DIR / Path(vh["file"]).name)
-        print(f"  copied {src.name} -> {OUT_DIR/Path(vh['file']).name}")
+        shutil.copy(src, OUT_DIR / Path(ref).name)
+        print(f"  copied {src.name} -> {OUT_DIR/Path(ref).name}")
 
     return outputs
 

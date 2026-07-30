@@ -237,14 +237,18 @@ a.card:hover .go i{transform:translateX(4px)}
 .specitem .nm{font-family:'Host Grotesk',sans-serif;font-weight:800;letter-spacing:-.01em;font-size:1.05rem;line-height:1.15;color:var(--text);display:block}
 .specitem .by{font-family:'Space Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);display:block;margin-top:6px}
 
-/* ── footer verification mark (lufs-vh) ───────────────────────────────────── */
-.vh-mark{width:44px;height:44px;flex:none;display:block;opacity:.85}
-footer .vh{display:flex;align-items:center;gap:12px}
-footer .vh-cap{font-family:'Space Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.14em;color:var(--dim);line-height:1.5}
+/* ── footer verification stamp (lufs-vh) ──────────────────────────────────
+   ring-68 carrier + scope face, derived from this site's own URL. Transparent
+   on purpose, so the same file sits correctly on both the charcoal and the
+   cream ground. Deliberately not a link and not decorative chrome: it is a
+   stamp, so it gets real size. */
+footer .foot-txt{display:flex;flex-direction:column;gap:7px;min-width:0}
+.vh-mark{width:64px;height:64px;flex:none;display:block;opacity:.92}
+@media(max-width:680px){.vh-mark{width:52px;height:52px}}
 .cert-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:26px;padding-top:18px;border-top:1px solid var(--hair)}
 .cert-label{font-family:'Space Mono',monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.2em;color:var(--accent-txt)}
 .contact-links{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
-footer{border-top:1px solid var(--hair);padding:30px 0;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
+footer{border-top:1px solid var(--hair);padding:30px 0;display:flex;justify-content:space-between;align-items:center;gap:22px;flex-wrap:wrap}
 footer .mono{font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
 
 /* ---- dev affordances hidden on the shipped site (dial panel still toggles with 'd') ---- */
