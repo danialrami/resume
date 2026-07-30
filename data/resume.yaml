@@ -54,31 +54,29 @@ skills:
 
 education:
   - school: NYU Steinhardt
+    kind: Education
     location: New York, NY
     degree: B.M. Music Theory and Composition for Film and Multimedia
     dates: "2015–2019"
   - school: IRCAM
+    kind: Residency
     location: Paris, France
     degree: Sound Spatialization and Synthesis
     dates: 2017
 
-certifications:
-  - name: Wwise‑101
-    link: https://example.com/wwise-101
-  - name: Wwise‑201
-    link: https://example.com/wwise-201
-  - name: Unreal Engine 5
-    link: https://example.com/unreal-5
-  - name: Max/MSP
-    link: https://example.com/max-msp
-
 projects:
-  - name: Mobile App Sound Design
+  - name: midi-audio-recorder
+    link: https://github.com/danialrami/midi-audio-recorder
+    meta: "Public repo · Max/MSP"
     description:
-      - Created cohesive sonic identity for health tech mobile application with brand‑aligned sound palette.
-  - name: Interactive Audio Experience
+      - "A field recorder on steroids: two stereo pairs and a MIDI keyboard captured on one keystroke, into timestamped take folders, with live scope and keyboard feedback."
+  - name: canvas-generator_spotify
+    link: https://github.com/danialrami/canvas-generator_spotify
+    meta: "Public repo · Python"
     description:
-      - Designed immersive audio for spatial computing prototype using directional awareness cues.
-  - name: Audio Pipeline Automation
+      - "Turns static album art into a Spotify Canvas — BPM-synced glitch animation and transitions, exported to spec at 720×1280."
+  - name: reaper-scripts
+    link: https://github.com/danialrami/reaper-scripts
+    meta: "Public repo · Lua"
     description:
-      - Developed Python‑based tools for audio asset management and pipeline automation.
+      - "Custom REAPER actions for the parts of a session that should not be manual."

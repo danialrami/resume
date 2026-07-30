@@ -54,29 +54,29 @@ skills:
 
 education:
   - school: NYU Steinhardt
+    kind: Education
     location: New York, NY
     degree: B.M. Music Theory and Composition for Film and Multimedia
     dates: "2015–2019"
   - school: IRCAM
+    kind: Residency
     location: Paris, France
     degree: Sound Spatialization and Synthesis
     dates: 2017
 
-certifications:
-  - name: CompTIA A+ (in progress)
-    link: ""
-  - name: CompTIA Network+ (in progress)
-    link: ""
-  - name: CompTIA Security+ (in progress)
-    link: ""
-
 projects:
-  - name: LUFS Workchain
+  - name: ffmpeg-mcp-server
+    link: https://github.com/danialrami/ffmpeg-mcp-server
+    meta: "Public repo · Python"
     description:
-      - YAML-driven, agent-first audio-processing engine; open-core with hosted execution + certification as the value layer
-  - name: Self-hosted agent mesh
+      - "An MCP server giving AI assistants safe, batch FFmpeg access — every command runs in a Docker container with networking disabled, against a whitelist validator, to a standardized 48 kHz / 32-bit output."
+  - name: markov-chain-midi-analysis
+    link: https://github.com/lufs-audio/markov-chain-midi-analysis
+    meta: "Public repo · Python"
     description:
-      - Cloud + local agents sharing a versioned knowledge base; HTTPS-only egress model across a two-site Tailscale homelab
-  - name: catalog.lufs.audio
+      - "Chord- and note-level Markov models over a MIDI corpus. Rewritten after four defects in the original run were found and each reproduced under test; 31 contract tests now encode them."
+  - name: echo-bridge
+    link: https://github.com/danialrami/echo-bridge
+    meta: "Public repo · C++ / Daisy Seed"
     description:
-      - Astro static site streaming from a private Cloudflare R2 bucket via a signing Worker
+      - "Partitioned-convolution reverb firmware for a guitar pedal — a 64-point FFT for early reflections, 1024 for the tail, impulse responses loaded from USB."

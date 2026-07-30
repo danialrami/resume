@@ -50,21 +50,29 @@ skills:
 
 education:
   - school: NYU Steinhardt
+    kind: Education
     location: New York, NY
     degree: B.M. Music Theory and Composition for Film and Multimedia
     dates: "2015–2019"
   - school: IRCAM
+    kind: Residency
     location: Paris, France
     degree: Sound Spatialization and Synthesis
     dates: 2017
 
 projects:
-  - name: LUFS Workchain
+  - name: portfolio-reel
+    link: https://github.com/danialrami/portfolio-reel
+    meta: "Public repo · Python"
     description:
-      - Agent-first audio-processing engine — the intersection of sound craft and production infrastructure
-  - name: catalog.lufs.audio
+      - "Reel pipeline: capture clips from day-to-day work through OBS, describe each one in YAML, and compile the cut — overlays, transitions, music — with MoviePy."
+  - name: albumdujour
+    link: https://github.com/danialrami/albumdujour
+    meta: "Public repo · Python"
     description:
-      - "Self-hosted music catalog: Astro + Svelte, streaming from Cloudflare R2 via a signing Worker"
-  - name: Multi-agent production mesh
+      - "Static-site generator that turns a listening log in Google Sheets into a published site, with a credential-safe build and a subtree-split deploy."
+  - name: lufs-vectorscope-fog-demo
+    link: https://github.com/danialrami/lufs-vectorscope-fog-demo
+    meta: "Public repo · WebGL"
     description:
-      - Cloud + local agents automating audio and web workflows against a shared knowledge base
+      - "An audio-reactive vectorscope — a true Lissajous of left × right through a mid/side transform — veiled behind a shader fog. Self-contained, no build step."

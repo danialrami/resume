@@ -23,5 +23,48 @@ deck:
   # same "anyone with the link" perms, but downloads instead of opening a preview.
   download_url: "https://drive.usercontent.google.com/download?id=14NlocpvsWC1MLLTOTxtkdq0EZviiuj6P&export=download"
   label: "Download deck (PDF)"
-  # Deck site link stays empty until deck.daniel-ramirez.io is refreshed (Amacher).
-  site_url: ""
+  # The deck site is live, so the hero carries a "Deck" cross-link to it.
+  site_url: "https://deck.daniel-ramirez.io"
+
+# Cross-links to the sibling daniel-ramirez.io sites. Empty url = link hidden.
+links:
+  blog:
+    url: "https://blog.daniel-ramirez.io"
+    label: "Blog"
+
+# Resume PDF. Intentionally EMPTY: /assets/pdf/resume.pdf does not exist — the
+# host answers it with the SPA shell (a soft 404), so a button here would look
+# fine and be broken. Set the url once a real PDF ships and it appears in the
+# hero beside Contact; until then the button simply isn't rendered.
+resume_pdf:
+  url: ""
+  label: "Download PDF"
+
+# Certifications, shared by every lens (a lens may still declare its own to
+# override). `status: earned` renders as a filled "Certified" chip and sorts
+# first; anything else renders as "In progress". `short` is the compact form
+# used in the front-matter band under the hero.
+certifications:
+  - name: Wwise Certification
+    short: Wwise
+    issuer: Audiokinetic
+    status: earned
+  - name: Unreal Engine 5
+    short: UE5
+    issuer: School of Video Game Audio
+    status: earned
+  - name: CompTIA A+
+    issuer: ACI Learning
+    status: in-progress
+  - name: CompTIA Network+
+    issuer: ACI Learning
+    status: in-progress
+  - name: CompTIA Security+
+    issuer: ACI Learning
+    status: in-progress
+  - name: Q-SYS
+    issuer: QSC
+    status: in-progress
+  - name: Dante Certification
+    issuer: Audinate
+    status: in-progress
