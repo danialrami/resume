@@ -134,7 +134,7 @@ h1,h2,h3{font-family:'Host Grotesk',sans-serif;font-weight:800;letter-spacing:-.
 .pl-vol::-moz-range-thumb{width:12px;height:12px;border:0;border-radius:50%;background:var(--accent)}
 
 /* ---- content ---- */
-.content{padding:0 clamp(24px,5vw,72px);max-width:1240px;width:100%;margin-inline:auto}
+.content{padding:0 clamp(24px,5vw,72px);max-width:1080px;width:100%;margin-inline:auto}
 /* keep the measure sane on ultrawide: sections stop stretching and the
    column centres in whatever space is left beside the rail. */
 .hero{min-height:62vh;display:flex;flex-direction:column;justify-content:center;padding:64px 0 40px}
@@ -242,14 +242,18 @@ a.card:hover .go i{transform:translateX(4px)}
    on purpose, so the same file sits correctly on both the charcoal and the
    cream ground. Deliberately not a link and not decorative chrome: it is a
    stamp, so it gets real size. */
-footer .foot-txt{display:flex;flex-direction:column;gap:7px;min-width:0}
+footer .foot-txt{display:flex;flex-direction:column;gap:10px;min-width:0;max-width:60ch}
 .vh-mark{width:64px;height:64px;flex:none;display:block;opacity:.92}
 @media(max-width:680px){.vh-mark{width:52px;height:52px}}
 .cert-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:26px;padding-top:18px;border-top:1px solid var(--hair)}
 .cert-label{font-family:'Space Mono',monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.2em;color:var(--accent-txt)}
 .contact-links{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
-footer{border-top:1px solid var(--hair);padding:30px 0;display:flex;justify-content:space-between;align-items:center;gap:22px;flex-wrap:wrap}
-footer .mono{font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+footer{border-top:1px solid var(--hair);padding:38px 0 44px;display:flex;justify-content:space-between;align-items:center;gap:28px 40px;flex-wrap:wrap}
+footer .mono{font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);line-height:1.75}
+@media(max-width:680px){
+  footer{padding:30px 0 36px;gap:22px;align-items:flex-start}
+  footer .foot-txt{gap:9px}
+}
 
 /* ---- dev affordances hidden on the shipped site (dial panel still toggles with 'd') ---- */
 .proto-note,.dial-toggle{display:none!important}

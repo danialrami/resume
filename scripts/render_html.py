@@ -556,10 +556,12 @@ def patch_template(raw: str, site: dict) -> str:
         )
     # favicon -> the lufs-vh mark, replacing the inline data-URI cloud
     vh = site.get("visual_hash", {}) or {}
-    if vh.get("favicon"):
+    if vh.get("mark"):
+        # Same file as the footer stamp: the tab icon and the seal at the foot
+        # of the page are one image at two sizes.
         t = sub_once(
             t, r'<link rel="icon"[^>]*>',
-            lambda _m: f'<link rel="icon" type="image/svg+xml" href="{escape_html(vh["favicon"])}">',
+            lambda _m: f'<link rel="icon" type="image/svg+xml" href="{escape_html(vh["mark"])}">',
             "favicon",
         )
     # head: title + meta description -> placeholders
@@ -694,19 +696,34 @@ def build_site() -> list:
     # the lufs-vh mark ships as a real file: it is both the favicon and the
     # footer mark, and scripts/verify asserts every local reference resolves.
     vh = site.get("visual_hash", {}) or {}
-    for key in ("mark", "favicon"):
-        ref = vh.get(key)
-        if not ref:
-            continue
+    ref = vh.get("mark")
+    if ref:
         src = TEMPLATE.parent / Path(ref).name
         if not src.is_file():
             raise SystemExit(
-                f"[render] site.yaml declares visual_hash.{key} {ref!r} but {src} "
-                f"is missing. Render it with the lufs-vh CLI (see site.yaml) or "
-                f"clear the key — never hand-draw a substitute."
+                f"[render] site.yaml declares visual_hash.mark {ref!r} but {src} "
+                f"is missing. Render it with the lufs-vh CLI (see data/site.yaml) "
+                f"or clear the key — never hand-draw a substitute."
             )
         shutil.copy(src, OUT_DIR / Path(ref).name)
         print(f"  copied {src.name} -> {OUT_DIR/Path(ref).name}")
+
+    # _headers: the platform file is GENERATED from the root manifest, which
+    # stays authoritative (website-portability contract). Without this the host
+    # default cached styles.css for 4h against always-fresh HTML.
+    root_manifest = BASE_DIR / "site.yaml"
+    if root_manifest.is_file():
+        rules = (load_yaml(root_manifest) or {}).get("headers") or []
+        if rules:
+            lines = []
+            for rule in rules:
+                path, cc = rule.get("path"), rule.get("cache_control")
+                if not path or not cc:
+                    continue
+                lines.append(f"{path}\n  Cache-Control: {cc}\n")
+            if lines:
+                (OUT_DIR / "_headers").write_text("\n".join(lines))
+                print(f"  wrote _headers ({len(lines)} rules) -> {OUT_DIR/'_headers'}")
 
     return outputs
 
