@@ -254,6 +254,19 @@ footer .mono{font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;colo
   footer{padding:30px 0 36px;gap:22px;align-items:flex-start}
   footer .foot-txt{gap:9px}
 }
+/* Mobile: the stamp always drops to CENTRE. daniel-ramirez.io is the reference
+   implementation (`.site-footer{justify-content:center;text-align:center}` at
+   768) and blog.daniel-ramirez.io matches it; this brings the resume site in
+   line, so the mark behaves identically on all three surfaces at one shared
+   breakpoint. Previously this footer dropped the mark LEFT — `space-between`
+   puts a lone wrapped item at flex-start.
+   Placed AFTER the 680 block on purpose: that block sets
+   `align-items:flex-start`, and equal-specificity declarations are resolved by
+   source order, so an earlier position would silently lose below 680. */
+@media(max-width:768px){
+  footer{justify-content:center;align-items:center;text-align:center}
+  footer .foot-txt{align-items:center}
+}
 
 /* ---- dev affordances hidden on the shipped site (dial panel still toggles with 'd') ---- */
 .proto-note,.dial-toggle{display:none!important}
